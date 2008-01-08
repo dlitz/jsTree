@@ -23,7 +23,7 @@
 
 <xsl:template name="nodes">
 	<xsl:param name="node" />
-	<ul> 
+	<ul>
 	<xsl:for-each select="$node/item">
 		<li>
 		<xsl:attribute name="id"><xsl:value-of select="@id" /></xsl:attribute>
