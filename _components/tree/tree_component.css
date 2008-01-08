@@ -1,0 +1,132 @@
+/* TREE LAYOUT */
+.tree ul {
+	margin:0 0 0 5px;
+	padding:0;
+	list-style-type:none;
+}
+.tree li {
+	display:block;
+	min-height:18px;
+	line-height:18px;
+	padding:0 0 0 15px;
+	margin:0;
+	clear:both;
+}
+.tree li ul {
+	display:none;
+}
+.tree ul li.open,
+.tree li ul li.open {
+	background:url("images/minus.jpg") 4px 6px no-repeat;
+}
+.tree li.open ul {
+	display:block;
+
+	/**** EXPERIMENTAL ****/
+	clear:both;
+}
+.tree ul li.closed,
+.tree li ul li.closed {
+	background:url("images/plus.jpg") 5px 5px no-repeat;
+}
+.tree li.closed ul {
+	display:none !important;
+}
+
+.tree li a,
+.tree li span {
+	display:block;
+	float:left;
+	line-height:16px;
+	height:16px;
+	margin:0;
+	padding:0 3px 0 22px !important;
+
+	color:black;
+	white-space:nowrap;
+	text-decoration:none;
+
+	border:1px solid white;
+	background-color:white;
+	background-repeat:no-repeat;
+	background-position:3px 0px; 
+	-moz-border-radius:3px;
+}
+.tree li a:hover {
+	background-color: #e7f4f9;
+	border-color: #d8f0fa;
+}
+.tree li a.clicked,
+.tree li a.clicked:hover,
+.tree li span.clicked {
+	background-color: #beebff;
+	border-color: #99defd;
+}
+
+.tree li a input,
+.tree li span input {
+	margin:0;
+	padding:0 1px;
+	display:block;
+	height:12px;
+	border:1px solid white;
+	background:white;
+	font-size:10px;
+	font-family:Verdana;
+}
+.tree li a input:not([class="xxx"]),
+.tree li span input:not([class="xxx"]) {
+	padding:1px;
+}
+
+/* Шибаните точки */
+.tree ul ul {
+	background:url("images/dot.gif") 6px 1px repeat-y;
+}
+.tree li {
+	background:url("images/li.jpg") 7px center no-repeat;
+}
+/*
+.tree li li:last-child {
+	background:url("images/lastli.jpg") 5px top no-repeat;
+	background-color:white !important;
+}
+*/
+.tree li li.last {
+	background:url("images/lastli.jpg") 5px top no-repeat;
+	background-color:white !important;
+}
+
+/* ЗА ДРАГ */
+.tree #dragged {
+	padding:0 3px;
+	margin:0;
+	background:white;
+	opacity: .85;
+	filter: alpha(opacity=85);
+
+	position:absolute;
+	top:-10px;
+	left:-10px;
+}
+.tree #dragged.last,
+.tree #dragged:last-child {
+	background:inherit;
+}
+
+/* HACKY-HACKY */
+.tree li {
+	margin-bottom:-2px;
+	_height:18px;
+	_width:50%;
+}
+.tree li:not([class="xxx"]) {
+	margin-bottom:0px;
+}
+.tree li ul {
+	padding-bottom:2px;
+	_height:1px;
+}
+.tree li ul:not([class="xxx"]) {
+	padding-bottom:0;
+}
