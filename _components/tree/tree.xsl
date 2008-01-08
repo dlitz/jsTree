@@ -32,7 +32,7 @@
 			<xsl:if test="position() = last()"> last </xsl:if>
 			<xsl:choose>
 				<xsl:when test="@state = 'open'"> open </xsl:when>
-				<xsl:when test="count(./item) &gt; 0"> closed </xsl:when>
+				<xsl:when test="count(./item) &gt; 0 or @hasChildren &gt; 0"> closed </xsl:when>
 				<xsl:otherwise> </xsl:otherwise>
 			</xsl:choose>
 		</xsl:attribute>
@@ -49,7 +49,7 @@
 				</a>
 
 			</xsl:for-each>
-			<xsl:if test="count(./item) > 0">
+			<xsl:if test="count(./item) > 0 or @hasChildren &gt; 0">
 				<xsl:call-template name="nodes">
 					<xsl:with-param name="node" select="current()" />
 				</xsl:call-template>
