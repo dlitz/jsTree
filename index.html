@@ -38,19 +38,19 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	</style>
 
 	<!-- BASE SCRIPTS -->
-	<script type="text/javascript" src="script/prototypes.js"></script>
-	<script type="text/javascript" src="script/sarissa.js"></script>
-	<script type="text/javascript" src="script/sarissa_ieemu_xpath.js"></script>
-	<script type="text/javascript" src="script/jquery.js"></script>
-	<script type="text/javascript" src="script/jquery.xslt.js"></script>
-	<script type="text/javascript" src="script/jquery.listen.js"></script>
-	<script type="text/javascript" src="script/jquery.hotkeys.js"></script>
-	<script type="text/javascript" src="script/jquery.dimensions.js"></script>
-	<script type="text/javascript" src="script/jquery.log.js"></script>
+	<script type="text/javascript" src="../../script/prototypes.js"></script>
+	<script type="text/javascript" src="../../script/sarissa.js"></script>
+	<script type="text/javascript" src="../../script/sarissa_ieemu_xpath.js"></script>
+	<script type="text/javascript" src="../../script/jquery.js"></script>
+	<script type="text/javascript" src="../../script/jquery.xslt.js"></script>
+	<script type="text/javascript" src="../../script/jquery.listen.js"></script>
+	<script type="text/javascript" src="../../script/jquery.hotkeys.js"></script>
+	<script type="text/javascript" src="../../script/jquery.dimensions.js"></script>
+	<script type="text/javascript" src="../../script/jquery.log.js"></script>
 
 	<!-- COMPONENTS -->
-	<link rel="stylesheet" type="text/css" href="_components/tree/tree_component.css" />
-	<script type="text/javascript" src="_components/tree/tree_component.js"></script>
+	<link rel="stylesheet" type="text/css" href="tree_component.css" />
+	<script type="text/javascript" src="tree_component.js"></script>
 
 	<!-- INITIALIZE -->
 	<script type="text/javascript">
@@ -58,7 +58,9 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
 			tree = new tree_component();
 			tree.init($("#box"),{ 
-				data		: "tree.xml", 
+				path		: "",
+				data		: "nested.xml", 
+				xsl			: "nested.xsl", 
 				dflt		: "site_24",
 				languages	: [ "en", "bg" ],
 				move		: {
@@ -70,13 +72,12 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 					draggables	: ["folder"]
 				},
 				callback	: {
-					onchange	: function() { },
-					onrename	: function() { },
-					onmove		: function() { },
-					onopen		: function(obj) { },
-					onclose		: function() { }
+					onopen		: function(obj) { 
+						//	$(obj).children("ul").getTransform(tree.settings.path+tree.settings.xsl,tree.settings.data, { } );
+						}
 				}
 			});
+
 		});
 	</script>
 </head>

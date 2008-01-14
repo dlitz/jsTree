@@ -7,7 +7,7 @@ function tree_component () {
 		settings : {
 			path			: "_components/tree/",
 			data			: false,
-			xsl			: "tree.xsl",
+			xsl			: "nested.xsl",
 			languages	: [],
 			dflt			: false,
 			move			: {
@@ -24,6 +24,10 @@ function tree_component () {
 		},
 		init : function(elem, opts) {
 			this.container		= elem;
+			if(opts && opts.callback) {
+				this.settings.callback = $.extend({},this.settings.callback,opts.callback);
+				delete opts.callback;
+			}
 			this.settings		= $.extend({},this.settings,opts);
 			this.current_lang	= this.settings.languages && this.settings.languages.length ? this.settings.languages[0] : false;
 			if(this.settings.languages && this.settings.languages.length) {
@@ -41,10 +45,11 @@ function tree_component () {
 			var offs = {};
 			$(this.container).addClass("tree").css({ position: "relative" }).offset({},offs).css( { position : "" } );
 			if(this.settings.move.draggables.length && this.settings.move.rules.length) {
+				var _this = this;
 				$("<img>")
 					.attr({
-						id	: "marker", 
-						src	: "_components/tree/images/marker.gif" 
+						id		: "marker", 
+						src	: _this.settings.path + "images/marker.gif" 
 					})
 					.css({
 						height	: "5px",
@@ -58,7 +63,7 @@ function tree_component () {
 			this.offset = offs;
 			this.refresh();
 			this.attachEvents();
-			_this = this;
+			var _this = this;
 			$.hotkeys.add('f2',		{ disableInInput: true },	function() { _this.rename(); });
 			$.hotkeys.add('n',		{ disableInInput: true },	function() { _this.create(); });
 			$.hotkeys.add('l',		{ disableInInput: true },	function() { _this.cycle(); });
@@ -117,6 +122,7 @@ function tree_component () {
 							return true;
 						})
 						.bind("mouseup", function (event) {
+							if(_this.to) clearTimeout(_this.to);
 							if(_this.drag && _this.drag.parentNode && _this.drag.parentNode == $(_this.container).get(0)) {
 								$(_this.container).get(0).removeChild(_this.drag);
 								if(_this.moveType) {
@@ -146,7 +152,7 @@ function tree_component () {
 								// MOVING OVER SELF OR CHILDREN
 								if($(event.target).parents("li").andSelf().index(_this._drag.get(0)) != -1) {
 									if($(_this.drag).children("IMG").size() == 0) {
-										$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='icons/remove.png' />");
+										$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='" + _this.settings.path + "images/remove.png' />");
 									}
 									_this.moveType = false;
 									_this.moveRef = false;
@@ -174,13 +180,13 @@ function tree_component () {
 										goTo.x -= 2;
 										goTo.y = event.pageY - (goTo.y + st)%18 + 7 ; // $(event.target).offset().top + 7
 										if($(event.target).parent("LI").hasClass("closed")) {
-											_this.to = setTimeout("$('#" + $(event.target).parent("LI").attr("id") + "').removeClass('closed').addClass('open');",500);
+											_this.to = setTimeout( function () { _this.open_branch("#" + $(event.target).parent("LI").attr("id")); }, 500);
 										}
 									}
 									
 									if($.inArray( $(_this._drag).attr("rel") + " " + mov + " " + $(event.target).parents("li:eq(0)").attr("rel") ,_this.settings.move.rules) != -1) {
-										if(mov == "inside")	$("#marker").attr("src","_components/tree/images/plus.gif").width(11);
-										else						$("#marker").attr("src","_components/tree/images/marker.gif").width(40);
+										if(mov == "inside")	$("#marker").attr("src", _this.settings.path + "images/plus.gif").width(11);
+										else						$("#marker").attr("src", _this.settings.path + "images/marker.gif").width(40);
 										_this.moveType	= mov;
 										_this.moveRef	= event.target;
 										$(_this.drag).children("IMG").remove();
@@ -426,7 +432,7 @@ function tree_component () {
 				$parent.children("li.last").removeClass("last");
 				$parent.children("li:last").addClass("last");
 			}
-			_this.settings.callback.onmove.call(null, what, where, how);
+			this.settings.callback.onmove.call(null, what, where, how);
 		}
 	}
 }
