@@ -27,6 +27,8 @@
 
 <xsl:template name="nodes">
 	<xsl:param name="node" />
+	<xsl:variable name="children" select="count(//item[@parent_id=$node/attribute::id]) &gt; 0" />
+	
 	<li>
 	<xsl:attribute name="id"><xsl:value-of select="@id" /></xsl:attribute>
 	<xsl:attribute name="rel"><xsl:value-of select="@type" /></xsl:attribute>
@@ -34,7 +36,7 @@
 		<xsl:if test="position() = last()"> last </xsl:if>
 		<xsl:choose>
 			<xsl:when test="@state = 'open'"> open </xsl:when>
-			<xsl:when test="count(//item[@parent_id=$node/attribute::id]) &gt; 0 or @hasChildren &gt; 0"> closed </xsl:when>
+			<xsl:when test="$children or @hasChildren &gt; 0"> closed </xsl:when>
 			<xsl:otherwise> </xsl:otherwise>
 		</xsl:choose>
 	</xsl:attribute>
@@ -66,7 +68,7 @@
 			</a>
 		</xsl:otherwise>
 		</xsl:choose>
-		<xsl:if test="count(//item[@parent_id=$node/attribute::id]) &gt; 0">
+		<xsl:if test="$children">
 		<ul>
 			<xsl:for-each select="//item[@parent_id=$node/attribute::id]">
 				<xsl:call-template name="nodes">

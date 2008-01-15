@@ -1,11 +1,12 @@
 // ** TO DO **
+// scrolling to selected when keyboard navigation is used - scrollintoview
 // INVERTING parents(li.closed)
 // WORKING AROUND async tree with open callback ( when refreshing nested nodes )
 
 function tree_component () {
 	return {
 		settings : {
-			path			: "_components/tree/",
+			path			: "",
 			data			: false,
 			xsl			: "nested.xsl",
 			languages	: [],
@@ -266,11 +267,24 @@ function tree_component () {
 			$(obj).removeClass("open").addClass("closed");
 			this.settings.callback.onclose.call(null, obj);
 		},
+		open_all : function () {
+			var _this = this;
+			$(this.container).find("li.closed").each( function () {
+							_this.open_branch(this);
+						});
+		},
+		close_all : function () {
+			var _this = this;
+			$(this.container).find("li.open").each( function () {
+							_this.close_branch(this);
+						});
+		},
 		select_branch : function (obj) {
 			var _this = this;
 			$(this.selected)
 				.children("A").removeClass("clicked");
 			this.selected = $(obj).blur().parent("li").get(0);
+			// this.selected.scrollIntoView();
 			$(this.selected)
 				.children("A").addClass("clicked").end()
 				.parents("li.closed").each( function () {
