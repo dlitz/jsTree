@@ -1,0 +1,327 @@
+<!DOCTYPE html
+PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>jsTree :: documentation</title>
+	<script type="text/javascript" src="../jsTree/jquery.js"></script>
+	<link rel="stylesheet" type="text/css" href="prettify.css" />
+	<script type="text/javascript" src="prettify.js"></script>
+</head>
+<body>
+<h1>jsTree</h1>
+<p>A tree component based on jQuery.</p>
+<ul id="menu"></ul>
+<ul>
+	<li><a href="examples.html">Examples</a>
+		<ul>
+			<li><a href="data_example.html">Data</a>
+				<ul>
+					<li><a href="data_example.html#nodata">with predefined HTML</a></li>
+					<li><a href="data_example.html#flat">with flat XML</a></li>
+					<li><a href="data_example.html#nested">with nested XML</a></li>
+					<li><a href="data_example.html#json">with JSON</a></li>
+				</ul>
+			</li>
+			<li><a href="lang_example.html">Language versions</a></li>
+			<li><a href="rules_example.html">Rules example</a></li>
+			<li><a href="callbacks_example.html">Callbacks example</a></li>
+			<li><a href="#">PHP integrated example</a>
+				<ul>
+					<li><a href="#">using adjacency</a></li>
+					<li><a href="#">using nested sets</a></li>
+					<li><a href="#">using both</a></li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+</ul>
+
+<h2 id="dep">Dependencies</h2>
+<p>
+<ul>
+	<li>[included] jQuery</li>
+	<li>[included] jQuery listen plugin</li>
+	<li>[included] Sarrissa &amp; jQuery XSLT plugin (<em>only if using XML as source</em>)</li>
+	<li>[included] jQuery metadata plugin (<em>only if using metadata rules</em>)</li>
+</ul>
+</p>
+
+<h2 id="conf">How to create and configure</h2>
+<h3 id="inc">Includes</h3>
+<code class="prettyprint">&lt;!-- REQUIRED SCRIPTS AND STYLES --&gt;
+&lt;link rel=&quot;stylesheet&quot; type=&quot;text/css&quot; href=&quot;jsTree/tree_component.css&quot; /&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;jsTree/css.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;jsTree/jquery.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;jsTree/jquery.listen.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;jsTree/tree_component.js&quot;&gt;&lt;/script&gt;
+
+
+&lt;!-- BEGIN OF OPTIONAL SCRIPTS --&gt;
+&lt;!-- required for xml data type --&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;jsTree/sarissa.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;jsTree/sarissa_ieemu_xpath.js&quot;&gt;&lt;/script&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;jsTree/jquery.xslt.js&quot;&gt;&lt;/script&gt;
+&lt;!-- required for metadata rule definitions --&gt;
+&lt;script type=&quot;text/javascript&quot; src=&quot;jsTree/jquery.metadata.js&quot;&gt;&lt;/script&gt;
+&lt;!-- END OF OPTIONAL SCRIPTS --&gt;
+</code>
+<h3 id="create">Creation</h3>
+<code class="prettyprint">var tree = new tree_component();</code>
+<h3 id="init">Initizalization</h3>
+<code class="prettyprint">var tree.init(<em>container_node</em>,[{ <em>options</em> }]);</code>
+<h3 id="config">Configuration (not required)</h3>
+<code class="prettyprint">{
+	data	: false,	 // can be false, JSON or path to xml file
+	xsl	: "nested.xsl",	 // if data is xml which xsl to it transform with ("nested" or "flat")
+	languages	: [],	 // what are the languages - default - no language versions
+	dflt		: false, // default node to select on load
+	dots		: true,	 // Dots or no dots (see customization)
+	type_attr	: "rel", // in what attribute is the type stored (if not metadata)
+	metadata	: false, // use metadata? false or attribute name
+	rules		: {	 // RULES - read below
+		use_inline	: false,	// CHECK FOR INLINE RULES - REQUIRES METADATA
+		clickable	: [],		// which node types can the user select | default - all
+		deletable	: [],		// which node types can the user delete | default - all
+		creatable	: [],		// which node types can the user create in | default - all
+		draggable	: [],		// which node types can the user move | default - none
+		dragrules	: []		// allowed operations between nodes | default - none
+	},
+	callback	: {	// various callbacks to attach custom logic to
+		onchange	: function(NODE) { },		// focus changed
+		onrename	: function(NODE) { },		// node renamed ISNEW - TRUE|FALSE
+		onmove		: function(NODE,REF_NODE,TYPE) { }, // move completed
+		oncreate	: function(NODE,REF_NODE,TYPE) { }, // node created
+		ondelete	: function(NODE) { },		// node deleted
+		onopen		: function(NODE) { },		// node opened
+		onclose		: function(NODE) { }		// node closed
+	}
+}
+</code>
+<h4 id="container">Container</h2>
+<p>The container node of the tree, can be: jQuery object, DOM node.</p>
+<h4 id="data">Data</h2>
+<p>The data for the tree. Default is predefined HTML.</p>
+<h5 id="data_html">predefined HTML</h3>
+<p>Used by not passing this attribute. Binds events and display only to the container element's content. Expected content is as follows:</p>
+<code class="prettyprint">&lt!-- SINGLE NODE --&gt;
+&lt;li id=&quot;<em>node_identificator</em>&quot;&gt;
+	&lt;a href=&quot;#&quot;&gt;<em>node_title</em>&lt;/a&gt;
+&lt;/li&gt;
+&lt!-- NODE WITH CHILDREN --&gt;
+&lt;li id=&quot;<em>node_identificator</em>&quot;&gt;
+	&lt;a href=&quot;#&quot; style=&quot;background-image:url(<em>node_icon</em>);&quot;&gt;<em>node_title</em>&lt;/a&gt;
+	&lt;ul&gt;
+		&lt!-- CHILD NODES --&gt;
+	&lt/ul&gt;
+&lt;/li&gt;
+</code>
+<p>If language versions are used:</p>
+<code class="prettyprint">&lt!-- SINGLE NODE --&gt;
+&lt;li id=&quot;<em>node_identificator</em>&quot;&gt;
+	&lt;a href=&quot;#&quot; class=&quot;<em>language_name</em>&quot;&gt;<em>node_title</em>&lt;/a&gt;
+	&lt;a href=&quot;#&quot; class=&quot;<em>language_name</em>&quot;&gt;<em>node_title</em>&lt;/a&gt;
+&lt;/li&gt;
+</code>
+<h5 id="data_xml-nested">nested XML</h3>
+<p>The data parameter is the path to the file. The xsl parameter does not need changes.<br />Basic structure of the XML. All attributes of the item node get copied to the li node in the output HTML. If the hasChildren attribute is present, the output node is displayed as having children.</p>
+<p>No language versions</p>
+<code class="prettyprint">&lt;xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;root&gt;
+	&lt;item [<em>attribute</em>=&quot;<em>attribute_value</em>&quot; icon=&quot;<em>path_to_icon</em>&quot; state=&quot;<em>closed|open</em>&quot; <em>hasChildren</em>]&gt;
+		&lt;![CDATA[<em>node_title</em>]]&gt;
+		&lt;!-- NESTED ITEM NODES --&gt;
+	&lt;/item&gt;
+&lt;/root&gt;
+</code>
+<p>With language versions</p>
+<code class="prettyprint">&lt;xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;root&gt;
+	&lt;item [<em>attribute</em>=&quot;<em>attribute_value</em>&quot; state=&quot;<em>closed|open</em>&quot; <em>hasChildren</em>]&gt;
+		&lt;content&gt;
+			&lt;name icon=&quot;<em>path_to_icon</em>&quot; lang=&quot;<em>language_name</em>&quot;&gt;&lt;![CDATA[<em>node_title</em>]]&gt;&lt;/name&gt;
+			&lt;name icon=&quot;<em>path_to_icon</em>&quot; lang=&quot;<em>language_name</em>&quot;&gt;&lt;![CDATA[<em>node_title</em>]]&gt;&lt;/name&gt;
+		&lt;/content&gt;
+		&lt;!-- NESTED ITEM NODES --&gt;
+	&lt;/item&gt;
+&lt;/root&gt;
+</code>
+<h5 id="data_xml-flat">flat XML</h3>
+<p>The data parameter is the path to the file. The xsl parameter has to be "flat.xsl".<br />Basic structure of the XML. All attributes of the item node get copied to the li node in the output HTML. If the hasChildren attribute is present, the output node is displayed as having children. If the state attribute is present the node is forced in the specified state;</p>
+<p>No language versions</p>
+<code class="prettyprint">&lt;xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;root&gt;
+	&lt;item id=&quot;<em>node_identificator</em>&quot; parent_id=&quot;<em>parent_node_identificator</em>&quot; [<em>attribute</em>=&quot;<em>attribute_value</em>&quot; icon=&quot;<em>path_to_icon</em>&quot; state=&quot;<em>closed|open</em>&quot; <em>hasChildren</em>]&gt;
+		&lt;![CDATA[<em>node_title</em>]]&gt;
+	&lt;/item&gt;
+	&lt;!-- NEXT ITEM NODES --&gt;
+&lt;/root&gt;
+</code>
+<p>With language versions</p>
+<code class="prettyprint">&lt;xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot; ?&gt;
+&lt;root&gt;
+	&lt;item id=&quot;<em>node_identificator</em>&quot; parent_id=&quot;<em>parent_node_identificator</em>&quot; [<em>attribute</em>=&quot;<em>attribute_value</em>&quot; icon=&quot;<em>path_to_icon</em>&quot; state=&quot;<em>closed|open</em>&quot; <em>hasChildren</em>]&gt;
+		&lt;content&gt;
+			&lt;name icon=&quot;<em>path_to_icon</em>&quot; lang=&quot;<em>language_name</em>&quot;&gt;&lt;![CDATA[<em>node_title</em>]]&gt;&lt;/name&gt;
+			&lt;name icon=&quot;<em>path_to_icon</em>&quot; lang=&quot;<em>language_name</em>&quot;&gt;&lt;![CDATA[<em>node_title</em>]]&gt;&lt;/name&gt;
+		&lt;/content&gt;
+	&lt;/item&gt;
+	&lt;!-- NEXT ITEM NODES --&gt;
+&lt;/root&gt;
+</code>
+<h5 id="data_json">JSON</h3>
+<p>JSON can be passed as the data parameter. Here is the appropriate form.</p>
+<p>No langauge versions</p>
+<code class="prettyprint">{ 
+	attributes: { id : &quot;<em>node_identificator</em>&quot; }, 
+	data: &quot;<em>node_identificator</em>&quot;, 
+	icons: &quot;<em>path_to_icon</em>&quot;, 
+	children: [ // an array of child nodes objects ]
+}
+</code>
+<p>With langauge versions:<br />Note, the data and icons array must be ordered in the same order as the passed languages array (see below)</p>
+<code class="prettyprint">{ 
+	attributes: { id : &quot;<em>node_identificator</em>&quot; }, 
+	data: [&quot;<em>node_identificator</em>&quot;, &quot;<em>node_identificator</em>&quot;, ... ], 
+	icons: [&quot;<em>path_to_icon</em>&quot;, &quot;<em>path_to_icon</em>&quot;, ... ], 
+	children: [ // an array of child nodes objects ]
+}
+</code>
+
+<h4 id="xsl">xsl</h4>
+<p>Used only with xml data sources - should be either "flat.xsl" or "nested.xsl". Default is "nested.xsl".</p>
+
+<h4 id="lang">languages</h4>
+<p>An array of language names, if not specified, there are no language versions. The first item in the array is the default language and be visible onload</p>
+<h4 id="dflt">dflt</h4>
+<p>Default node to select onload</p>
+<h4 id="dots">dots</h4>
+<p>Whether to initially show dots (see customization for more). Default is true.</p>
+<h4 id="type_attr">type_attr</h4>
+<p>Attribute where the type of the node is stored (default is rel). It is only used, when metadata is false.</p>
+<h4 id="meta">metadata</h4>
+<p>Use metadata read from nodes. Either false, or the attribute name storing the data. Default is false. Requires metadata plugin.</p>
+<h4 id="rules">rules</h4>
+<p>An object specifying default behaviours in the tree.</p>
+<h5 id="inline">use_inline</h5>
+<p>Will there be inline rules (requires metadata plugin). This enables you to set individual properties on nodes. For example all nodes of type folder are clickable, but the node "Home" of type folder is not. Also certain rules are only available as inline rules - such as "max_depth", "max_children" and "valid_children".</p>
+<h5 id="inline">clickable</h5>
+<p>Which node types are clickable - an array of string values. If the array is empty - all node types are clickable.</p>
+<h5 id="inline">deletable</h5>
+<p>Which node types are deletable - an array of string values. If the array is empty - all node types are deletable.</p>
+<h5 id="inline">creatable</h5>
+<p>Which node types can the user create new nodes in - an array of string values. If the array is empty - all node types are creatable.</p>
+<h5 id="inline">draggable</h5>
+<p>Which node types can the user drag - an array of string values. If the array is empty - there is no drag & drop (possible value is "all").</p>
+<h5 id="inline">dragrules</h5>
+<p>An array of string values describing possible moves. If the array is empty - there is no drag & drop (possible value is "all"). For example:</p>
+<code class="prettyprint">[
+	&quot;folder after folder&quot;,
+	&quot;folder before folder&quot;,
+	&quot;file inside folder&quot;,
+	&quot;file before file&quot;,
+	&quot;file after file&quot;
+]
+/* 
+ * This set of rules insures that there is only one level of folders.
+ * and there are no files outside folders, and the files can be ordered
+ * inside the folder.
+ */
+</code>
+<h4 id="data">callback</h4>
+<p>There can be a few callbacks attached, so that you can keep your own logic.
+	<ul>
+		<li>onchange - function(NODE) { // fired when focus changes NODE is the selected DOM node }</li>
+		<li>onrename - function(NODE) { // NODE is the renamed DOM node }</li>
+		<li>onmove - function(NODE,REF_NODE,TYPE) { // NODE is the created DOM node, REF_NODE is the reference node, TYPE is one of INSIDE, AFTER, BEFORE }</li>
+		<li>oncreate - function(NODE,REF_NODE) { // NODE is the created DOM node, REF_NODE is the parent DOM node }</li>
+		<li>onopen - function(NODE) { // NODE is the opened DOM node }</li>
+		<li>onclose - function(NODE) { // NODE is the closed DOM node }</li>
+	</ul>
+</p>
+
+<h2 id="cust">Customization</h1>
+<h3 id="icon">Custom node icon</h2>
+
+<h4 id="data_indep">Data independant:</h3>
+<p>Globally for all trees</p>
+<code class="prettyprint">.tree li a { background-image:url(<em>node_icon</em>); }</code>
+<p>Or for a specific tree</p>
+<code class="prettyprint"><em>container_selector</em> li a { background-image:url(<em>node_icon</em>); }</code>
+<p>For a specific langauge</p>
+<code class="prettyprint"><em>container_selector OR .tree</em> li a.<em>language_name</em> { background-image:url(<em>node_icon</em>); }</code>
+
+<h4 id="predef">When using Predefined HTML</h3>
+<p>If you are using predefined HTML you can specify the background-image inline for any &lt;a&gt; nodes</p>
+<code class="prettyprint">&lt;li id=&quot;<em>node_identificator</em>&quot;&gt;
+	&lt;a href=&quot;#&quot; style=&quot;background-image:url(<em>node_icon</em>);&quot;&gt;<em>node_title</em>&lt;/a&gt;
+&lt;/li&gt;
+</code>
+
+<h4 id="data_xml">When using XML</h3>
+<p>If you are using XML as source - simply pass an icon attribute. Here is how it looks if you have no language versions:</p>
+<code class="prettyprint">&lt;item icon=&quot;<em>node_icon</em>&quot; ...&gt;</code>
+<p>If you have langauge versions you can specify different icons for each language:</p>
+<code class="prettyprint">&lt;item ...&gt;
+	&lt;content&gt;
+		&lt;name lang=&quot;<em>language_name</em>&quot; icon=&quot;<em>node_icon</em>&quot; ...&gt; ... &lt;/name&gt;
+		&lt;name lang=&quot;<em>language_name</em>&quot; icon=&quot;<em>node_icon</em>&quot; ...&gt; ... &lt;/name&gt;
+	&lt;/content&gt;
+&lt/item&gt;
+</code>
+
+<h4 id="data_json">When using JSON</h3>
+<p>If you are using JSON as source you can specify node icon with the icon attribute.</p>
+<p>No language versions</p>
+<code class="prettyprint">{
+	attributes : { ... },
+	data : &quot;...&quot;,
+	icon : &quot;<em>node_icon</em>&quot;
+}
+</code>
+<p>Language versions</p>
+<code class="prettyprint">{
+	attributes : { ... },
+	data : [&quot;...&quot;, &quot;...&quot;, ... ],
+	icon : [&quot;<em>node_icon</em>&quot;, &quot;<em>node_icon</em>&quot;, ... ]
+}
+</code>
+
+<h3 id="cust-hotkeys">Hotkeys</h2>
+<p>I found this jquery plugin extremely useful - check it out</p>
+<code class="prettyprint">$.hotkeys.add('<em>key</em>', { disableInInput: true }, function() { <em>instance</em>.<em>function</em>([<em>arguments</em>]); });
+
+/* for example */
+$.hotkeys.add('f2',	{ disableInInput: true }, function() { tree.rename(); });
+$.hotkeys.add('n',	{ disableInInput: true }, function() { tree.create(); });
+$.hotkeys.add('d',	{ disableInInput: true }, function() { tree.remove(); });
+$.hotkeys.add('l',	{ disableInInput: true }, function() { tree.cycle_lang(); });
+$.hotkeys.add('r',	{ disableInInput: true }, function() { tree.refresh(); });
+$.hotkeys.add('up',	{ disableInInput: true }, function() { tree.get_prev(); });
+$.hotkeys.add('down',	{ disableInInput: true }, function() { tree.get_next(); });
+$.hotkeys.add('left',	{ disableInInput: true }, function() { tree.get_left(); });
+$.hotkeys.add('right',	{ disableInInput: true }, function() { tree.get_right(); });
+</code>
+
+<h3 id="cust-dots">Dots</h2>
+<p>You can choose whether to have dots or not, and toggle them on the fly (attach to event)</p>
+<p>In the configuration</p>
+<code class="prettyprint"><em>instance</em>.init(<em>container_node</em>,{ dots : <em>false | true</em> });</code>
+<p>Runtime using built-in function</p>
+<code class="prettyprint"><em>instance</em>.toggleDots();</code>
+<p>Runtime using jQuery</p>
+<code class="prettyprint">$(<em>container_node</em>).addClass(&quot;no_dots&quot;);
+$(<em>container_node</em>).removeClass(&quot;no_dots&quot;);
+$(<em>container_node</em>).toggleClass(&quot;no_dots&quot;);
+</code>
+<p>In the HTML markup</p>
+<code class="prettyprint">&lt;<em>container_node</em> class=&quot;no_dots&quot;&gt;
+	...
+&lt;/<em>container_node</em>&gt;
+</code>
+</body>
+</html>
+
+</body>
+</html>

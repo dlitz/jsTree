@@ -1,0 +1,90 @@
+html, body {
+	font-family:Verdana;
+	font-size:10px;
+	padding:0;
+	margin:0;
+	min-height:100%;
+	_height:100%;
+	background:#ebebeb;
+}
+body {
+	width:800px;
+	margin:0 auto;
+	background:white;
+	padding:0 20px;
+	border-left:1px solid gray;
+	border-right:1px solid gray;
+}
+body p,
+body code {
+	margin-left:2em;
+}
+h1, h2, h3, h4, h5, h6 {
+	margin:0;
+	padding:1em 0 0 0;
+	font-family:Georgia;
+	font-weight:bold;
+	color:navy;
+}
+h1 {
+	font-size:1.4em;
+}
+h2 {
+	font-size:1.3em;
+	margin-left:1em;
+}
+h3 {
+	font-size:1.2em;
+	margin-left:1.5em;
+}
+h4, h5, h6 {
+	font-size:1.1em;
+	margin-left:2em;
+}
+h5, h6 {
+	color:black;
+}
+p {
+	margin:0.5em 0 0 2em;
+}
+code {
+	display:block;
+	border:1px solid gray;
+	border-left-width:12px;
+	background:#ebebeb;
+	padding:2px;
+	margin:2px;
+	font-size:12px;
+}
+code em {
+	font-weight:bold;
+	padding:0 4px;
+	text-decoration:underline;
+}
+
+/* Pretty printing styles. Used with prettify.js. */
+.str { color: #080; }
+.kwd { color: #008; }
+.com { color: #800; }
+.typ { color: #606; }
+.lit { color: #066; }
+.pun { color: #660; }
+.pln { color: #000; }
+.tag { color: #008; }
+.atn { color: #606; }
+.atv { color: #080; }
+.dec { color: #606; }
+pre.prettyprint { padding: 2px; border: 1px solid #888; }
+
+@media print {
+  .str { color: #060; }
+  .kwd { color: #006; font-weight: bold; }
+  .com { color: #600; font-style: italic; }
+  .typ { color: #404; font-weight: bold; }
+  .lit { color: #044; }
+  .pun { color: #440; }
+  .pln { color: #000; }
+  .tag { color: #006; font-weight: bold; }
+  .atn { color: #404; }
+  .atv { color: #060; }
+}
