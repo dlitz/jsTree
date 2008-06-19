@@ -37,6 +37,7 @@
 
 /*  
  * CHANGELOG:
+ *   fix oncreate & onmove callback to pass on valid nodes
  *   current language is passed when renaming
  *   added onbeforechange callback
  *   'data' can be JSON and none (only events attached to structure)
@@ -210,6 +211,7 @@ function tree_component () {
 				})
 				.listen("click", "a", function (event) { // WHEN CLICK IS ON THE TEXT OR ICON
 					_this.select_branch.apply(_this, [event.target]);
+					if(_this.inp) { _this.inp.blur(); }
 					event.preventDefault(); 
 					event.target.blur();
 					return false;
@@ -579,25 +581,25 @@ function tree_component () {
 			}
 			if(this.settings.languages.length) {
 				for(i = 0; i < this.settings.languages.length; i++) {
-					$li.append("<a href='#' class='" + this.settings.languages[i] + "'>Нова категория</a>");
+					$li.append("<a href='#' class='" + this.settings.languages[i] + "'>New folder</a>");
 				}
 			}
-			else { $li.append("<a href='#'>Нова категория</a>"); }
+			else { $li.append("<a href='#'>New folder</a>"); }
 			this.moved($li,this.selected.find("a:first"),"inside", true);
 			this.select_branch($li.find("a:first"));
 			this.rename();
 		},
 		rename : function () {
 			if(this.selected) {
+				var _this = this;
 				if(!this.check("renameable", this.selected)) return false;
 				var obj = this.selected;
 				if(this.current_lang)	obj = obj.find("a." + this.current_lang).get(0);
 				else					obj = obj.find("a:first").get(0);
 				last_value = obj.innerHTML;
 
-				_this = this;
-				var inp = $("<input type='text' value='" + last_value + "' />");
-				inp
+				_this.inp = $("<input type='text' value='" + last_value + "' />");
+				_this.inp
 					.bind("mousedown",		function (event) { event.stopPropagation(); })
 					.bind("mouseup",		function (event) { event.stopPropagation(); })
 					.bind("click",			function (event) { event.stopPropagation(); })
@@ -606,18 +608,19 @@ function tree_component () {
 							if(key == 27) { this.blur(); }
 							if(key == 13) { this.blur(); }
 						});
-				inp.get(0).onblur = function(event) {
+				_this.inp.blur(function(event) {
 						if(this.value == "") this.value == last_value; 
 						$(obj).html( $(obj).parent().find("input").eq(0).attr("value") ).get(0).style.display = ""; 
 						$(obj).prevAll("span").remove(); 
-						_this.settings.callback.onrename.call(null, obj, this.current_lang);
-					};
-				var spn = $("<span />").addClass(obj.className).append(inp);
+						_this.settings.callback.onrename.call(null, _this.get_node(obj).get(0), _this.current_lang);
+						_this.inp = false;
+					});
+				var spn = $("<span />").addClass(obj.className).append(_this.inp);
 				spn.attr("style", $(obj).attr("style"));
 				obj.style.display = "none";
 				$(obj).parent().prepend(spn);
-				inp.get(0).focus();
-				inp.get(0).select();
+				_this.inp.get(0).focus();
+				_this.inp.get(0).select();
 			}
 		},
 		// REMOVE NODES
@@ -705,8 +708,8 @@ function tree_component () {
 				$parent.children("li.last").removeClass("last");
 				$parent.children("li:last").addClass("last");
 			}
-			if(is_new)	this.settings.callback.oncreate.call(null, what, where, how);
-			else		this.settings.callback.onmove.call(null, what, where, how);
+			if(is_new)	this.settings.callback.oncreate.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how);
+			else		this.settings.callback.onmove.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how);
 		}
 	}
 }

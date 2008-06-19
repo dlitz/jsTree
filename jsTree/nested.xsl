@@ -68,8 +68,7 @@
 					<xsl:otherwise>padding-left:5px !important;</xsl:otherwise>
 				</xsl:choose>
 			</xsl:attribute>
-				<xsl:value-of select="current()" />
-			</a>
+			<xsl:for-each select="text()"><xsl:value-of select="."/></xsl:for-each></a>
 		</xsl:otherwise>
 		</xsl:choose>
 			<xsl:if test="$children or @hasChildren">
