@@ -109,6 +109,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				callback	: {
 					onopen		: function(NODE) { },
 					onchange	: function(NODE) { },
+					onbeforechange	: function() { return confirm("Change focus?"); },
 					onrename	: function(NODE) { },
 					onmove		: function(NODE,REF_NODE,TYPE) { },
 					oncreate	: function(NODE,REF_NODE,TYPE) { },
@@ -210,8 +211,8 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 								<li id="predef_7"><a href="#">Link 7</a>
 							</ul>
 						</li>
-						<li id="predef_5"><a href="#">Link 5</a></li>
-						<li id="predef_6"><a href="#">Link 6</a></li>
+						<li id="predef_8"><a href="#">Link 5</a></li>
+						<li id="predef_9"><a href="#">Link 6</a></li>
 					</ul>
 				</li>
 			</ul>

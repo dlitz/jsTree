@@ -14,7 +14,6 @@
 /* 
  * TODO:
  * commented throughout the code with '// TODO: '
- *   !IMPLEMENT: pass current language when renaming
  *   !IMPLEMENT: cut & paste nodes
  *   !IMPLEMENT: native async loading and nested nodes fix
  *   !IMPLEMENT: error and other messages (language file?)
@@ -38,6 +37,8 @@
 
 /*  
  * CHANGELOG:
+ *   current language is passed when renaming
+ *   added onbeforechange callback
  *   'data' can be JSON and none (only events attached to structure)
  *   Opera comaptible
  *   scroll node into view when node selected
@@ -68,8 +69,9 @@ function tree_component () {
 				dragrules	: "none"	// what move operations between nodes are allowed | default - none | "all"
 			},
 			callback	: {										// various callbacks to attach custom logic to
+				onbeforechange : function(NODE) { return true },// before focus change should return true | false
 				onchange	: function(NODE) { },				// focus changed
-				onrename	: function(NODE) { },				// node renamed ISNEW - TRUE|FALSE
+				onrename	: function(NODE,LANG) { },			// node renamed ISNEW - TRUE|FALSE, current language
 				onmove		: function(NODE,REF_NODE,TYPE) { },	// move completed (TYPE is BELOW|ABOVE|INSIDE)
 				oncreate	: function(NODE,REF_NODE,TYPE) { },	// node created (TYPE is BELOW|ABOVE|INSIDE)
 				ondelete	: function(NODE) { },				// node deleted
@@ -480,6 +482,7 @@ function tree_component () {
 			var obj = _this.get_node(obj);
 			// CHECK AGAINST RULES FOR SELECTABLE NODES
 			if(!_this.check("clickable", obj)) return false;
+			if(_this.settings.callback.onbeforechange.call(null) === false) return false;
 
 			// DEFOCUS CURRELNTLY SELECTED NODE
 			if(this.selected) this.selected.children("A").removeClass("clicked");
@@ -607,7 +610,7 @@ function tree_component () {
 						if(this.value == "") this.value == last_value; 
 						$(obj).html( $(obj).parent().find("input").eq(0).attr("value") ).get(0).style.display = ""; 
 						$(obj).prevAll("span").remove(); 
-						_this.settings.callback.onrename.call(null, obj);
+						_this.settings.callback.onrename.call(null, obj, this.current_lang);
 					};
 				var spn = $("<span />").addClass(obj.className).append(inp);
 				spn.attr("style", $(obj).attr("style"));
