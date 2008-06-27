@@ -9,64 +9,52 @@
 	min-height:18px;
 	line-height:18px;
 	padding:0 0 0 15px;
-	margin:0;
+	margin:0 0 0 0;
 	clear:both;
 }
 .tree li ul {
 	display:none;
-}
-.tree ul li.open,
-.tree li ul li.open {
-	background:url("images/minus.jpg") 4px 6px no-repeat;
-}
-.tree li.open ul {
-	display:block;
-
-	/**** EXPERIMENTAL ****/
 	clear:both;
 }
-.tree ul li.closed,
-.tree li ul li.closed {
-	background:url("images/plus.jpg") 5px 5px no-repeat;
-}
-.tree li.closed ul {
-	display:none !important;
-}
-
 .tree li a,
 .tree li span {
-	display:block;
+	display:inline;
 	float:left;
 	line-height:16px;
 	height:16px;
-	margin:0;
-	padding:0 3px 0 22px !important;
-
+	padding:1px 4px 1px 23px !important;
 	color:black;
 	white-space:nowrap;
 	text-decoration:none;
-
-	border:1px solid white;
-	background-color:white;
+	background-color:transparent;
 	background-repeat:no-repeat;
-	background-position:3px 0px; 
+	background-position:4px 1px; 
 	-moz-border-radius:3px;
+	border:0;
+	margin:0;
 }
 .tree li a:hover {
 	background-color: #e7f4f9;
-	border-color: #d8f0fa;
+	border:1px solid #d8f0fa;
+	padding:0px 3px 0px 22px !important;
+	background-position:3px 0px; 
 }
 .tree li a.clicked,
 .tree li a.clicked:hover,
 .tree li span.clicked {
 	background-color: #beebff;
-	border-color: #99defd;
+	border:1px solid #99defd;
+	padding:0px 3px 0px 22px !important;
+	background-position:3px 0px; 
+}
+.tree li span.clicked {
+	padding:0px 3px 0px 20px !important;
 }
 
 .tree li a input,
 .tree li span input {
 	margin:0;
-	padding:0 1px;
+	padding:0 0;
 	display:block;
 	height:12px;
 	border:1px solid white;
@@ -76,7 +64,7 @@
 }
 .tree li a input:not([class="xxx"]),
 .tree li span input:not([class="xxx"]) {
-	padding:1px;
+	padding:1px 0;
 }
 
 /* FOR DOTS */
@@ -84,13 +72,12 @@
 	background:url("images/dot.gif") 6px 1px repeat-y;
 }
 .tree li {
-	background:url("images/li.jpg") 7px center no-repeat;
+	background:url("images/li.gif") 7px center no-repeat;
 }
-.tree li li.last {
-	background:url("images/lastli.jpg") 5px top no-repeat;
+.tree li.last {
+	background:url("images/lastli.gif") 5px top no-repeat;
 	background-color:white !important;
 }
-
 /* NO DOTS */
 .no_dots ul ul {
 	background:transparent;
@@ -98,9 +85,24 @@
 .no_dots li {
 	background:transparent;
 }
-.no_dots li li.last {
+.no_dots li.last {
 	background:transparent;
 	background-color:transparent !important;
+}
+
+/* OPEN OR CLOSE */
+.tree li.open {
+	background:url("images/fminus.gif") 4px 6px no-repeat;
+}
+.tree li.open ul {
+	display:block;
+	clear:both;
+}
+.tree li.closed {
+	background:url("images/fplus.gif") 5px 5px no-repeat;
+}
+.tree li.closed ul {
+	display:none !important;
 }
 
 
@@ -118,34 +120,100 @@
 }
 .tree #dragged.last,
 .tree #dragged:last-child {
-	background:inherit;
+	background:white;
+}
+.tree #dragged li.open {
+	background:url("images/fplus.gif") 5px 5px no-repeat;
+}
+.tree #dragged ul ul {
+	display:none;
 }
 
 /* HACKY-HACKY */
- /* LI - EXPLORER */
-.tree li {
+/* EXPLORER 7 */
+*:first-child+html .tree li {
 	margin-bottom:-2px;
-	_height:18px;
-	_width:50%;
+} 
+*:first-child+html .tree li ul {
+	padding-bottom:2px;
 }
- /* LI - FIREFOX */
+/* EXPLORER 6 */
+.tree li {
+	_width:50%;
+	_margin-bottom:-2px;
+}
+.tree li ul {
+	_padding-bottom:2px;
+}
+
+/* 
+ * FF & OPERA FIXES
 .tree li:not([class="xxx"]) {
 	margin-bottom:0px;
 }
- /* LI - OPERA */
 html:first-child .tree li {
 	margin-bottom:0px;
 }
- /* UL - EXPLORER */
-.tree li ul {
-	padding-bottom:2px;
-	_height:1px;
-}
- /* UL - FIREFOX */
 .tree li ul:not([class="xxx"]) {
 	padding-bottom:0;
 }
- /* UL - OPERA */
 html:first-child .tree ul {
 	padding-bottom:0;
+}
+*/
+
+
+/* RTL modification */
+.rtl * {
+	direction:rtl;
+}
+.rtl ul {
+	margin:0 5px 0 0;
+}
+.rtl li {
+	padding:0 15px 0 0;
+}
+.rtl li.open {
+	background:url("images/fminus_rtl.gif") right 6px no-repeat;
+}
+.rtl li.closed {
+	background:url("images/fplus_rtl.gif") right 4px no-repeat;
+}
+.rtl li li.last {
+	background:url("images/lastli_rtl.gif") right top no-repeat;
+}
+.rtl li a,
+.rtl li span {
+	float:right;
+	padding:1px 23px 1px 4px !important;
+	background-position:right 1px; 
+	margin-right:1px;
+}
+.rtl li a:hover {
+	background-color: #e7f4f9;
+	border:1px solid #d8f0fa;
+	padding:0px 23px 0px 3px !important;
+	background-position:right 0px; 
+	margin-right:0px;
+}
+.rtl li a.clicked,
+.rtl li a.clicked:hover,
+.rtl li span.clicked {
+	background-color: #beebff;
+	border:1px solid #99defd;
+	padding:0px 23px 0px 3px !important;
+	background-position:right 0px; 
+	margin-right:0px;
+}
+.rtl li span.clicked {
+	padding:0px 21px 0px 3px !important;
+}
+.rtl ul ul {
+	background:url("images/dot.gif") right 1px repeat-y;
+}
+.rtl li {
+	background:url("images/li.gif") right center no-repeat;
+}
+.rtl #dragged li.open {
+	background-position: right 5px;
 }

@@ -1,5 +1,5 @@
 /*
- * jsTree 0.5
+ * jsTree 0.6
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,47 +7,37 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-06-12
+ * Date: 2008-06-27
  *
  */
 
 /* 
  * TODO:
  * commented throughout the code with '// TODO: '
- *   !IMPLEMENT: cut & paste nodes
  *   !IMPLEMENT: native async loading and nested nodes fix
- *   !IMPLEMENT: error and other messages (language file?)
- *   !IMPLEMENT: popup with text while dragging - see above
- *   !IMPLEMENT: drag & drop between trees
- *   !OPTIMIZE: #marker position calculation
  *   !NOTE: 'type_attr' cannot be 'class'
  *   !NOTE: file opera bug (event.pageY) when dragging and scrolling
- */
-
-/* 
- * CREATE EXAMPLES:
- *   nested sets (PHP, AJAX)
- *   adjacency (PHP, AJAX)
- *   combined (PHP, AJAX)
- *   no data - events only
- *   JSON data
- *   simple example 'tree.init($("#box"));'
- *   CSS default image '.tree li a { background-image:url(); }'
+ *   !NOTE: Firefox 2 slows down when too many nested nodes (over 10 levels) (because of floated "a")
  */
 
 /*  
  * CHANGELOG:
- *   fix oncreate & onmove callback to pass on valid nodes
- *   current language is passed when renaming
- *   added onbeforechange callback
- *   'data' can be JSON and none (only events attached to structure)
- *   Opera comaptible
- *   scroll node into view when node selected
- *   scroll container while dragging and mouse is near the edge
- *   'remove' function 
- *   rules and rule checking reinvented (added inline_rules, max_depth, max_children, valid_children, renameable)
- *   dots are optional ('toggleDots' function, '.no_dots' classname)
- *   various optimizations
+ *   added drag & drop between trees with correct marker placement
+ *   optimized jQuery selectors
+ *   added cut/copy/paste + oncopy callback
+ *   added error callback - attach custom function to errors
+ *   added multiple selection with move & delete
+ *   added getJSON - return the tree as an object
+ *   added before handlers
+ *   optimized css, added 'leaf' class
+ *   added basic rtl support (user opinions?)
+ *   added cookie support with definable prefix and options - default is false
+ *   added if selected node is within closed parent - select parent
+ *   added CSS solution when dragging large sets - all inner nodes are closed while dragging
+ *   added solid background color option (not white) - set background color on "li.last", ".tree"
+ *   added animation support (slideUp/slideDown) - specify duration (disabled for msie 6 - slow)
+ *   updated listen plugin
+ *   updated sarissa
  */
 
 function tree_component () {
@@ -59,7 +49,13 @@ function tree_component () {
 			dflt		: false,		// default node to select on load
 			dots		: true,			// Dotted or not initially - can be changed by the .no_dots class on the container
 			type_attr	: "rel",		// in what attribute is the type stored (if not metadata)
+			animation	: 0,			// speed of animation - 0 for no animation
+			insertAt	: "top",		// top or bottom
+			cookies		: false,		// SAVE cookies for open and selected false or prefix
 			metadata	: false,		// USE METADATA PLUGIN false OR attribute name
+			rtl			: false,		// Is right to left ?
+			multitree	: true,
+			multiple	: true,			// MULTIPLE SELECTION
 			rules		: {				// RULES - read below
 				use_inline	: false,	// CHECK FOR INLINE RULES - REQUIRES METADATA
 				clickable	: "all",	// which node types can the user select | default - all
@@ -70,14 +66,20 @@ function tree_component () {
 				dragrules	: "none"	// what move operations between nodes are allowed | default - none | "all"
 			},
 			callback	: {										// various callbacks to attach custom logic to
-				onbeforechange : function(NODE) { return true },// before focus change should return true | false
+				beforechange: function(NODE) { return true },	// before focus change should return true | false
+				beforemove  : function(NODE,REF_NODE,TYPE) { return true },	// before move should return true | false
+				beforecreate: function(NODE,REF_NODE,TYPE) { return true },	// before create change should return true | false
+				beforerename: function(NODE) { return true },	// before create change should return true | false
+				beforedelete: function(NODE) { return true },	// before delete change should return true | false
 				onchange	: function(NODE) { },				// focus changed
 				onrename	: function(NODE,LANG) { },			// node renamed ISNEW - TRUE|FALSE, current language
 				onmove		: function(NODE,REF_NODE,TYPE) { },	// move completed (TYPE is BELOW|ABOVE|INSIDE)
-				oncreate	: function(NODE,REF_NODE,TYPE) { },	// node created (TYPE is BELOW|ABOVE|INSIDE)
+				oncopy		: function(NODE,REF_NODE,TYPE) { },	// copy completed (TYPE is BELOW|ABOVE|INSIDE)
+				oncreate	: function(NODE,REF_NODE,TYPE) { },	// node created, parent node (TYPE is insertAt)
 				ondelete	: function(NODE) { },				// node deleted
 				onopen		: function(NODE) { },				// node opened
-				onclose		: function(NODE) { }				// node closed
+				onclose		: function(NODE) { },				// node closed
+				error		: function(TEXT) { }				// error occured
 			}
 		},
 		// INITIALIZATION
@@ -86,6 +88,11 @@ function tree_component () {
 			this.container		= $(elem);
 
 			// MERGE OPTIONS WITH DEFAULTS
+			if(opts && opts.cookies) {
+				this.settings.cookies = $.extend({},this.settings.cookies,opts.cookies);
+				delete opts.cookies;
+				if(!this.settings.cookies.opts) this.settings.cookies.opts = {};
+			}
 			if(opts && opts.callback) {
 				this.settings.callback = $.extend({},this.settings.callback,opts.callback);
 				delete opts.callback;
@@ -113,13 +120,15 @@ function tree_component () {
 				for(var ln = 0; ln < this.settings.languages.length; ln++) {
 					st = add_css(id + " ." + this.settings.languages[ln], this.sn);
 					if(st !== false) {
-						if(this.settings.languages[ln] == this.current_lang)	st.style.display = "block";
+						if(this.settings.languages[ln] == this.current_lang)	st.style.display = "inline";
 						else													st.style.display = "none";
 					}
 				}
 			}
 
 			this.container.addClass("tree").css({ position: "relative" });
+			if(this.settings.rtl) this.container.addClass("rtl");
+			if(this.settings.multiple) this.selected_arr = [];
 			this.offset = this.container.offset();
 			this.container.css({ position : "" });
 			if(this.settings.dots == false) this.container.addClass("no_dots");
@@ -148,13 +157,25 @@ function tree_component () {
 		refresh : function () {
 			var _this = this;
 			// SAVE SELECTED
-			this.settings.dflt	= (this.selected) ? "#" + this.selected.attr("id") : this.settings.dflt;
+			this.settings.dflt = (this.selected) ? "#" + this.selected.attr("id") : this.settings.dflt;
+			if(this.settings.cookies) {
+				var str = $.cookie(this.settings.cookies.prefix + '_selected');
+				if(str) this.settings.dflt = "#" + str;
+			}
+
+			this.opened = Array();
+			if(this.settings.cookies) {
+				var str = $.cookie(this.settings.cookies.prefix + '_open');
+				if(str && str.length)	str = str.split(",");
+				else					str = [];
+				if(str.length) this.opened = str;
+			}
+			else {
+				this.container.find("li.open").each(function (i) { _this.opened.push(this.id); });
+			}
 
 			if(this.settings.data !== false && typeof this.settings.data != "object") {
-				this.scrtop			= this.container.get(0).scrollTop;
-				// SAVE OPENED
-				this.opened			= Array();
-				$("li.open").each(function (i) { _this.opened.push("#" + this.id); });
+				this.scrtop = this.container.get(0).scrollTop;
 				this.container.getTransform(this.path + this.settings.xsl, this.settings.data, { callback: function () { _this.reselect.apply(_this); } });
 				return;
 			}
@@ -164,6 +185,7 @@ function tree_component () {
 			}
 			// IF DATA WAS JSON OR PREDEFINED
 			this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
+			this.container.find("li").not(".open").not(".closed").addClass("leaf");
 			this.reselect();
 		},
 		// CONVERT JSON TO HTML
@@ -196,6 +218,38 @@ function tree_component () {
 			str += "</li>";
 			return str;
 		},
+		// getJSON from HTML
+		getJSON : function (nod) {
+			if(!nod || $(nod).size() == 0)	nod = this.container.find("li:eq(0)");
+			else							nod = $(nod);
+
+			var _this = this;
+			var obj = { attributes : {}, data : false, icons : false };
+			nod_d = nod.get(0);
+			for(i in nod_d.attributes) {
+				obj.attributes[nod_d.attributes[i].name] = nod_d.attributes[i].value;
+			}
+			var a = nod.children("a");
+			if(a.size() > 1) {
+				obj.data = [];
+				obj.icons = [];
+				a.each(function () {
+					obj.data.push(this.innerHTML);
+					obj.icons.push(this.style.backgroundImage.replace("url(","").replace(")",""));
+				});
+			}
+			else {
+				obj.data = a.text();
+				obj.icons = a.css("backgroundImage");
+			}
+			if(nod.children("ul").size() > 0) {
+				obj.children = [];
+				nod.children("ul").children("li").each(function () {
+					obj.children.push(_this.getJSON(this));
+				});
+			}
+			return obj;
+		},
 		// ALL EVENTS
 		attachEvents : function () {
 			var _this = this;
@@ -210,7 +264,7 @@ function tree_component () {
 					event.stopPropagation();
 				})
 				.listen("click", "a", function (event) { // WHEN CLICK IS ON THE TEXT OR ICON
-					_this.select_branch.apply(_this, [event.target]);
+					_this.select_branch.apply(_this, [event.target, event.ctrlKey]);
 					if(_this.inp) { _this.inp.blur(); }
 					event.preventDefault(); 
 					event.target.blur();
@@ -231,11 +285,31 @@ function tree_component () {
 							// SELECT LIST ITEM NODE
 							var obj = _this.get_node(event.target);
 							// IF ITEM IS DRAGGABLE
-							if(_this.check("draggable", obj)) {
-								_this._drag		= obj;
-								_this.drag		= obj.get(0).cloneNode(true);
-								_this.drag.id	= "dragged";
-								_this.isdown	= true;
+							if(_this.settings.multiple && _this.selected_arr.length > 1 && obj.children("a:eq(0)").hasClass("clicked")) {
+								var counter = 0;
+								for(i in _this.selected_arr) {
+									if(_this.check("draggable", _this.selected_arr[i])) {
+										_this.selected_arr[i].addClass("dragged");
+										counter ++;
+									}
+								}
+								if(counter > 0) {
+									if(_this.check("draggable", obj))	_this._drag = obj;
+									else								_this._drag = _this.container.find("li.dragged:eq(0)");
+									_this.isdown	= true;
+									_this.drag		= _this._drag.get(0).cloneNode(true);
+									_this.drag.id	= "dragged";
+									$(_this.drag).children("a").html("Multiple selection").end().children("ul").remove();
+								}
+							}
+							else {
+								if(_this.check("draggable", obj)) {
+									_this._drag		= obj;
+									_this.drag		= obj.get(0).cloneNode(true);
+									_this.drag.id	= "dragged";
+									_this.isdown	= true;
+									obj.addClass("dragged");
+								}
 							}
 							obj.blur();
 							event.preventDefault(); 
@@ -254,7 +328,7 @@ function tree_component () {
 							if(_this.drag && _this.drag.parentNode && _this.drag.parentNode == $(_this.container).get(0)) {
 								$(_this.drag).remove();
 								// CALL FUNCTION FOR COMPLETING MOVE
-								if(_this.moveType) _this.moved(_this._drag, _this.moveRef, _this.moveType);
+								if(_this.moveType) _this.moved(_this.container.find("li.dragged"), _this.moveRef, _this.moveType);
 								_this.moveType = false;
 								_this.moveRef = false;
 							}
@@ -264,6 +338,7 @@ function tree_component () {
 							_this.drag		= false;
 							_this.isdown	= false;
 							_this.appended	= false;
+							_this.container.find("li.dragged").removeClass("dragged");
 							event.preventDefault(); 
 							event.stopPropagation();
 							return false;
@@ -278,26 +353,27 @@ function tree_component () {
 								}
 								$(_this.drag).css({ "left" : (event.pageX + 5), "top" : (event.pageY + ($.browser.opera ? _this.container.scrollTop() : 0) + 15) });
 
-								if(_this.sto) clearTimeout(_this.sto);
-								_this.sto = setTimeout( function() { _this.scrollCheck(event.pageX,event.pageY); }, 50);
-
-								// MOVING OVER SELF OR CHILDREN
-								if($(event.target).parents("li").andSelf().index(_this._drag.get(0)) != -1) {
-									if($(_this.drag).children("IMG").size() == 0) {
-										$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
-									}
-									_this.moveType = false;
-									_this.moveRef = false;
-									$("#marker").hide();
+								var cnt = $(event.target).parents(".tree:eq(0)");
+								if(cnt.size() == 0) {
+									if(_this.sto) clearTimeout(_this.sto);
 									return false;
 								}
 
+								if(_this.sto) clearTimeout(_this.sto);
+								_this.sto = setTimeout( function() { _this.scrollCheck(event.pageX,event.pageY, cnt); }, 50);
+
 								var mov = false;
-								var st = _this.container.scrollTop();
+								var st = cnt.scrollTop();
+
+								if(!_this.settings.multitree && cnt.get(0) != _this.container.get(0)) return false;
+
 								if(event.target.tagName == "A" ) {
 									var goTo = { 
-										x : ($(event.target).offset().left - 1),
-										y : (event.pageY - _this.offset.top)
+										x : ($(event.target).offset({scroll : false}).left - 1),
+										y : (event.pageY - cnt.offset({scroll : false}).top)
+									}
+									if(cnt.hasClass("rtl")) {
+										goTo.x += $(event.target).width() - 8;
 									}
 									if( (goTo.y + st)%18 < 7 ) {
 										mov = "before";
@@ -310,77 +386,33 @@ function tree_component () {
 									else {
 										mov = "inside";
 										goTo.x -= 2;
+										if(cnt.hasClass("rtl")) {
+											goTo.x += 36;
+										}
 										goTo.y = event.pageY - (goTo.y + st)%18 + 7 ;
 										if(_this.get_node(event.target).hasClass("closed")) {
 											_this.to = setTimeout( function () { _this.open_branch(_this.get_node(event.target)); }, 500);
 										}
 									}
 
-									// CHECKING FOR MAX_DEPTH, MAX_CHILDREN, VALID_CHILDREN
-									if(_this.settings.rules.use_inline && _this.settings.metadata) {
-										var nd = false;
-										if(mov == "inside")	nd = $(event.target).parents("li:eq(0)");
-										else				nd = $(event.target).parents("li:eq(1)");
-										if(nd.size()) {
-											// CHECK IF dragged IS A VALID CHILD OD PARENT
-											if(typeof nd.metadata()["valid_children"] != "undefined") {
-												if($.inArray(_this.get_type(_this._drag), nd.metadata()["valid_children"]) == -1) {
-													if($(_this.drag).children("IMG").size() == 0) {
-														$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
-													}
-													_this.moveType = false;
-													_this.moveRef = false;
-													$("#marker").hide();
-													return false;
-												}
-											}
-											// CHECK IF PARENT HAS FREE SLOTS FOR CHILDREN
-											if(typeof nd.metadata()["max_children"] != "undefined") {
-												if( (nd.children("ul:eq(0)").children("li").not(_this._drag).size() + 1) > nd.metadata().max_children) {
-													if($(_this.drag).children("IMG").size() == 0) {
-														$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
-													}
-													_this.moveType = false;
-													_this.moveRef = false;
-													$("#marker").hide();
-													return false;
-												}
-											}
-											// CHECK FOR MAXDEPTH UP THE CHAIN
-											var ok = true;
-											nd.parents("li").each(function(i) {
-												if($(this).metadata().max_depth) {
-													if( (i + 1) >= $(this).metadata().max_depth) ok = false;
-												}
-											});
-											if(!ok) {
-												if($(_this.drag).children("IMG").size() == 0) {
-													$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
-												}
-												_this.moveType = false;
-												_this.moveRef = false;
-												$("#marker").hide();
-												return false;
-											}
-										}
-									}
-
-									// ONLY IF ALLOWED
-									if(_this.check("dragrules", [$(_this._drag), mov, $(event.target).parents("li:eq(0)")])) {
+									if(_this.checkMove(cnt.find("li.dragged"),$(event.target),mov)) {
 										if(mov == "inside")	$("#marker").attr("src", _this.path + "images/plus.gif").width(11);
-										else				$("#marker").attr("src", _this.path + "images/marker.gif").width(40);
+										else {
+											if(cnt.hasClass("rtl"))	{ $("#marker").attr("src", _this.path + "images/marker_rtl.gif").width(40); }
+											else					{ $("#marker").attr("src", _this.path + "images/marker.gif").width(40); }
+										}
 										_this.moveType	= mov;
 										_this.moveRef	= event.target;
 										$(_this.drag).children("IMG").remove();
 										$("#marker").css({ "left" : goTo.x , "top" : goTo.y }).show();
 									}
 									else {
+										if($(_this.drag).children("IMG").size() == 0) {
+											$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
+										}
 										_this.moveType = false;
 										_this.moveRef = false;
 										$("#marker").hide();
-										if($(_this.drag).children("IMG").size() == 0) {
-											$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='/minfin/admin/_modules/_basic/icons/remove.png' />");
-										}
 									}
 								}
 								else if(event.target.tagName == "IMG" && event.target.id == "marker") {
@@ -400,6 +432,75 @@ function tree_component () {
 				} 
 				// ENDIF OF DRAG & DROP FUNCTIONS
 		},
+		checkMove : function (NODES, REF_NODE, TYPE) {
+			var _this = this;
+			// OVER SELF OR CHILDREN
+			if(REF_NODE.parents("li.dragged").size() > 0 || REF_NODE.is(".dragged")) return this.error("MOVE: NODE OVER SELF");
+			// CHECK AGAINST DRAG_RULES
+			if(NODES.size() == 1) {
+				var NODE = NODES.eq(0);
+				if(!this.check("dragrules", [NODE, TYPE, REF_NODE.parents("li:eq(0)")])) return this.error("MOVE: AGAINST DRAG RULES");
+			}
+			else {
+				var ok = true;
+				NODES.each(function (i) {
+					if(ok == false) return false;
+					if(i > 0) {
+						var ref = NODES.eq( (i - 1) );
+						var mv = "after";
+					}
+					else {
+						var ref = REF_NODE;
+						var mv = TYPE;
+					}
+					if(!_this.check("dragrules", [$(this), mv, ref])) ok = false;
+				});
+				if(ok == false) return this.error("MOVE: AGAINST DRAG RULES");
+			}
+			// CHECK AGAINST METADATA
+			if(this.settings.rules.use_inline && this.settings.metadata) {
+				var nd = false;
+				if(mov == "inside")	nd = REF_NODE.parents("li:eq(0)");
+				else				nd = REF_NODE.parents("li:eq(1)");
+				if(nd.size()) {
+					// VALID CHILDREN CHECK
+					if(typeof nd.metadata()["valid_children"] != "undefined") {
+						var tmp = nd.metadata()["valid_children"];
+						var ok = true;
+						NODES.each(function (i) {
+							if(ok == false) return false;
+							if($.inArray(_this.get_type(this), tmp) == -1) ok = false;
+						});
+						if(ok == false) return this.error("MOVE: NOT A VALID CHILD");
+					}
+					// CHECK IF PARENT HAS FREE SLOTS FOR CHILDREN
+					if(typeof nd.metadata()["max_children"] != "undefined") {
+						if((nd.children("ul:eq(0)").children("li").not(".dragged").size() + NODES.size()) > nd.metadata().max_children) return this.error("MOVE: MAX CHILDREN REACHED");
+					}
+					// CHECK FOR MAXDEPTH UP THE CHAIN
+					var incr = 0;
+					NODES.each(function (i) {
+						var i = 1;
+						var t = $(this);
+						while(i < 100) {
+							t = t.children("ul:eq(0)");
+							if(t.size() == 0) break;
+							i ++
+						}
+						incr = Math.max(i,incr);
+					});
+					var ok = true;
+					nd.parents("li").each(function(i) {
+						if(ok == false) return false;
+						if($(this).metadata().max_depth) {
+							if( (i + incr) >= $(this).metadata().max_depth) ok = false;
+						}
+					});
+					if(ok == false) return this.error("MOVE: MAX_DEPTH REACHED");
+				}
+			}
+			return true;
+		},
 		// USED AFTER REFRESH
 		reselect : function () {
 			var _this = this;
@@ -410,7 +511,7 @@ function tree_component () {
 					// TODO: POSSIBLE PROBLEM IN ASYNC - NESTED OPEN NODES
 					// NEED TO IMPLEMENT QUEUE
 
-					this.open_branch(this.opened[j]);
+					this.open_branch("#" + this.opened[j], true);
 				}
 				delete this.opened;
 			}
@@ -420,7 +521,7 @@ function tree_component () {
 				delete this.scrtop;
 			}
 			// RESELECT PREVIOUSLY SELECTED OR DEFAULT
-			if(this.settings.dflt) {
+			if(this.settings.dflt && $(this.settings.dflt).size() == 1) {
 				this.selected		= $(this.settings.dflt);
 				this.settings.dflt	= false;
 				this.select_branch(this.selected);
@@ -442,26 +543,28 @@ function tree_component () {
 			else return obj.attr(this.settings.type_attr);
 		},
 		// SCROLL CONTAINER WHILE DRAGGING
-		scrollCheck : function (x,y) { 
+		scrollCheck : function (x,y, cnt) { 
+			if(!cnt) cnt = _this.container;
+			var off = cnt.offset({scroll:false});
 			var _this = this;
 			// NEAR TOP
-			if(y - _this.offset.top < 20) {
-				_this.container.scrollTop(Math.max(_this.container.scrollTop()-4,0));
+			if(y - off.top < 20) {
+				cnt.scrollTop(Math.max(cnt.scrollTop()-4,0));
 			}
 			// NEAR BOTTOM (DETECT HORIZONTAL SCROLL)
-			var h_cor = (_this.container.get(0).scrollWidth > _this.container.width()) ? 40 : 20;
-			if(_this.container.height() - (y - _this.offset.top) < h_cor) {
-				_this.container.scrollTop(_this.container.scrollTop()+4);
+			var h_cor = (cnt.get(0).scrollWidth > cnt.width()) ? 40 : 20;
+			if(cnt.height() - (y - off.top) < h_cor) {
+				cnt.scrollTop(cnt.scrollTop()+4);
 			}
 			// NEAR LEFT
-			if(x - _this.offset.left < 20) {
-				_this.container.scrollLeft(_this.container.scrollLeft()-4);
+			if(x - off.left < 20) {
+				cnt.scrollLeft(cnt.scrollLeft()-4);
 			}
 			// NEAR RIGHT
-			if(_this.container.width() - (x - _this.offset.left) < 40) {
-				_this.container.scrollLeft(_this.container.scrollLeft()+4);
+			if(cnt.width() - (x - off.left) < 40) {
+				cnt.scrollLeft(cnt.scrollLeft()+4);
 			}
-			_this.sto = setTimeout( function() { _this.scrollCheck(x,y); }, 50);
+			_this.sto = setTimeout( function() { _this.scrollCheck(x,y,cnt); }, 50);
 		},
 		check : function (rule, nodes) {
 			// CHECK LOCAL RULES IF METADATA
@@ -472,27 +575,39 @@ function tree_component () {
 			if(!this.settings.rules[rule])			return false;
 			if(this.settings.rules[rule] == "none")	return false;
 			if(this.settings.rules[rule] == "all")	return true;
-			// TODO: MAX_DEPTH AND MAX_CHILD CHECK
 			if(rule == "dragrules")
 				return ($.inArray(this.get_type(nodes[0]) + " " + nodes[1] + " " + this.get_type(nodes[2]), this.settings.rules.dragrules) != -1) ? true : false;
 			else 
 				return ($.inArray(this.get_type(nodes),this.settings.rules[rule]) != -1) ? true : false;
 		},
 		// CALLED WHEN BRANCH SELECTED
-		select_branch : function (obj) {
+		select_branch : function (obj, multiple) {
 			var _this = this;
 			var obj = _this.get_node(obj);
 			// CHECK AGAINST RULES FOR SELECTABLE NODES
-			if(!_this.check("clickable", obj)) return false;
-			if(_this.settings.callback.onbeforechange.call(null) === false) return false;
+			if(!_this.check("clickable", obj)) return this.error("SELECT: NODE NOT SELECTABLE");
+			if(_this.settings.callback.beforechange.call(null) === false) return this.error("SELECT: STOPPED BY USER");
 
 			// DEFOCUS CURRELNTLY SELECTED NODE
-			if(this.selected) this.selected.children("A").removeClass("clicked");
+			if(this.settings.multiple && multiple) {
+				this.selected_arr.push(obj);
+			}
+			if(this.settings.multiple && !multiple) {
+				for(i in this.selected_arr) {
+					this.selected_arr[i].children("A").removeClass("clicked");
+				}
+				this.selected_arr = [];
+				this.selected_arr.push(obj);
+				if(this.selected) this.selected.children("A").removeClass("clicked");
+			}
+			if(!this.settings.multiple) {
+				if(this.selected) this.selected.children("A").removeClass("clicked");
+			}
 			// SAVE NEWLY SELECTED
 			this.selected = obj;
 
 			// FOCUS NEW NODE AND OPEN ALL PARENT NODES IF CLOSED
-			this.selected.children("a").removeClass("clicked").addClass("clicked").end().parents("li.closed").each( function () { _this.open_branch(this); });
+			this.selected.children("a").removeClass("clicked").addClass("clicked").end().parents("li.closed").each( function () { _this.open_branch(this, true); });
 
 			// SCROLL SELECTED NODE INTO VIEW
 			var off_t = this.selected.offset({ scroll : false }).top;
@@ -502,27 +617,68 @@ function tree_component () {
 			if(off_t + 5 < beg_t) this.container.scrollTop(this.container.scrollTop() - (beg_t - off_t + 5) );
 			if(off_t + h_cor > end_t) this.container.scrollTop(this.container.scrollTop() + (off_t + h_cor - end_t) );
 
+			this.set_cookie("selected");
 			// CALLBACK FOR CUSTOM LOGIC
 			this.settings.callback.onchange.call(null, this.selected.get(0));
+		},
+		deselect_branch : function (obj) {
+			var _this = this;
+			var obj = this.get_node(obj);
+			obj.children("a").removeClass("clicked");
+			if(this.settings.multiple && this.selected_arr.length > 1) {
+				this.selected_arr = [];
+				this.container.find("a.clicked").filter(":first-child").parent().each(function () {
+					_this.selected_arr.push($(this));
+				});
+				if(obj == this.selected) this.selected = this.selected_arr[0];
+			}
+			else {
+				if(this.settings.multiple) this.selected_arr = [];
+				this.selected = false;
+			}
 		},
 		toggle_branch : function (obj) {
 			var obj = this.get_node(obj);
 			if(obj.hasClass("closed"))	return this.open_branch(obj);
 			if(obj.hasClass("open"))	return this.close_branch(obj); 
 		},
-		open_branch : function (obj) {
+		open_branch : function (obj, disable_animation) {
 			var obj = this.get_node(obj);
-			obj.removeClass("closed").addClass("open");
+			if(parseInt(this.settings.animation) > 0 && !disable_animation && !($.browser.msie && $.browser.version < 7) ) {
+				obj.children("ul:eq(0)").css("display","none");
+				obj.removeClass("closed").addClass("open");
+				obj.children("ul:eq(0)").slideDown(parseInt(this.settings.animation), function() {
+					$(this).css("display","");
+				});
+			} else obj.removeClass("closed").addClass("open");
+			this.set_cookie("open");
 			this.settings.callback.onopen.call(null, obj.get(0));
 		},
-		close_branch : function (obj) {
+		close_branch : function (obj, disable_animation) {
+			var _this = this;
 			var obj = this.get_node(obj);
-			obj.removeClass("open").addClass("closed");
+			if(parseInt(this.settings.animation) > 0 && !disable_animation && !($.browser.msie && $.browser.version < 7) && obj.children("ul:eq(0)").size() == 1) {
+				obj.children("ul:eq(0)").slideUp(parseInt(this.settings.animation), function() {
+					obj.removeClass("open").addClass("closed");
+					_this.set_cookie("open");
+					$(this).css("display","");
+				});
+			} 
+			else {
+				this.set_cookie("open");
+				obj.removeClass("open").addClass("closed");
+			}
+			if(this.selected && obj.find("a.clicked").size() > 0) {
+				obj.find("li:has(a.clicked)").each(function() {
+					_this.deselect_branch(this);
+				});
+				this.select_branch(obj, (this.settings.multiple && this.selected_arr.length > 0) );
+			}
 			this.settings.callback.onclose.call(null, obj.get(0));
 		},
 		open_all : function () {
 			var _this = this;
-			$(this.container).find("li.closed").each( function () { _this.open_branch(this); });
+			$(this.container).find("li.closed").each( function () { _this.open_branch(this, true); });
 		},
 		close_all : function () {
 			var _this = this;
@@ -547,17 +703,17 @@ function tree_component () {
 		},
 		create : function (type) {
 			// NOTHING SELECTED
-			if(!this.selected) return false;
-			if(!this.check("creatable", this.selected)) return false;
+			if(!this.selected) return this.error("CREATE: NO NODE SELECTED");
+			if(!this.check("creatable", this.selected)) return this.error("CREATE: CANNOT CREATE IN NODE");
 
 			var t = type || this.get_type();
 			if(this.settings.rules.use_inline && this.settings.metadata) {
 				$.metadata.setType("attr", this.settings.metadata);
 				if(typeof this.selected.metadata()["valid_children"] != "undefined") {
-					if($.inArray(t, this.selected.metadata()["valid_children"]) == -1) return false;
+					if($.inArray(t, this.selected.metadata()["valid_children"]) == -1) return this.error("CREATE: NODE NOT A VALID CHILD");
 				}
 				if(typeof this.selected.metadata()["max_children"] != "undefined") {
-					if( (this.selected.children("ul:eq(0)").children("li").size() + 1) > this.selected.metadata().max_children) return false;
+					if( (this.selected.children("ul:eq(0)").children("li").size() + 1) > this.selected.metadata().max_children) return this.error("CREATE: MAX_CHILDREN REACHED");
 				}
 				var ok = true;
 				this.selected.parents("li").each(function(i) {
@@ -567,7 +723,7 @@ function tree_component () {
 						}
 					}
 				});
-				if(!ok) return false;
+				if(!ok) return this.error("CREATE: MAX_DEPTH REACHED");
 			}
 
 			$li = $("<li />");
@@ -585,18 +741,32 @@ function tree_component () {
 				}
 			}
 			else { $li.append("<a href='#'>New folder</a>"); }
-			this.moved($li,this.selected.find("a:first"),"inside", true);
-			this.select_branch($li.find("a:first"));
+			if(this.settings.insertAt == "top" || this.selected.children("ul").size() == 0) {
+				this.moved($li,this.selected.children("a:eq(0)"),"inside", true);
+			}
+			else {
+				this.moved($li,this.selected.children("ul:eq(0)").children("li:last").children("a:eq(0)"),"after",true);
+			}
+			this.select_branch($li.children("a:eq(0)"));
 			this.rename();
 		},
 		rename : function () {
 			if(this.selected) {
 				var _this = this;
-				if(!this.check("renameable", this.selected)) return false;
+				if(!this.check("renameable", this.selected)) return this.error("RENAME: NODE NOT RENAMABLE");
+				if(!this.settings.callback.beforerename.call(null,this.selected.get(0))) return this.error("RENAME: STOPPED BY USER");
 				var obj = this.selected;
 				if(this.current_lang)	obj = obj.find("a." + this.current_lang).get(0);
 				else					obj = obj.find("a:first").get(0);
 				last_value = obj.innerHTML;
+
+				/*
+				var w_max = 170;
+				var w_min =  10;
+				var c_wid = (obj.offsetWidth - 25);
+				c_wid = Math.max(w_min,c_wid);
+				c_wid = Math.min(w_max,c_wid);
+				*/
 
 				_this.inp = $("<input type='text' value='" + last_value + "' />");
 				_this.inp
@@ -605,8 +775,9 @@ function tree_component () {
 					.bind("click",			function (event) { event.stopPropagation(); })
 					.bind("keyup",			function (event) { 
 							var key = event.keyCode || event.which;
-							if(key == 27) { this.blur(); }
-							if(key == 13) { this.blur(); }
+							if(key == 27) { this.blur(); return }
+							if(key == 13) { this.blur(); return }
+							$.log(this.scrollWidth);
 						});
 				_this.inp.blur(function(event) {
 						if(this.value == "") this.value == last_value; 
@@ -622,18 +793,41 @@ function tree_component () {
 				_this.inp.get(0).focus();
 				_this.inp.get(0).select();
 			}
+			else return this.error("RENAME: NO NODE SELECTED");
 		},
 		// REMOVE NODES
 		remove : function() {
 			if(this.selected) {
-				if(!this.check("deletable", this.selected)) return false;
+				if(!this.check("deletable", this.selected)) return this.error("DELETE: NODE NOT DELETABLE");
+				if(!this.settings.callback.beforedelete.call(null,this.selected.get(0))) return this.error("DELETE: STOPPED BY USER");;
 				$parent = this.selected.parent();
-				var obj = this.selected.remove();
+				var obj = this.selected;
+				if(!this.settings.multiple || this.selected_arr.length == 1) {
+					var stop = true;
+					this.get_prev();
+				}
+				obj = obj.remove();
 				$parent.children("li:last").addClass("last");
-				if($parent.children("li").size() == 0) $parent.parents("li:eq(0)").removeClass("open").removeClass("closed").children("ul").remove();
-				this.settings.callback.ondelete.call(null, obj);
+				if($parent.children("li").size() == 0) {
+					$li = $parent.parents("li:eq(0)");
+					$li.removeClass("open").removeClass("closed").children("ul").remove().addClass("leaf");
+					this.set_cookie("open");
+				}
 				this.selected = false;
+				this.settings.callback.ondelete.call(null, obj);
+				if(this.settings.multiple && !stop) {
+					var _this = this;
+					this.selected_arr = [];
+					this.container.find("a.clicked").filter(":first-child").parent().each(function () {
+						_this.selected_arr.push($(this));
+					});
+					if(this.selected_arr.length > 0) {
+						this.selected = this.selected_arr[0];
+						this.remove();
+					}
+				}
 			}
+			else return this.error("DELETE: NO NODE SELECTED");
 		},
 		// FOR EXPLORER-LIKE KEYBOARD SHORTCUTS
 		get_next : function() {
@@ -668,10 +862,40 @@ function tree_component () {
 		toggleDots : function () {
 			this.container.toggleClass("no_dots");
 		},
-		moved : function (what, where, how, is_new) {
+		set_cookie : function (type) {
+			if(this.settings.cookies === false) return false;
+			switch(type) {
+				case "selected":
+					$.cookie(this.settings.cookies.prefix + '_selected',this.selected.attr("id"),this.settings.cookies.opts);
+					break;
+				case "open":
+					var str = "";
+					this.container.find("li.open").each(function (i) { str += this.id + ","; });
+					$.cookie(this.settings.cookies.prefix + '_open',str.replace(/,$/ig,""),this.settings.cookies.opts);
+					break;
+			}
+		},
+		moved : function (what, where, how, is_new, is_copy) {
 			var what	= $(what);
 			var $parent	= $(what).parents("ul:eq(0)");
 			var $where	= $(where);
+			// IF MULTIPLE
+			if(what.size() > 1) {
+				var _this = this;
+				var tmp = this.moved(what.eq(0),where,how, false, is_copy);
+				what.each(function (i) {
+					if(i == 0) return;
+					tmp = _this.moved(this, tmp.children("a:eq(0)"), "after");
+				})
+				return;
+			}
+			if(is_new) {
+				if(!this.settings.callback.beforemove.call(null,what,where,how)) return;
+			}
+			else {
+				if(!this.settings.callback.beforecreate.call(null,what,where,how)) return;
+			}
+
 			// ADD NODE TO NEW PLACE
 			switch(how) {
 				case "before":
@@ -690,7 +914,7 @@ function tree_component () {
 					}
 					else {
 						what.addClass("last");
-						$where.parent().append("<ul/>").addClass("open");
+						$where.parent().append("<ul/>").removeClass("leaf").addClass("open");
 						$where.parent().children("ul:first").prepend(what);
 					}
 					break;
@@ -700,16 +924,54 @@ function tree_component () {
 			// CLEANUP OLD PARENT
 			if($parent.find("li").size() == 0) {
 				var $li = $parent.parent();
-				$li.removeClass("open").removeClass("closed").children("ul").remove();
-				$li.parents("ul").eq(0).children("li.last").removeClass("last");
-				$li.parents("ul").eq(0).children("li:last").addClass("last");
+				$li.removeClass("open").removeClass("closed").addClass("leaf").children("ul").remove();
+				$li.parents("ul:eq(0)").children("li.last").removeClass("last").end().children("li:last").addClass("last");
+				this.set_cookie("open");
 			}
 			else {
 				$parent.children("li.last").removeClass("last");
 				$parent.children("li:last").addClass("last");
 			}
-			if(is_new)	this.settings.callback.oncreate.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how);
-			else		this.settings.callback.onmove.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how);
+			if(is_new && how != "inside") where = this.get_node(where).parents("li:eq(0)");
+			if(is_copy)		this.settings.callback.oncopy.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how)
+			else if(is_new)	this.settings.callback.oncreate.call(null, this.get_node(what).get(0), this.get_node(where).get(0), this.settings.insertAt);
+			else			this.settings.callback.onmove.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how);
+			return what;
+		},
+		error : function (code) {
+			this.settings.callback.error.call(null,code);
+			return false;
+		},
+		cut : function () {
+			if(!this.selected) return this.error("CUT: NO NODE SELECTED");
+			this.copy_nodes = false;
+			this.cut_nodes = this.container.find("a.clicked").filter(":first-child").parent();
+		},
+		copy : function () {
+			if(!this.selected) return this.error("COPY: NO NODE SELECTED");
+			this.copy_nodes = this.container.find("a.clicked").filter(":first-child").parent();
+			this.cut_nodes = false;
+		},
+		paste : function () {
+			if(!this.selected) return this.error("PASTE: NO NODE SELECTED");
+			if(!this.copy_nodes && !this.cut_nodes) return this.error("PASTE: NOTHING TO DO");
+			if(this.copy_nodes && this.copy_nodes.size()) {
+				if(!this.checkMove(this.copy_nodes, this.selected.children("a:eq(0)"), "inside")) return false;
+				tmp = this.copy_nodes.clone();
+				tmp.each(function (i) {
+					this.id = this.id + "_copy";
+					$(this).find("li").each(function () {
+						this.id = this.id + "_copy";
+					})
+				});
+				this.moved(tmp, this.selected.children("a:eq(0)"), "inside", false, true);
+				this.copy_nodes = false;
+			}
+			if(this.cut_nodes && this.cut_nodes.size()) {
+				if(!this.checkMove(this.cut_nodes, this.selected.children("a:eq(0)"), "inside")) return false;
+				this.moved(this.cut_nodes, this.selected.children("a:eq(0)"), "inside");
+				this.cut_nodes = false;
+			}
 		}
 	}
 }

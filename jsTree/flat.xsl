@@ -37,7 +37,7 @@
 		<xsl:choose>
 			<xsl:when test="@state = 'open'"> open </xsl:when>
 			<xsl:when test="$children or @hasChildren"> closed </xsl:when>
-			<xsl:otherwise> </xsl:otherwise>
+			<xsl:otherwise> leaf </xsl:otherwise>
 		</xsl:choose>
 		<xsl:value-of select="@class" />
 	</xsl:attribute>
@@ -54,7 +54,7 @@
 				<xsl:attribute name="style">
 					<xsl:choose>
 						<xsl:when test="string-length(attribute::icon) > 0">background-image:url(<xsl:value-of select="@icon" />);</xsl:when>
-						<xsl:otherwise>padding-left:5px !important;</xsl:otherwise>
+						<xsl:otherwise></xsl:otherwise>
 					</xsl:choose>
 				</xsl:attribute>
 					<xsl:value-of select="." />
@@ -67,7 +67,7 @@
 			<xsl:attribute name="style">
 				<xsl:choose>
 					<xsl:when test="string-length(attribute::icon) > 0">background-image:url(<xsl:value-of select="@icon" />);</xsl:when>
-					<xsl:otherwise>padding-left:5px !important;</xsl:otherwise>
+					<xsl:otherwise></xsl:otherwise>
 				</xsl:choose>
 			</xsl:attribute>
 				<xsl:value-of select="." />
