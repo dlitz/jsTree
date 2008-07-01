@@ -10,36 +10,6 @@
  * Date: 2008-06-27
  *
  */
-
-/* 
- * TODO:
- * commented throughout the code with '// TODO: '
- *   !IMPLEMENT: native async loading and nested nodes fix
- *   !NOTE: 'type_attr' cannot be 'class'
- *   !NOTE: file opera bug (event.pageY) when dragging and scrolling
- *   !NOTE: Firefox 2 slows down when too many nested nodes (over 10 levels) (because of floated "a")
- */
-
-/*  
- * CHANGELOG:
- *   added drag & drop between trees with correct marker placement
- *   optimized jQuery selectors
- *   added cut/copy/paste + oncopy callback
- *   added error callback - attach custom function to errors
- *   added multiple selection with move & delete
- *   added getJSON - return the tree as an object
- *   added before handlers
- *   optimized css, added 'leaf' class
- *   added basic rtl support (user opinions?)
- *   added cookie support with definable prefix and options - default is false
- *   added if selected node is within closed parent - select parent
- *   added CSS solution when dragging large sets - all inner nodes are closed while dragging
- *   added solid background color option (not white) - set background color on "li.last", ".tree"
- *   added animation support (slideUp/slideDown) - specify duration (disabled for msie 6 - slow)
- *   updated listen plugin
- *   updated sarissa
- */
-
 function tree_component () {
 	return {
 		settings : {
@@ -460,8 +430,8 @@ function tree_component () {
 			// CHECK AGAINST METADATA
 			if(this.settings.rules.use_inline && this.settings.metadata) {
 				var nd = false;
-				if(mov == "inside")	nd = REF_NODE.parents("li:eq(0)");
-				else				nd = REF_NODE.parents("li:eq(1)");
+				if(TYPE == "inside")	nd = REF_NODE.parents("li:eq(0)");
+				else					nd = REF_NODE.parents("li:eq(1)");
 				if(nd.size()) {
 					// VALID CHILDREN CHECK
 					if(typeof nd.metadata()["valid_children"] != "undefined") {
@@ -507,7 +477,7 @@ function tree_component () {
 			// REOPEN BRANCHES
 			if(this.opened && this.opened.length) {
 				for(var j = 0; j < this.opened.length; j++) {
-					
+
 					// TODO: POSSIBLE PROBLEM IN ASYNC - NESTED OPEN NODES
 					// NEED TO IMPLEMENT QUEUE
 
@@ -543,10 +513,15 @@ function tree_component () {
 			else return obj.attr(this.settings.type_attr);
 		},
 		// SCROLL CONTAINER WHILE DRAGGING
-		scrollCheck : function (x,y, cnt) { 
-			if(!cnt) cnt = _this.container;
-			var off = cnt.offset({scroll:false});
+		scrollCheck : function (x,y, cntr) { 
 			var _this = this;
+			if(!cntr) {
+				var cnt = _this.container;
+				var off = _this.offset;
+			} else {
+				var cnt = cntr;
+				var off = cnt.offset({scroll:false});
+			}
 			// NEAR TOP
 			if(y - off.top < 20) {
 				cnt.scrollTop(Math.max(cnt.scrollTop()-4,0));
@@ -564,7 +539,7 @@ function tree_component () {
 			if(cnt.width() - (x - off.left) < 40) {
 				cnt.scrollLeft(cnt.scrollLeft()+4);
 			}
-			_this.sto = setTimeout( function() { _this.scrollCheck(x,y,cnt); }, 50);
+			_this.sto = setTimeout( function() { _this.scrollCheck(x,y,cntr); }, 50);
 		},
 		check : function (rule, nodes) {
 			// CHECK LOCAL RULES IF METADATA
