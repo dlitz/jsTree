@@ -865,10 +865,10 @@ function tree_component () {
 				return;
 			}
 			if(is_new) {
-				if(!this.settings.callback.beforemove.call(null,what,where,how)) return;
+				if(!this.settings.callback.beforecreate.call(null,what,where,how)) return;
 			}
 			else {
-				if(!this.settings.callback.beforecreate.call(null,what,where,how)) return;
+				if(!this.settings.callback.beforemove.call(null,what,where,how)) return;
 			}
 
 			// ADD NODE TO NEW PLACE
