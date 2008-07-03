@@ -1,5 +1,5 @@
 /*
- * jsTree 0.6
+ * jsTree 0.6.5
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-06-27
+ * Date: 2008-07-03
  *
  */
 function tree_component () {
@@ -35,21 +35,23 @@ function tree_component () {
 				draggable	: "none",	// which node types can the user move | default - none | "all"
 				dragrules	: "none"	// what move operations between nodes are allowed | default - none | "all"
 			},
-			callback	: {										// various callbacks to attach custom logic to
-				beforechange: function(NODE) { return true },	// before focus change should return true | false
-				beforemove  : function(NODE,REF_NODE,TYPE) { return true },	// before move should return true | false
-				beforecreate: function(NODE,REF_NODE,TYPE) { return true },	// before create change should return true | false
-				beforerename: function(NODE) { return true },	// before create change should return true | false
-				beforedelete: function(NODE) { return true },	// before delete change should return true | false
-				onchange	: function(NODE) { },				// focus changed
-				onrename	: function(NODE,LANG) { },			// node renamed ISNEW - TRUE|FALSE, current language
-				onmove		: function(NODE,REF_NODE,TYPE) { },	// move completed (TYPE is BELOW|ABOVE|INSIDE)
-				oncopy		: function(NODE,REF_NODE,TYPE) { },	// copy completed (TYPE is BELOW|ABOVE|INSIDE)
-				oncreate	: function(NODE,REF_NODE,TYPE) { },	// node created, parent node (TYPE is insertAt)
-				ondelete	: function(NODE) { },				// node deleted
-				onopen		: function(NODE) { },				// node opened
-				onclose		: function(NODE) { },				// node closed
-				error		: function(TEXT) { }				// error occured
+			callback	: { // various callbacks to attach custom logic to
+				beforechange: function(NODE,TREE_OBJ)				{ return true }, // before focus  - should return true | false
+				beforemove  : function(NODE,REF_NODE,TYPE,TREE_OBJ)	{ return true }, // before move   - should return true | false
+				beforecreate: function(NODE,REF_NODE,TYPE,TREE_OBJ)	{ return true }, // before create - should return true | false
+				beforerename: function(NODE,LANG,TREE_OBJ)			{ return true }, // before rename - should return true | false
+				beforedelete: function(NODE,TREE_OBJ)				{ return true }, // before delete - should return true | false
+				onchange	: function(NODE,TREE_OBJ) { },					// focus changed
+				onrename	: function(NODE,LANG,TREE_OBJ) { },				// node renamed ISNEW - TRUE|FALSE, current language
+				onmove		: function(NODE,REF_NODE,TYPE,TREE_OBJ) { },	// move completed (TYPE is BELOW|ABOVE|INSIDE)
+				oncopy		: function(NODE,REF_NODE,TYPE,TREE_OBJ) { },	// copy completed (TYPE is BELOW|ABOVE|INSIDE)
+				oncreate	: function(NODE,REF_NODE,TYPE,TREE_OBJ) { },	// node created, parent node (TYPE is insertAt)
+				ondelete	: function(NODE, TREE_OBJ) { },					// node deleted
+				onopen		: function(NODE, TREE_OBJ) { },					// node opened
+				onclose		: function(NODE, TREE_OBJ) { },					// node closed
+				error		: function(TEXT, TREE_OBJ) { },					// error occured
+				ondblclk	: function(NODE, TREE_OBJ) { TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE); } 
+				// double click on node - defaults to open/close & select
 			}
 		},
 		// INITIALIZATION
@@ -241,8 +243,7 @@ function tree_component () {
 					return false;
 				})
 				.listen("dblclick", "a", function (event) { // WHEN DOUBLECLICK ON TEXT OR ICON
-					_this.toggle_branch.apply(_this, [event.target]);
-					_this.select_branch.apply(_this, [event.target]);
+					_this.settings.callback.ondblclk.call(null, _this.get_node(event.target).get(0), _this);
 					event.preventDefault(); 
 					event.stopPropagation();
 					event.target.blur();
@@ -561,7 +562,7 @@ function tree_component () {
 			var obj = _this.get_node(obj);
 			// CHECK AGAINST RULES FOR SELECTABLE NODES
 			if(!_this.check("clickable", obj)) return this.error("SELECT: NODE NOT SELECTABLE");
-			if(_this.settings.callback.beforechange.call(null) === false) return this.error("SELECT: STOPPED BY USER");
+			if(_this.settings.callback.beforechange.call(null,obj.get(0),_this) === false) return this.error("SELECT: STOPPED BY USER");
 
 			// DEFOCUS CURRELNTLY SELECTED NODE
 			if(this.settings.multiple && multiple) {
@@ -594,7 +595,7 @@ function tree_component () {
 
 			this.set_cookie("selected");
 			// CALLBACK FOR CUSTOM LOGIC
-			this.settings.callback.onchange.call(null, this.selected.get(0));
+			this.settings.callback.onchange.call(null, this.selected.get(0), _this);
 		},
 		deselect_branch : function (obj) {
 			var _this = this;
@@ -627,7 +628,7 @@ function tree_component () {
 				});
 			} else obj.removeClass("closed").addClass("open");
 			this.set_cookie("open");
-			this.settings.callback.onopen.call(null, obj.get(0));
+			this.settings.callback.onopen.call(null, obj.get(0), this);
 		},
 		close_branch : function (obj, disable_animation) {
 			var _this = this;
@@ -649,7 +650,7 @@ function tree_component () {
 				});
 				this.select_branch(obj, (this.settings.multiple && this.selected_arr.length > 0) );
 			}
-			this.settings.callback.onclose.call(null, obj.get(0));
+			this.settings.callback.onclose.call(null, obj.get(0), this);
 		},
 		open_all : function () {
 			var _this = this;
@@ -729,7 +730,7 @@ function tree_component () {
 			if(this.selected) {
 				var _this = this;
 				if(!this.check("renameable", this.selected)) return this.error("RENAME: NODE NOT RENAMABLE");
-				if(!this.settings.callback.beforerename.call(null,this.selected.get(0))) return this.error("RENAME: STOPPED BY USER");
+				if(!this.settings.callback.beforerename.call(null,this.selected.get(0), _this.current_lang, _this)) return this.error("RENAME: STOPPED BY USER");
 				var obj = this.selected;
 				if(this.current_lang)	obj = obj.find("a." + this.current_lang).get(0);
 				else					obj = obj.find("a:first").get(0);
@@ -758,7 +759,7 @@ function tree_component () {
 						if(this.value == "") this.value == last_value; 
 						$(obj).html( $(obj).parent().find("input").eq(0).attr("value") ).get(0).style.display = ""; 
 						$(obj).prevAll("span").remove(); 
-						_this.settings.callback.onrename.call(null, _this.get_node(obj).get(0), _this.current_lang);
+						_this.settings.callback.onrename.call(null, _this.get_node(obj).get(0), _this.current_lang, _this);
 						_this.inp = false;
 					});
 				var spn = $("<span />").addClass(obj.className).append(_this.inp);
@@ -774,7 +775,7 @@ function tree_component () {
 		remove : function() {
 			if(this.selected) {
 				if(!this.check("deletable", this.selected)) return this.error("DELETE: NODE NOT DELETABLE");
-				if(!this.settings.callback.beforedelete.call(null,this.selected.get(0))) return this.error("DELETE: STOPPED BY USER");;
+				if(!this.settings.callback.beforedelete.call(null,this.selected.get(0), _this)) return this.error("DELETE: STOPPED BY USER");;
 				$parent = this.selected.parent();
 				var obj = this.selected;
 				if(!this.settings.multiple || this.selected_arr.length == 1) {
@@ -789,7 +790,7 @@ function tree_component () {
 					this.set_cookie("open");
 				}
 				this.selected = false;
-				this.settings.callback.ondelete.call(null, obj);
+				this.settings.callback.ondelete.call(null, obj, this);
 				if(this.settings.multiple && !stop) {
 					var _this = this;
 					this.selected_arr = [];
@@ -865,10 +866,10 @@ function tree_component () {
 				return;
 			}
 			if(is_new) {
-				if(!this.settings.callback.beforecreate.call(null,what,where,how)) return;
+				if(!this.settings.callback.beforecreate.call(null,what,where,how,this)) return;
 			}
 			else {
-				if(!this.settings.callback.beforemove.call(null,what,where,how)) return;
+				if(!this.settings.callback.beforemove.call(null,what,where,how,this)) return;
 			}
 
 			// ADD NODE TO NEW PLACE
@@ -908,13 +909,13 @@ function tree_component () {
 				$parent.children("li:last").addClass("last");
 			}
 			if(is_new && how != "inside") where = this.get_node(where).parents("li:eq(0)");
-			if(is_copy)		this.settings.callback.oncopy.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how)
-			else if(is_new)	this.settings.callback.oncreate.call(null, this.get_node(what).get(0), this.get_node(where).get(0), this.settings.insertAt);
-			else			this.settings.callback.onmove.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how);
+			if(is_copy)		this.settings.callback.oncopy.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how, this)
+			else if(is_new)	this.settings.callback.oncreate.call(null, this.get_node(what).get(0), this.get_node(where).get(0), this.settings.insertAt, this);
+			else			this.settings.callback.onmove.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how, this);
 			return what;
 		},
 		error : function (code) {
-			this.settings.callback.error.call(null,code);
+			this.settings.callback.error.call(null,code,this);
 			return false;
 		},
 		cut : function () {
