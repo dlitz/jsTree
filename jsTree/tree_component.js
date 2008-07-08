@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-07-03
+ * Date: 2008-07-08
  *
  */
 function tree_component () {
@@ -24,6 +24,7 @@ function tree_component () {
 			cookies		: false,		// SAVE cookies for open and selected false or prefix
 			metadata	: false,		// USE METADATA PLUGIN false OR attribute name
 			rtl			: false,		// Is right to left ?
+			path		: false,
 			multitree	: true,
 			multiple	: true,			// MULTIPLE SELECTION
 			rules		: {				// RULES - read below
@@ -76,12 +77,15 @@ function tree_component () {
 			this.settings		= $.extend({},this.settings,opts);
 
 			// PATH TO IMAGES AND XSL
-			this.path = "";
-			$("script").each( function () { 
-				if(this.src.toString().match(/tree_component.js$/)) {
-					_this.path = this.src.toString().replace("tree_component.js", "");
-				}
-			});
+			if(this.settings.path == false) {
+				this.path = "";
+				$("script").each( function () { 
+					if(this.src.toString().match(/tree_component.js$/)) {
+						_this.path = this.src.toString().replace("tree_component.js", "");
+					}
+				});
+			}
+			else this.path = this.settings.path;
 
 			// DEAL WITH LANGUAGE VERSIONS
 			this.current_lang	= this.settings.languages && this.settings.languages.length ? this.settings.languages[0] : false;
@@ -226,6 +230,11 @@ function tree_component () {
 		attachEvents : function () {
 			var _this = this;
 
+			var tmp = this.container.find("li.closed:eq(0)");
+			if(tmp.size() == 0) tmp = this.container.find("li.leaf:eq(0)");
+			this.li_height = tmp.height();
+			if(!this.li_height) this.li_height = 18;
+
 			this.container
 				.bind("click", function (event) { 
 					event.stopPropagation(); 
@@ -320,9 +329,10 @@ function tree_component () {
 								if(_this.to) clearTimeout(_this.to);
 								if(!_this.appended) {
 									_this.container.append(_this.drag);
+									_this.po = $(_this.drag).offsetParent().offset({scroll : false});
 									_this.appended = true;
 								}
-								$(_this.drag).css({ "left" : (event.pageX + 5), "top" : (event.pageY + ($.browser.opera ? _this.container.scrollTop() : 0) + 15) });
+								$(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.rtl ? $(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + ($.browser.opera ? _this.container.scrollTop() : 0) + 15) });
 
 								var cnt = $(event.target).parents(".tree:eq(0)");
 								if(cnt.size() == 0) {
@@ -346,13 +356,13 @@ function tree_component () {
 									if(cnt.hasClass("rtl")) {
 										goTo.x += $(event.target).width() - 8;
 									}
-									if( (goTo.y + st)%18 < 7 ) {
+									if( (goTo.y + st)%_this.li_height < _this.li_height/3 + 1 ) {
 										mov = "before";
-										goTo.y = event.pageY - (goTo.y + st)%18 - 2 ;
+										goTo.y = event.pageY - (goTo.y + st)%_this.li_height - 2 ;
 									}
-									else if((goTo.y + st)%18 > 11 ) {
+									else if((goTo.y + st)%_this.li_height > _this.li_height*2/3 - 1 ) {
 										mov = "after";
-										goTo.y = event.pageY - (goTo.y + st)%18 + 16 ;
+										goTo.y = event.pageY - (goTo.y + st)%_this.li_height + _this.li_height - 2 ;
 									}
 									else {
 										mov = "inside";
@@ -360,7 +370,7 @@ function tree_component () {
 										if(cnt.hasClass("rtl")) {
 											goTo.x += 36;
 										}
-										goTo.y = event.pageY - (goTo.y + st)%18 + 7 ;
+										goTo.y = event.pageY - (goTo.y + st)%_this.li_height + Math.floor(_this.li_height/2) - 2 ;
 										if(_this.get_node(event.target).hasClass("closed")) {
 											_this.to = setTimeout( function () { _this.open_branch(_this.get_node(event.target)); }, 500);
 										}
@@ -379,7 +389,7 @@ function tree_component () {
 									}
 									else {
 										if($(_this.drag).children("IMG").size() == 0) {
-											$(_this.drag).append("<img style='position:absolute; left:4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
+											$(_this.drag).append("<img style='position:absolute; " + (_this.settings.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
 										}
 										_this.moveType = false;
 										_this.moveRef = false;
@@ -644,7 +654,7 @@ function tree_component () {
 				this.set_cookie("open");
 				obj.removeClass("open").addClass("closed");
 			}
-			if(this.selected && obj.find("a.clicked").size() > 0) {
+			if(this.selected && obj.children("ul:eq(0)").find("a.clicked").size() > 0) {
 				obj.find("li:has(a.clicked)").each(function() {
 					_this.deselect_branch(this);
 				});
@@ -866,10 +876,10 @@ function tree_component () {
 				return;
 			}
 			if(is_new) {
-				if(!this.settings.callback.beforecreate.call(null,what,where,how,this)) return;
+				if(!this.settings.callback.beforecreate.call(null,this.get_node(what).get(0), this.get_node(where).get(0),how,this)) return;
 			}
 			else {
-				if(!this.settings.callback.beforemove.call(null,what,where,how,this)) return;
+				if(!this.settings.callback.beforemove.call(null,this.get_node(what).get(0), this.get_node(where).get(0),how,this)) return;
 			}
 
 			// ADD NODE TO NEW PLACE
