@@ -727,6 +727,7 @@ function tree_component () {
 				}
 			}
 			else { $li.append("<a href='#'>New folder</a>"); }
+			$li.addClass("leaf");
 			if(this.settings.insertAt == "top" || this.selected.children("ul").size() == 0) {
 				this.moved($li,this.selected.children("a:eq(0)"),"inside", true);
 			}
