@@ -651,8 +651,8 @@ function tree_component () {
 				});
 			} 
 			else {
-				this.set_cookie("open");
 				obj.removeClass("open").addClass("closed");
+				this.set_cookie("open");
 			}
 			if(this.selected && obj.children("ul:eq(0)").find("a.clicked").size() > 0) {
 				obj.find("li:has(a.clicked)").each(function() {
@@ -764,7 +764,6 @@ function tree_component () {
 							var key = event.keyCode || event.which;
 							if(key == 27) { this.blur(); return }
 							if(key == 13) { this.blur(); return }
-							$.log(this.scrollWidth);
 						});
 				_this.inp.blur(function(event) {
 						if(this.value == "") this.value == last_value; 
