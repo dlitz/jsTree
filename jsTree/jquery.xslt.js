@@ -321,11 +321,11 @@ jQuery.fn.getTransform = function( xsl, xml, options ){
 		// 20070202: jquery 1.1.1 can get a "a.appendChild is not a function" error using html() sometimes ...
 		//		no idea why yet, so adding a fallback to innerHTML
 		//		::warning:: ie6 has trouble with javascript events such as onclick assigned statically within the html when using innerHTML
-		try{
+		try {
 			if(settings.append)			$(this).append( trans.string );
 			else if(settings.repl)		$(this).replaceWith( trans.string );
-			else								$(this).html( trans.string );
-		}catch(e){
+			else						$(this).html( trans.string );
+		} catch(e) {
 			if(xslTransform.debug) $.log( 'getTransform: error placing results of transform into element, falling back to innerHTML: ' + e.toString() );
 			$(this)[0].innerHTML = trans.string;
 		}

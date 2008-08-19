@@ -1,5 +1,5 @@
 /*
- * jsTree 0.6.5
+ * jsTree 0.7
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,27 +7,34 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-07-16
+ * Date: 2008-08-19
  *
  */
 function tree_component () {
 	return {
 		settings : {
-			data		: false,		// where is the tree data file located
-			xsl			: "nested.xsl",	// which xsl to transform with (depends on data type "nested" or "flat")
-			languages	: [],			// what are the languages - default - no language versions
-			dflt		: false,		// default node to select on load
-			dots		: true,			// Dotted or not initially - can be changed by the .no_dots class on the container
-			type_attr	: "rel",		// in what attribute is the type stored (if not metadata)
-			animation	: 0,			// speed of animation - 0 for no animation
-			insertAt	: "top",		// top or bottom
-			cookies		: false,		// SAVE cookies for open and selected false or prefix
-			metadata	: false,		// USE METADATA PLUGIN false OR attribute name
-			rtl			: false,		// Is right to left ?
-			path		: false,
-			multitree	: true,
-			multiple	: true,			// MULTIPLE SELECTION
-			rules		: {				// RULES - read below
+			data	: {
+				type	: "predefined",	// ENUM [json, xml_flat, xml_nested, predefined]
+				async	: false,		// BOOL - async loading onopen
+				url		: false,		// FALSE or STRING - url to document to be used (async or not)
+				json	: false			// FALSE or OBJECT if type is JSON and async is false - the tree dump as json
+			},
+			dflt		: false,		// FALSE or STRING 
+			languages	: [],			// ARRAY of string values (which will be used as CSS classes - si they must be valid)
+			path		: false,		// FALSE or STRING (if false - will be autodetected)
+			cookies		: false,		// FALSE or OBJECT (prefix, opts - from jqCookie - expires, path, domain, secure)
+			ui		: {
+				dots		: true,		// BOOL - dots or no dots
+				rtl			: false,	// BOOL - is the tree right-to-left
+				animation	: 0,		// INT - duration of open/close animations in miliseconds
+				hover_mode	: true		// SHOULD get_* functions chage focus or change hovered item
+			},
+			rules	: {
+				multiple	: false,	// FALSE | CTRL | ON - multiple selection off/ with or without holding Ctrl
+				metadata	: false,	// FALSE or STRING - attribute name (use metadata plugin)
+				type_attr	: "rel",	// STRING attribute name (where is the type stored if no metadata)
+				multitree	: false,	// BOOL - is drag n drop between trees allowed
+				createat	: "bottom",	// STRING (top or bottom) new nodes get inserted at top or bottom
 				use_inline	: false,	// CHECK FOR INLINE RULES - REQUIRES METADATA
 				clickable	: "all",	// which node types can the user select | default - all
 				renameable	: "all",	// which node types can the user select | default - all
@@ -36,12 +43,22 @@ function tree_component () {
 				draggable	: "none",	// which node types can the user move | default - none | "all"
 				dragrules	: "none"	// what move operations between nodes are allowed | default - none | "all"
 			},
-			callback	: { // various callbacks to attach custom logic to
-				beforechange: function(NODE,TREE_OBJ)				{ return true }, // before focus  - should return true | false
-				beforemove  : function(NODE,REF_NODE,TYPE,TREE_OBJ)	{ return true }, // before move   - should return true | false
-				beforecreate: function(NODE,REF_NODE,TYPE,TREE_OBJ)	{ return true }, // before create - should return true | false
-				beforerename: function(NODE,LANG,TREE_OBJ)			{ return true }, // before rename - should return true | false
-				beforedelete: function(NODE,TREE_OBJ)				{ return true }, // before delete - should return true | false
+			lang : {
+				new_node	: "New folder",
+				loading		: "Loading ..."
+			},
+			callback	: {				// various callbacks to attach custom logic to
+				// before focus  - should return true | false
+				beforechange: function(NODE,TREE_OBJ) { return true },
+				// before move   - should return true | false
+				beforemove  : function(NODE,REF_NODE,TYPE,TREE_OBJ) { return true }, 
+				// before create - should return true | false
+				beforecreate: function(NODE,REF_NODE,TYPE,TREE_OBJ) { return true }, 
+				// before rename - should return true | false
+				beforerename: function(NODE,LANG,TREE_OBJ) { return true }, 
+				// before delete - should return true | false
+				beforedelete: function(NODE,TREE_OBJ) { return true }, 
+
 				onchange	: function(NODE,TREE_OBJ) { },					// focus changed
 				onrename	: function(NODE,LANG,TREE_OBJ) { },				// node renamed ISNEW - TRUE|FALSE, current language
 				onmove		: function(NODE,REF_NODE,TYPE,TREE_OBJ) { },	// move completed (TYPE is BELOW|ABOVE|INSIDE)
@@ -51,8 +68,10 @@ function tree_component () {
 				onopen		: function(NODE, TREE_OBJ) { },					// node opened
 				onclose		: function(NODE, TREE_OBJ) { },					// node closed
 				error		: function(TEXT, TREE_OBJ) { },					// error occured
-				ondblclk	: function(NODE, TREE_OBJ) { TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE); } 
 				// double click on node - defaults to open/close & select
+				ondblclk	: function(NODE, TREE_OBJ) { TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE); },
+				// right click - to prevent use: EV.preventDefault(); EV.stopPropagation(); return false
+				onrgtclk	: function(NODE, TREE_OBJ, EV) { }
 			}
 		},
 		// INITIALIZATION
@@ -70,9 +89,21 @@ function tree_component () {
 				this.settings.callback = $.extend({},this.settings.callback,opts.callback);
 				delete opts.callback;
 			}
+			if(opts && opts.data) {
+				this.settings.data = $.extend({},this.settings.data,opts.data);
+				delete opts.data;
+			}
+			if(opts && opts.ui) {
+				this.settings.ui = $.extend({},this.settings.ui,opts.ui);
+				delete opts.ui;
+			}
 			if(opts && opts.rules) {
 				this.settings.rules = $.extend({},this.settings.rules,opts.rules);
 				delete opts.rules;
+			}
+			if(opts && opts.lang) {
+				this.settings.lang = $.extend({},this.settings.lang,opts.lang);
+				delete opts.lang;
 			}
 			this.settings		= $.extend({},this.settings,opts);
 
@@ -103,11 +134,14 @@ function tree_component () {
 			}
 
 			this.container.addClass("tree").css({ position: "relative" });
-			if(this.settings.rtl) this.container.addClass("rtl");
-			if(this.settings.multiple) this.selected_arr = [];
+			if(this.settings.ui.rtl) this.container.addClass("rtl");
+			if(this.settings.rules.multiple) this.selected_arr = [];
 			this.offset = this.container.offset();
 			this.container.css({ position : "" });
-			if(this.settings.dots == false) this.container.addClass("no_dots");
+			if(this.settings.ui.dots == false) this.container.addClass("no_dots");
+
+			this.hovered = false;
+			this.locked = false;
 
 			// CREATE DUMMY FOR MOVING
 			if(this.settings.rules.draggable != "none" && this.settings.rules.dragrules != "none") {
@@ -131,6 +165,7 @@ function tree_component () {
 		},
 		// REPAINT TREE
 		refresh : function () {
+			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			// SAVE SELECTED
 			this.settings.dflt = (this.selected) ? "#" + this.selected.attr("id") : this.settings.dflt;
@@ -150,30 +185,59 @@ function tree_component () {
 				this.container.find("li.open").each(function (i) { _this.opened.push(this.id); });
 			}
 
-			if(this.settings.data !== false && typeof this.settings.data != "object") {
+			if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 				this.scrtop = this.container.get(0).scrollTop;
-				this.container.getTransform(this.path + this.settings.xsl, this.settings.data, { callback: function () { _this.reselect.apply(_this); } });
+				var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
+				this.container.getTransform(this.path + xsl, this.settings.data.url, { callback: function () { _this.reselect.apply(_this); } });
 				return;
 			}
-			// IF JSON - PARSE IN AND ADD IT IN THE CONTAINER
-			if(typeof this.settings.data == "object") {
-				this.container.html("<ul>" + this.parseJSON(this.settings.data) + "</ul>");
+			else if(this.settings.data.type == "json") {
+				if(this.settings.data.json) {
+					this.container.html("<ul>" + this.parseJSON(this.settings.data.json) + "</ul>");
+					this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
+					this.container.find("li").not(".open").not(".closed").addClass("leaf");
+					this.reselect();
+				}
+				else {
+					var _this = this;
+					$.getJSON(this.settings.data.url, { id : 0 }, function (data) {
+						var str = "";
+						for(var i = 0; i < data.length; i++) {
+							str += _this.parseJSON(data[i]);
+						}
+						_this.container.html("<ul>" + str + "</ul>");
+						_this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
+						_this.container.find("li").not(".open").not(".closed").addClass("leaf");
+						_this.reselect.apply(_this);
+					});
+				}
 			}
-			// IF DATA WAS JSON OR PREDEFINED
-			this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
-			this.container.find("li").not(".open").not(".closed").addClass("leaf");
-			this.reselect();
+			else {
+				this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
+				this.container.find("li").not(".open").not(".closed").addClass("leaf");
+				this.reselect();
+			}
 		},
 		// CONVERT JSON TO HTML
 		parseJSON : function (data) {
 			var str = "";
 			str += "<li ";
-			for(i in data.attributes) str += " " + i + "='" + data.attributes[i] + "' ";
+			var cls = false;
+			for(i in data.attributes) {
+				if(i == "class") {
+					str += " class='" + data.attributes[i] + " ";
+					if(data.state == "closed" || data.state == "open") str += " " + data.state + " ";
+					str += "' ";
+					cls = true;
+				}
+				else str += " " + i + "='" + data.attributes[i] + "' ";
+			}
+			if(!cls && (data.state == "closed" || data.state == "open")) str += " class='" + data.state + "' ";
 			str += ">";
 			if(this.settings.languages.length) {
 				for(var i = 0; i < this.settings.languages.length; i++) {
 					str += "<a href='#' class='" + this.settings.languages[i] + "' ";
-					if(data.icons[this.settings.languages[i]]) 
+					if(data.icons && data.icons[this.settings.languages[i]]) 
 						str += " style='background-image:url(\"" + data.icons[this.settings.languages[i]] + "\");' ";
 					str += ">" + data.data[this.settings.languages[i]] + "</a>";
 				}
@@ -245,27 +309,54 @@ function tree_component () {
 					event.stopPropagation();
 				})
 				.listen("click", "a", function (event) { // WHEN CLICK IS ON THE TEXT OR ICON
-					_this.select_branch.apply(_this, [event.target, event.ctrlKey]);
+					if(_this.locked) {
+						event.preventDefault(); 
+						event.target.blur();
+						return _this.error("LOCKED");
+					}
+					_this.select_branch.apply(_this, [event.target, event.ctrlKey || _this.settings.rules.multiple == "on"]);
 					if(_this.inp) { _this.inp.blur(); }
 					event.preventDefault(); 
 					event.target.blur();
 					return false;
 				})
 				.listen("dblclick", "a", function (event) { // WHEN DOUBLECLICK ON TEXT OR ICON
+					if(_this.locked) {
+						event.preventDefault(); 
+						event.stopPropagation();
+						event.target.blur();
+						return _this.error("LOCKED");
+					}
 					_this.settings.callback.ondblclk.call(null, _this.get_node(event.target).get(0), _this);
 					event.preventDefault(); 
 					event.stopPropagation();
 					event.target.blur();
+				})
+				.listen("contextmenu", "a", function (event) {
+					if(_this.locked) return _this.error("LOCKED");
+					return _this.settings.callback.onrgtclk.call(null, _this.get_node(event.target).get(0), _this, event);
+				})
+				.listen("mouseover", "a", function (event) {
+					if(_this.locked) {
+						event.preventDefault();
+						event.stopPropagation();
+						return _this.error("LOCKED");
+					}
+					if(_this.settings.ui.hover_mode && _this.hovered !== false && event.target.tagName == "A") {
+						_this.hovered.children("a").removeClass("hover");
+						_this.hovered = false;
+					}
 				});
 
 				// ATTACH DRAG & DROP ONLY IF NEEDED
 				if(this.settings.rules.draggable != "none" && this.settings.rules.dragrules != "none") {
 					$(this.container)
 						.listen("mousedown", "a", function (event) {
+							if(_this.locked) return _this.error("LOCKED");
 							// SELECT LIST ITEM NODE
 							var obj = _this.get_node(event.target);
 							// IF ITEM IS DRAGGABLE
-							if(_this.settings.multiple && _this.selected_arr.length > 1 && obj.children("a:eq(0)").hasClass("clicked")) {
+							if(_this.settings.rules.multiple != false && _this.selected_arr.length > 1 && obj.children("a:eq(0)").hasClass("clicked")) {
 								var counter = 0;
 								for(i in _this.selected_arr) {
 									if(_this.check("draggable", _this.selected_arr[i])) {
@@ -324,6 +415,7 @@ function tree_component () {
 							return false;
 						})
 						.bind("mousemove", function (event) {
+							if(_this.locked) return _this.error("LOCKED");
 							if(_this.isdown) {
 								// CLEAR TIMEOUT FOR OPENING HOVERED NODES WHILE DRAGGING
 								if(_this.to) clearTimeout(_this.to);
@@ -332,7 +424,7 @@ function tree_component () {
 									_this.po = $(_this.drag).offsetParent().offset({scroll : false});
 									_this.appended = true;
 								}
-								$(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.rtl ? $(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + ($.browser.opera ? _this.container.scrollTop() : 0) + 15) });
+								$(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.ui.rtl ? $(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + ($.browser.opera ? _this.container.scrollTop() : 0) + 15) });
 
 								var cnt = $(event.target).parents(".tree:eq(0)");
 								if(cnt.size() == 0) {
@@ -346,7 +438,7 @@ function tree_component () {
 								var mov = false;
 								var st = cnt.scrollTop();
 
-								if(!_this.settings.multitree && cnt.get(0) != _this.container.get(0)) return false;
+								if(!_this.settings.rules.multitree && cnt.get(0) != _this.container.get(0)) return false;
 
 								if(event.target.tagName == "A" ) {
 									var goTo = { 
@@ -389,7 +481,7 @@ function tree_component () {
 									}
 									else {
 										if($(_this.drag).children("IMG").size() == 0) {
-											$(_this.drag).append("<img style='position:absolute; " + (_this.settings.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
+											$(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
 										}
 										_this.moveType = false;
 										_this.moveRef = false;
@@ -414,6 +506,7 @@ function tree_component () {
 				// ENDIF OF DRAG & DROP FUNCTIONS
 		},
 		checkMove : function (NODES, REF_NODE, TYPE) {
+			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			// OVER SELF OR CHILDREN
 			if(REF_NODE.parents("li.dragged").size() > 0 || REF_NODE.is(".dragged")) return this.error("MOVE: NODE OVER SELF");
@@ -439,7 +532,7 @@ function tree_component () {
 				if(ok == false) return this.error("MOVE: AGAINST DRAG RULES");
 			}
 			// CHECK AGAINST METADATA
-			if(this.settings.rules.use_inline && this.settings.metadata) {
+			if(this.settings.rules.use_inline && this.settings.rules.metadata) {
 				var nd = false;
 				if(TYPE == "inside")	nd = REF_NODE.parents("li:eq(0)");
 				else					nd = REF_NODE.parents("li:eq(1)");
@@ -487,13 +580,14 @@ function tree_component () {
 			var _this = this;
 			// REOPEN BRANCHES
 			if(this.opened && this.opened.length) {
+				var opn = false;
 				for(var j = 0; j < this.opened.length; j++) {
-
-					// TODO: POSSIBLE PROBLEM IN ASYNC - NESTED OPEN NODES
-					// NEED TO IMPLEMENT QUEUE
-
-					this.open_branch("#" + this.opened[j], true);
+					if(this.open_branch("#" + this.opened[j], true, function () { _this.reselect.apply(_this); } )) {
+						opn = true;
+						delete this.opened[j];
+					}
 				}
+				if(this.settings.data.async && opn) return;
 				delete this.opened;
 			}
 			// REPOSITION SCROLL - WHEN QUEUE IMPLEMENTED - SHOULD BE AT THE END
@@ -502,7 +596,14 @@ function tree_component () {
 				delete this.scrtop;
 			}
 			// RESELECT PREVIOUSLY SELECTED OR DEFAULT
-			if(this.settings.dflt && $(this.settings.dflt).size() == 1) {
+			if(this.settings.rules.multiple != false && this.selected_arr.length > 1) {
+				var tmp = this.selected_arr;
+				this.selected_arr = [];
+				for(i in tmp) {
+					this.select_branch("#" + tmp[i].attr("id"), true);
+				}
+			}
+			else if(this.settings.dflt && $(this.settings.dflt).size() == 1) {
 				this.selected		= $(this.settings.dflt);
 				this.settings.dflt	= false;
 				this.select_branch(this.selected);
@@ -517,11 +618,11 @@ function tree_component () {
 		get_type : function (obj) {
 			obj = !obj ? this.selected : this.get_node(obj);
 			if(!obj) return;
-			if(this.settings.metadata) {
-				$.metadata.setType("attr", this.settings.metadata);
+			if(this.settings.rules.metadata) {
+				$.metadata.setType("attr", this.settings.rules.metadata);
 				return obj.metadata().type;
 			} 
-			else return obj.attr(this.settings.type_attr);
+			else return obj.attr(this.settings.rules.type_attr);
 		},
 		// SCROLL CONTAINER WHILE DRAGGING
 		scrollCheck : function (x,y, cntr) { 
@@ -553,9 +654,10 @@ function tree_component () {
 			_this.sto = setTimeout( function() { _this.scrollCheck(x,y,cntr); }, 50);
 		},
 		check : function (rule, nodes) {
+			if(this.locked) return this.error("LOCKED");
 			// CHECK LOCAL RULES IF METADATA
-			if(rule != "dragrules" && this.settings.rules.use_inline && this.settings.metadata) {
-				$.metadata.setType("attr", this.settings.metadata);
+			if(rule != "dragrules" && this.settings.rules.use_inline && this.settings.rules.metadata) {
+				$.metadata.setType("attr", this.settings.rules.metadata);
 				if(typeof this.get_node(nodes).metadata()[rule] != "undefined") return this.get_node(nodes).metadata()[rule];
 			}
 			if(!this.settings.rules[rule])			return false;
@@ -566,19 +668,48 @@ function tree_component () {
 			else 
 				return ($.inArray(this.get_type(nodes),this.settings.rules[rule]) != -1) ? true : false;
 		},
-		// CALLED WHEN BRANCH SELECTED
-		select_branch : function (obj, multiple) {
+		hover_branch : function (obj) {
+			if(this.locked) return this.error("LOCKED");
+			if(this.settings.ui.hover_mode == false) return this.select_branch(obj);
 			var _this = this;
 			var obj = _this.get_node(obj);
+			if(!obj.size()) return this.error("HOVER: NOT A VALID NODE");
+			// CHECK AGAINST RULES FOR SELECTABLE NODES
+			if(!_this.check("clickable", obj)) return this.error("SELECT: NODE NOT SELECTABLE");
+			if(this.hovered) this.hovered.children("A").removeClass("hover");
+
+			// SAVE NEWLY SELECTED
+			this.hovered = obj;
+
+			// FOCUS NEW NODE AND OPEN ALL PARENT NODES IF CLOSED
+			this.hovered.children("a").removeClass("hover").addClass("hover");
+
+			// SCROLL SELECTED NODE INTO VIEW
+			var off_t = this.hovered.offset({ scroll : false }).top;
+			var beg_t = this.container.offset({ scroll : false }).top;
+			var end_t = beg_t + this.container.height();
+			var h_cor = (this.container.get(0).scrollWidth > this.container.width()) ? 40 : 20;
+			if(off_t + 5 < beg_t) this.container.scrollTop(this.container.scrollTop() - (beg_t - off_t + 5) );
+			if(off_t + h_cor > end_t) this.container.scrollTop(this.container.scrollTop() + (off_t + h_cor - end_t) );
+		},
+		select_branch : function (obj, multiple) {
+			if(this.locked) return this.error("LOCKED");
+			if(!obj && this.hovered !== false) obj = this.hovered;
+			var _this = this;
+			obj = _this.get_node(obj);
+			if(!obj.size()) return this.error("SELECT: NOT A VALID NODE");
+			obj.children("a").removeClass("hover");
 			// CHECK AGAINST RULES FOR SELECTABLE NODES
 			if(!_this.check("clickable", obj)) return this.error("SELECT: NODE NOT SELECTABLE");
 			if(_this.settings.callback.beforechange.call(null,obj.get(0),_this) === false) return this.error("SELECT: STOPPED BY USER");
-
-			// DEFOCUS CURRELNTLY SELECTED NODE
-			if(this.settings.multiple && multiple) {
+			// IF multiple AND obj IS ALREADY SELECTED - DESELECT IT
+			if(this.settings.rules.multiple != false && multiple && obj.children("a.clicked").size() > 0) {
+				return this.deselect_branch(obj);
+			}
+			if(this.settings.rules.multiple != false && multiple) {
 				this.selected_arr.push(obj);
 			}
-			if(this.settings.multiple && !multiple) {
+			if(this.settings.rules.multiple != false && !multiple) {
 				for(i in this.selected_arr) {
 					this.selected_arr[i].children("A").removeClass("clicked");
 				}
@@ -586,11 +717,15 @@ function tree_component () {
 				this.selected_arr.push(obj);
 				if(this.selected) this.selected.children("A").removeClass("clicked");
 			}
-			if(!this.settings.multiple) {
+			if(!this.settings.rules.multiple) {
 				if(this.selected) this.selected.children("A").removeClass("clicked");
 			}
 			// SAVE NEWLY SELECTED
 			this.selected = obj;
+			if(this.settings.ui.hover_mode && this.hovered !== false) {
+				this.hovered.children("A").removeClass("hover");
+				this.hovered = obj;
+			}
 
 			// FOCUS NEW NODE AND OPEN ALL PARENT NODES IF CLOSED
 			this.selected.children("a").removeClass("clicked").addClass("clicked").end().parents("li.closed").each( function () { _this.open_branch(this, true); });
@@ -604,47 +739,86 @@ function tree_component () {
 			if(off_t + h_cor > end_t) this.container.scrollTop(this.container.scrollTop() + (off_t + h_cor - end_t) );
 
 			this.set_cookie("selected");
-			// CALLBACK FOR CUSTOM LOGIC
 			this.settings.callback.onchange.call(null, this.selected.get(0), _this);
 		},
 		deselect_branch : function (obj) {
+			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			var obj = this.get_node(obj);
 			obj.children("a").removeClass("clicked");
-			if(this.settings.multiple && this.selected_arr.length > 1) {
+			if(this.settings.rules.multiple != false && this.selected_arr.length > 1) {
 				this.selected_arr = [];
 				this.container.find("a.clicked").filter(":first-child").parent().each(function () {
 					_this.selected_arr.push($(this));
 				});
-				if(obj == this.selected) this.selected = this.selected_arr[0];
+				if(obj.get(0) == this.selected.get(0)) {
+					this.selected = this.selected_arr[0];
+					this.set_cookie("selected");
+				}
 			}
 			else {
-				if(this.settings.multiple) this.selected_arr = [];
+				if(this.settings.rules.multiple != false) this.selected_arr = [];
 				this.selected = false;
+				this.set_cookie("selected");
 			}
 		},
 		toggle_branch : function (obj) {
+			if(this.locked) return this.error("LOCKED");
 			var obj = this.get_node(obj);
 			if(obj.hasClass("closed"))	return this.open_branch(obj);
 			if(obj.hasClass("open"))	return this.close_branch(obj); 
 		},
-		open_branch : function (obj, disable_animation) {
+		open_branch : function (obj, disable_animation, callback) {
+			if(this.locked) return this.error("LOCKED");
 			var obj = this.get_node(obj);
-			if(parseInt(this.settings.animation) > 0 && !disable_animation && !($.browser.msie && $.browser.version < 7) ) {
-				obj.children("ul:eq(0)").css("display","none");
+			if(!obj.size()) return this.error("OPEN: NO SUCH NODE");
+
+			if(this.settings.data.async && obj.find("li").size() == 0) {
+				var _this = this;
+				obj.children("ul:eq(0)").remove().end().append("<ul><li class='last'><a style='background-image:url(" + _this.path + "images/throbber.gif)' href='#'>" + (_this.settings.lang.loading || "Loading ...") + "</a></li></ul>");
 				obj.removeClass("closed").addClass("open");
-				obj.children("ul:eq(0)").slideDown(parseInt(this.settings.animation), function() {
-					$(this).css("display","");
-				});
-			} else obj.removeClass("closed").addClass("open");
-			this.set_cookie("open");
-			this.settings.callback.onopen.call(null, obj.get(0), this);
+				if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
+					var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
+					var str = (this.settings.data.url.indexOf("?") == -1) ? "?id=" + obj.attr("id") : "&id=" + obj.attr("id");
+					obj.children("ul:eq(0)").getTransform(this.path + xsl, this.settings.data.url + str, { repl : true, callback: function () { 
+						_this.open_branch.apply(_this, [obj]); 
+						if(callback) callback.call();
+						} 
+					});
+				}
+				else {
+					$.getJSON(this.settings.data.url, { id : obj.attr("id") }, function (data, textStatus) {
+						var str = "";
+						for(var i = 0; i < data.length; i++) {
+							str += _this.parseJSON(data[i]);
+						}
+						obj.children("ul:eq(0)").replaceWith("<ul>" + str + "</ul>");
+						obj.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
+						obj.find("li").not(".open").not(".closed").addClass("leaf");
+						_this.open_branch.apply(_this, [obj]);
+						if(callback) callback.call();
+					});
+				}
+				return true;
+			}
+			else {
+				if(parseInt(this.settings.ui.animation) > 0 && !disable_animation && !($.browser.msie && $.browser.version < 7) ) {
+					obj.children("ul:eq(0)").css("display","none");
+					obj.removeClass("closed").addClass("open");
+					obj.children("ul:eq(0)").slideDown(parseInt(this.settings.ui.animation), function() {
+						$(this).css("display","");
+					});
+				} else obj.removeClass("closed").addClass("open");
+				this.set_cookie("open");
+				this.settings.callback.onopen.call(null, obj.get(0), this);
+			}
 		},
 		close_branch : function (obj, disable_animation) {
+			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			var obj = this.get_node(obj);
-			if(parseInt(this.settings.animation) > 0 && !disable_animation && !($.browser.msie && $.browser.version < 7) && obj.children("ul:eq(0)").size() == 1) {
-				obj.children("ul:eq(0)").slideUp(parseInt(this.settings.animation), function() {
+			if(parseInt(this.settings.ui.animation) > 0 && !disable_animation && !($.browser.msie && $.browser.version < 7) && obj.children("ul:eq(0)").size() == 1) {
+				obj.children("ul:eq(0)").slideUp(parseInt(this.settings.ui.animation), function() {
 					obj.removeClass("open").addClass("closed");
 					_this.set_cookie("open");
 					$(this).css("display","");
@@ -658,19 +832,22 @@ function tree_component () {
 				obj.find("li:has(a.clicked)").each(function() {
 					_this.deselect_branch(this);
 				});
-				this.select_branch(obj, (this.settings.multiple && this.selected_arr.length > 0) );
+				if(obj.children("a.clicked").size() == 0) this.select_branch(obj, (this.settings.rules.multiple != false && this.selected_arr.length > 0) );
 			}
 			this.settings.callback.onclose.call(null, obj.get(0), this);
 		},
 		open_all : function () {
+			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			$(this.container).find("li.closed").each( function () { _this.open_branch(this, true); });
 		},
 		close_all : function () {
+			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			$(this.container).find("li.open").each( function () { _this.close_branch(this); });
 		},
 		show_lang : function (i) { 
+			if(this.locked) return this.error("LOCKED");
 			if(this.settings.languages[i] == this.current_lang) return true;
 			var st = false;
 			var id = this.container.attr("id") ? "#" + this.container.attr("id") : ".tree";
@@ -682,19 +859,21 @@ function tree_component () {
 			return true;
 		},
 		cycle_lang : function() {
+			if(this.locked) return this.error("LOCKED");
 			var i = $.inArray(this.current_lang, this.settings.languages);
 			i ++;
 			if(i > this.settings.languages.length - 1) i = 0;
 			this.show_lang(i);
 		},
 		create : function (type) {
+			if(this.locked) return this.error("LOCKED");
 			// NOTHING SELECTED
 			if(!this.selected) return this.error("CREATE: NO NODE SELECTED");
 			if(!this.check("creatable", this.selected)) return this.error("CREATE: CANNOT CREATE IN NODE");
 
 			var t = type || this.get_type();
-			if(this.settings.rules.use_inline && this.settings.metadata) {
-				$.metadata.setType("attr", this.settings.metadata);
+			if(this.settings.rules.use_inline && this.settings.rules.metadata) {
+				$.metadata.setType("attr", this.settings.rules.metadata);
 				if(typeof this.selected.metadata()["valid_children"] != "undefined") {
 					if($.inArray(t, this.selected.metadata()["valid_children"]) == -1) return this.error("CREATE: NODE NOT A VALID CHILD");
 				}
@@ -711,24 +890,33 @@ function tree_component () {
 				});
 				if(!ok) return this.error("CREATE: MAX_DEPTH REACHED");
 			}
+			if(this.selected.hasClass("closed")) {
+				var _this = this;
+				return this.open_branch(this.selected, true, function () { _this.create.apply(_this, [type]); } );
+			}
 
 			$li = $("<li />");
 			// NEW NODE IS OF PASSED TYPE OR PARENT'S TYPE
-			if(this.settings.metadata) {
-				$.metadata.setType("attr", this.settings.metadata);
-				$li.attr(this.settings.metadata, "type: '" + t + "'");
+			if(this.settings.rules.metadata) {
+				$.metadata.setType("attr", this.settings.rules.metadata);
+				$li.attr(this.settings.rules.metadata, "type: '" + t + "'");
 			}
 			else {
-				$li.attr(this.settings.type_attr, t)
+				$li.attr(this.settings.rules.type_attr, t)
 			}
 			if(this.settings.languages.length) {
 				for(i = 0; i < this.settings.languages.length; i++) {
-					$li.append("<a href='#' class='" + this.settings.languages[i] + "'>New folder</a>");
+					var val = "New folder";
+					if(this.settings.lang.new_node) {
+						if((typeof this.settings.lang.new_node).toLowerCase() != "string" && this.settings.lang.new_node[i]) val = this.settings.lang.new_node[i];
+						else val = this.settings.lang.new_node;
+					}
+					$li.append("<a href='#' class='" + this.settings.languages[i] + "'>" + val + "</a>");
 				}
 			}
-			else { $li.append("<a href='#'>New folder</a>"); }
+			else { $li.append("<a href='#'>" + (this.settings.lang.new_node || "New folder") + "</a>"); }
 			$li.addClass("leaf");
-			if(this.settings.insertAt == "top" || this.selected.children("ul").size() == 0) {
+			if(this.settings.rules.createat == "top" || this.selected.children("ul").size() == 0) {
 				this.moved($li,this.selected.children("a:eq(0)"),"inside", true);
 			}
 			else {
@@ -738,6 +926,7 @@ function tree_component () {
 			this.rename();
 		},
 		rename : function () {
+			if(this.locked) return this.error("LOCKED");
 			if(this.selected) {
 				var _this = this;
 				if(!this.check("renameable", this.selected)) return this.error("RENAME: NODE NOT RENAMABLE");
@@ -783,12 +972,13 @@ function tree_component () {
 		},
 		// REMOVE NODES
 		remove : function() {
+			if(this.locked) return this.error("LOCKED");
 			if(this.selected) {
 				if(!this.check("deletable", this.selected)) return this.error("DELETE: NODE NOT DELETABLE");
-				if(!this.settings.callback.beforedelete.call(null,this.selected.get(0), _this)) return this.error("DELETE: STOPPED BY USER");;
+				if(!this.settings.callback.beforedelete.call(null,this.selected.get(0), _this)) return this.error("DELETE: STOPPED BY USER");
 				$parent = this.selected.parent();
 				var obj = this.selected;
-				if(!this.settings.multiple || this.selected_arr.length == 1) {
+				if(!this.settings.rules.multiple != false || this.selected_arr.length == 1) {
 					var stop = true;
 					this.get_prev();
 				}
@@ -801,7 +991,7 @@ function tree_component () {
 				}
 				this.selected = false;
 				this.settings.callback.ondelete.call(null, obj, this);
-				if(this.settings.multiple && !stop) {
+				if(this.settings.rules.multiple != false && !stop) {
 					var _this = this;
 					this.selected_arr = [];
 					this.container.find("a.clicked").filter(":first-child").parent().each(function () {
@@ -817,32 +1007,36 @@ function tree_component () {
 		},
 		// FOR EXPLORER-LIKE KEYBOARD SHORTCUTS
 		get_next : function() {
-			if(this.selected) {
-				if(this.selected.hasClass("open"))					return this.select_branch(this.selected.find("li:eq(0)"));
-				else if($(this.selected).nextAll("li").size() > 0)	return this.select_branch(this.selected.nextAll("li:eq(0)"));
-				else												return this.select_branch(this.selected.parents("li").next("li").eq(0));
+			var obj = this.hovered || this.selected;
+			if(obj) {
+				if(obj.hasClass("open"))					return this.hover_branch(obj.find("li:eq(0)"));
+				else if($(obj).nextAll("li").size() > 0)	return this.hover_branch(obj.nextAll("li:eq(0)"));
+				else										return this.hover_branch(obj.parents("li").next("li").eq(0));
 			}
 		},
 		get_prev : function() {
-			if(this.selected) {
-				if(this.selected.prev("li").size()) {
-					var obj = this.selected.prev("li").eq(0);
+			var obj = this.hovered || this.selected;
+			if(obj) {
+				if(obj.prev("li").size()) {
+					var obj = obj.prev("li").eq(0);
 					while(obj.hasClass("open")) obj = obj.children("ul:eq(0)").children("li:last");
-					return this.select_branch(obj);
+					return this.hover_branch(obj);
 				}
-				else { return this.select_branch(this.selected.parents("li:eq(0)")); }
+				else { return this.hover_branch(obj.parents("li:eq(0)")); }
 			}
 		},
 		get_left : function() {
-			if(this.selected) {
-				if(this.selected.hasClass("open"))	this.close_branch(this.selected);
-				else								this.get_prev();
+			var obj = this.hovered || this.selected;
+			if(obj) {
+				if(obj.hasClass("open"))	this.close_branch(obj);
+				else						this.get_prev();
 			}
 		},
 		get_right : function() {
-			if(this.selected) {
-				if(this.selected.hasClass("closed"))	this.open_branch(this.selected);
-				else									this.get_next();
+			var obj = this.hovered || this.selected;
+			if(obj) {
+				if(obj.hasClass("closed"))	this.open_branch(obj);
+				else						this.get_next();
 			}
 		},
 		toggleDots : function () {
@@ -852,7 +1046,8 @@ function tree_component () {
 			if(this.settings.cookies === false) return false;
 			switch(type) {
 				case "selected":
-					$.cookie(this.settings.cookies.prefix + '_selected',this.selected.attr("id"),this.settings.cookies.opts);
+					var val = this.selected ? this.selected.attr("id") : false;
+					$.cookie(this.settings.cookies.prefix + '_selected',val,this.settings.cookies.opts);
 					break;
 				case "open":
 					var str = "";
@@ -928,17 +1123,25 @@ function tree_component () {
 			this.settings.callback.error.call(null,code,this);
 			return false;
 		},
+		lock : function (state) {
+			this.locked = state;
+			if(this.locked)	this.container.addClass("locked");
+			else			this.container.removeClass("locked");
+		},
 		cut : function () {
+			if(this.locked) return this.error("LOCKED");
 			if(!this.selected) return this.error("CUT: NO NODE SELECTED");
 			this.copy_nodes = false;
 			this.cut_nodes = this.container.find("a.clicked").filter(":first-child").parent();
 		},
 		copy : function () {
+			if(this.locked) return this.error("LOCKED");
 			if(!this.selected) return this.error("COPY: NO NODE SELECTED");
 			this.copy_nodes = this.container.find("a.clicked").filter(":first-child").parent();
 			this.cut_nodes = false;
 		},
 		paste : function () {
+			if(this.locked) return this.error("LOCKED");
 			if(!this.selected) return this.error("PASTE: NO NODE SELECTED");
 			if(!this.copy_nodes && !this.cut_nodes) return this.error("PASTE: NOTHING TO DO");
 			if(this.copy_nodes && this.copy_nodes.size()) {

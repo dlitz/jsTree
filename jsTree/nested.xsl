@@ -43,23 +43,7 @@
 				<xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>
 			</xsl:if>
 		</xsl:for-each>
-
-		<xsl:choose>
-		<xsl:when test="count(content) &gt; 0">
-			<xsl:for-each select="content/name">
-				<a href="#">
-				<xsl:attribute name="class"><xsl:value-of select="@lang" /></xsl:attribute>
-				<xsl:attribute name="style">
-					<xsl:choose>
-						<xsl:when test="string-length(attribute::icon) > 0">background-image:url(<xsl:value-of select="@icon" />);</xsl:when>
-						<xsl:otherwise></xsl:otherwise>
-					</xsl:choose>
-				</xsl:attribute>
-					<xsl:value-of select="current()" />
-				</a>
-			</xsl:for-each>
-		</xsl:when>
-		<xsl:otherwise>
+		<xsl:for-each select="content/name">
 			<a href="#">
 			<xsl:attribute name="class"><xsl:value-of select="@lang" /></xsl:attribute>
 			<xsl:attribute name="style">
@@ -67,15 +51,14 @@
 					<xsl:when test="string-length(attribute::icon) > 0">background-image:url(<xsl:value-of select="@icon" />);</xsl:when>
 					<xsl:otherwise></xsl:otherwise>
 				</xsl:choose>
-			</xsl:attribute>
-			<xsl:for-each select="text()"><xsl:value-of select="."/></xsl:for-each></a>
-		</xsl:otherwise>
-		</xsl:choose>
-			<xsl:if test="$children or @hasChildren">
-				<xsl:call-template name="nodes">
-					<xsl:with-param name="node" select="current()" />
-				</xsl:call-template>
-			</xsl:if>
+			</xsl:attribute><xsl:value-of select="current()" /></a>
+		</xsl:for-each>
+
+		<xsl:if test="$children or @hasChildren">
+			<xsl:call-template name="nodes">
+				<xsl:with-param name="node" select="current()" />
+			</xsl:call-template>
+		</xsl:if>
 		</li>
 	</xsl:for-each>
 	</ul>
