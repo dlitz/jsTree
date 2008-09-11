@@ -342,7 +342,7 @@ jQuery.fn.getTransform = function( xsl, xml, options ){
 		if( settings.callback && jQuery.isFunction(settings.callback) ){
 			var json = false;
 			if(settings.json && trans.json) eval("json = " + trans.json.firstChild.data);
-			settings.callback.apply(window, [json]);
+			settings.callback.apply(window, [trans.string, json]);
 		}
 
 	});
