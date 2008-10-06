@@ -1,5 +1,5 @@
 /*
- * jsTree 0.7
+ * jsTree 0.8
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-08-19
+ * Date: 2008-10-06
  *
  */
 function tree_component () {
@@ -71,7 +71,8 @@ function tree_component () {
 				// double click on node - defaults to open/close & select
 				ondblclk	: function(NODE, TREE_OBJ) { TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE); },
 				// right click - to prevent use: EV.preventDefault(); EV.stopPropagation(); return false
-				onrgtclk	: function(NODE, TREE_OBJ, EV) { }
+				onrgtclk	: function(NODE, TREE_OBJ, EV) { },
+				onload		: function(TREE_OBJ) { }
 			}
 		},
 		// INITIALIZATION
@@ -164,7 +165,7 @@ function tree_component () {
 			this.attachEvents();
 		},
 		// REPAINT TREE
-		refresh : function () {
+		refresh : function (obj) {
 			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			// SAVE SELECTED
@@ -172,6 +173,15 @@ function tree_component () {
 			if(this.settings.cookies) {
 				var str = $.cookie(this.settings.cookies.prefix + '_selected');
 				if(str) this.settings.dflt = "#" + str;
+			}
+
+			if(obj && this.settings.data.async) {
+				this.opened = Array();
+				obj = this.get_node(obj);
+				obj.find("li.open").each(function (i) { _this.opened.push(this.id); });
+				this.close_branch(obj, true);
+				obj.children("ul:eq(0)").html("");
+				return this.open_branch(obj, true, function () { _this.reselect.apply(_this); });
 			}
 
 			this.opened = Array();
@@ -202,9 +212,11 @@ function tree_component () {
 					var _this = this;
 					$.getJSON(this.settings.data.url, { id : 0 }, function (data) {
 						var str = "";
-						for(var i = 0; i < data.length; i++) {
-							str += _this.parseJSON(data[i]);
-						}
+						if(data.length) {
+							for(var i = 0; i < data.length; i++) {
+								str += _this.parseJSON(data[i]);
+							}
+						} else str = _this.parseJSON(data);
 						_this.container.html("<ul>" + str + "</ul>");
 						_this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
 						_this.container.find("li").not(".open").not(".closed").addClass("leaf");
@@ -620,6 +632,7 @@ function tree_component () {
 				this.settings.dflt	= false;
 				this.select_branch(this.selected);
 			}
+			this.settings.callback.onload.call(null, _this);
 		},
 		// GET THE EXTENDED LI ELEMENT
 		get_node : function (obj) {
@@ -675,8 +688,20 @@ function tree_component () {
 			if(!this.settings.rules[rule])			return false;
 			if(this.settings.rules[rule] == "none")	return false;
 			if(this.settings.rules[rule] == "all")	return true;
-			if(rule == "dragrules")
-				return ($.inArray(this.get_type(nodes[0]) + " " + nodes[1] + " " + this.get_type(nodes[2]), this.settings.rules.dragrules) != -1) ? true : false;
+			if(rule == "dragrules") {
+				var nds = new Array();
+				nds[0] = this.get_type(nodes[0]);
+				nds[1] = nodes[1];
+				nds[2] = this.get_type(nodes[2]);
+				for(var i = 0; i < this.settings.rules.dragrules.length; i++) {
+					var tmp = this.settings.rules.dragrules[i].split(" ");
+					for(var j = 0; j < 3; j++) {
+						if(tmp[j] == nds[j] || tmp[j] == "*") tmp[j] = true;
+					}
+					if(tmp[0] === true && tmp[1] === true && tmp[2] === true) return true;
+				}
+				return false;
+			}
 			else 
 				return ($.inArray(this.get_type(nodes),this.settings.rules[rule]) != -1) ? true : false;
 		},
@@ -773,6 +798,8 @@ function tree_component () {
 				this.selected = false;
 				this.set_cookie("selected");
 			}
+			if(this.selected)	this.settings.callback.onchange.call(null, this.selected.get(0), _this);
+			else				this.settings.callback.onchange.call(null, false, _this);
 		},
 		toggle_branch : function (obj) {
 			if(this.locked) return this.error("LOCKED");
@@ -791,7 +818,7 @@ function tree_component () {
 				obj.removeClass("closed").addClass("open");
 				if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 					var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
-					var str = (this.settings.data.url.indexOf("?") == -1) ? "?id=" + obj.attr("id") : "&id=" + obj.attr("id");
+					var str = (this.settings.data.url.indexOf("?") == -1) ? "?id=" + encodeURIComponent(obj.attr("id")) : "&id=" + encodeURIComponent(obj.attr("id"));
 					obj.children("ul:eq(0)").getTransform(this.path + xsl, this.settings.data.url + str, { repl : true, callback: function (str, json) { 
 							if(str.length < 10) {
 								obj.removeClass("closed").removeClass("open").addClass("leaf").children("ul").remove();
@@ -811,9 +838,12 @@ function tree_component () {
 							return;
 						}
 						var str = "";
-						for(var i = 0; i < data.length; i++) {
-							str += _this.parseJSON(data[i]);
+						if(data.length) {
+							for(var i = 0; i < data.length; i++) {
+								str += _this.parseJSON(data[i]);
+							}
 						}
+						else str = _this.parseJSON(data);
 						obj.children("ul:eq(0)").replaceWith("<ul>" + str + "</ul>");
 						obj.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
 						obj.find("li").not(".open").not(".closed").addClass("leaf");
