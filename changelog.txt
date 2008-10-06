@@ -1,0 +1,94 @@
+NOTES:
+   type_attr cannot be 'class'
+   opera bug (event.pageY) when dragging and scrolling
+   Firefox 2 slows down when too many nested nodes (over 10 levels) (because of floated "a")
+   xml_flat in async mode - do not set parent_id
+   onopen callback in async mode is fired AFTER the content has loaded and displayed
+
+TODO:
+   FEAT: multitree (multiple instances with communication)
+     * drag rules
+     * language cleanup (Claudio & Gregory)
+   FEAT: native undo/redo (Rafi B)
+   DOCS: background customization
+   DOCS: examples & functions
+
+CHANGELOG:
+ v.0.8
+   onload callback - fired when:
+    - the tree is loaded for the first time
+    - the tree or a node is refreshed
+   * in dragrules
+   refreshing a single node is possible (in async mode)
+   passed json can now be an object, not an array of objects (by Marius Bratu)
+   onchange called in deselect_branch (by jstreeuser)
+   id is urlencoded (by Arjan Haverkamp)
+
+ v.0.7.1
+   fixed create bug in async mode (by William)
+   create function returns the created node (by Nuno Mota)
+   fixed bug when dropped node did not open branch in async mode (by William)
+   fixed bug when passing empty array as children (by William)
+   fixed async xml loading (empty array && recursion problem)
+   fixed leaf bug (by Nuno Mota)
+   fixed inside moving to respect the createat rule
+
+ v.0.7
+   native async loading
+   added lock() function to lock/unlock the tree
+   added language customization for standard strings
+   hover_mode option added (for changing hover state with keyboard)
+   options object refactoring
+   fixed bug with closing parent of selected if parent is selected (multiple - on)
+   multiple added (can now be always on - no need for holding Ctrl)
+   onrgtclk callback added (See commented code on how to prevent default)
+   fixed bug where Ctrl+clicking selected node did not deselect the node
+   removed optional XML structure for single language
+   Google Code issues (typos) (by peter.kalvin)
+
+ v.0.6.5
+   tree now allows for some node sizing (see demo)
+   fixed bug when created nodes did not have the leaf class (by addwin)
+   optimized rtl position and images
+   can now change
+   fixed changing focus when closing focused node (by Karf)
+   fixed before- callbacks parameters (by Colin)
+   fixed dragging position (by Karf)
+   returned optional path parameter (by Karf)
+   added ondblclk callback, which defaults to toggle and then select node (by Arno)
+   tree object is passed as final argument in every callback
+
+ v.0.6.0.1
+   removed bug with switched beforemove/beforecreate callbacks (by Colin)
+   fixed mistake with mov / TYPE (by newuni)
+
+ v.0.6
+   added drag & drop between trees with correct marker placement
+   optimized jQuery selectors
+   added cut/copy/paste + oncopy callback
+   added error callback - attach custom function to errors
+   added multiple selection with move & delete
+   added getJSON - return the tree as an object
+   added before handlers
+   optimized css, added 'leaf' class
+   added basic rtl support (user opinions?)
+   added cookie support with definable prefix and options - default is false
+   added if selected node is within closed parent - select parent
+   added CSS solution when dragging large sets - all inner nodes are closed while dragging
+   added solid background color option (not white) - set background color on "li.last", ".tree"
+   added animation support (slideUp/slideDown) - specify duration (disabled for msie 6 - slow)
+   updated listen plugin
+   updated sarissa
+   added insertAt option for creating nodes ('top' or 'bottom')
+
+ v.0.5
+   current language is passed when renaming
+   added onbeforechange callback
+   'data' can be JSON and none (only events attached to structure)
+   Opera comaptible
+   scroll node into view when node selected
+   scroll container while dragging and mouse is near the edge
+   'remove' function 
+   rules and rule checking reinvented (added inline_rules, max_depth, max_children, valid_children, renameable)
+   dots are optional ('toggleDots' function, '.no_dots' classname)
+   various optimizations
