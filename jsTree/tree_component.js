@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-10-06
+ * Date: 2008-10-07
  *
  */
 function tree_component () {
