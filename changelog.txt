@@ -14,6 +14,9 @@ TODO:
    DOCS: examples & functions
 
 CHANGELOG:
+ v.0.8.1
+   fixed renaming bug (by anotherhero)
+   fixed #marker bug (by anotherhero)
  v.0.8
    onload callback - fired when:
     - the tree is loaded for the first time
