@@ -1,5 +1,5 @@
 /*
- * jsTree 0.8
+ * jsTree 0.8.1
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-10-07
+ * Date: 2008-10-09
  *
  */
 function tree_component () {
@@ -158,7 +158,8 @@ function tree_component () {
 						display		: "block",
 						position	: "absolute",
 						left		: "30px",
-						top			: "30px"
+						top			: "30px",
+						zIndex		: "100"
 					}).hide().appendTo("body");
 			}
 			this.refresh();
@@ -1003,8 +1004,9 @@ function tree_component () {
 				c_wid = Math.min(w_max,c_wid);
 				*/
 
-				_this.inp = $("<input type='text' value='" + last_value + "' />");
+				_this.inp = $("<input type='text' />");
 				_this.inp
+					.val(last_value)
 					.bind("mousedown",		function (event) { event.stopPropagation(); })
 					.bind("mouseup",		function (event) { event.stopPropagation(); })
 					.bind("click",			function (event) { event.stopPropagation(); })
