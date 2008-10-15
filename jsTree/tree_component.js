@@ -1,5 +1,5 @@
 /*
- * jsTree 0.8.1
+ * jsTree 0.8.2
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-10-09
+ * Date: 2008-10-15
  *
  */
 function tree_component () {
@@ -924,23 +924,24 @@ function tree_component () {
 			if(i > this.settings.languages.length - 1) i = 0;
 			this.show_lang(i);
 		},
-		create : function (type) {
+		create : function (type, obj) {
 			if(this.locked) return this.error("LOCKED");
 			// NOTHING SELECTED
-			if(!this.selected) return this.error("CREATE: NO NODE SELECTED");
-			if(!this.check("creatable", this.selected)) return this.error("CREATE: CANNOT CREATE IN NODE");
+			obj = obj ? this.get_node(obj) : this.selected;
+			if(!obj.size()) return this.error("CREATE: NO NODE SELECTED");
+			if(!this.check("creatable", obj)) return this.error("CREATE: CANNOT CREATE IN NODE");
 
-			var t = type || this.get_type();
+			var t = type || this.get_type(obj);
 			if(this.settings.rules.use_inline && this.settings.rules.metadata) {
 				$.metadata.setType("attr", this.settings.rules.metadata);
-				if(typeof this.selected.metadata()["valid_children"] != "undefined") {
-					if($.inArray(t, this.selected.metadata()["valid_children"]) == -1) return this.error("CREATE: NODE NOT A VALID CHILD");
+				if(typeof obj.metadata()["valid_children"] != "undefined") {
+					if($.inArray(t, obj.metadata()["valid_children"]) == -1) return this.error("CREATE: NODE NOT A VALID CHILD");
 				}
-				if(typeof this.selected.metadata()["max_children"] != "undefined") {
-					if( (this.selected.children("ul:eq(0)").children("li").size() + 1) > this.selected.metadata().max_children) return this.error("CREATE: MAX_CHILDREN REACHED");
+				if(typeof obj.metadata()["max_children"] != "undefined") {
+					if( (obj.children("ul:eq(0)").children("li").size() + 1) > obj.metadata().max_children) return this.error("CREATE: MAX_CHILDREN REACHED");
 				}
 				var ok = true;
-				this.selected.parents("li").each(function(i) {
+				obj.parents("li").each(function(i) {
 					if($(this).metadata().max_depth) {
 						if( (i + 1) >= $(this).metadata().max_depth) {
 							ok = false;
@@ -949,9 +950,9 @@ function tree_component () {
 				});
 				if(!ok) return this.error("CREATE: MAX_DEPTH REACHED");
 			}
-			if(this.selected.hasClass("closed")) {
+			if(obj.hasClass("closed")) {
 				var _this = this;
-				return this.open_branch(this.selected, true, function () { _this.create.apply(_this, [type]); } );
+				return this.open_branch(obj, true, function () { _this.create.apply(_this, [type, obj]); } );
 			}
 
 			$li = $("<li />");
@@ -976,10 +977,10 @@ function tree_component () {
 			else { $li.append("<a href='#'>" + (this.settings.lang.new_node || "New folder") + "</a>"); }
 			$li.addClass("leaf");
 			if(this.settings.rules.createat == "top" || this.selected.children("ul").size() == 0) {
-				this.moved($li,this.selected.children("a:eq(0)"),"inside", true);
+				this.moved($li,obj.children("a:eq(0)"),"inside", true);
 			}
 			else {
-				this.moved($li,this.selected.children("ul:eq(0)").children("li:last").children("a:eq(0)"),"after",true);
+				this.moved($li,obj.children("ul:eq(0)").children("li:last").children("a:eq(0)"),"after",true);
 			}
 			this.select_branch($li.children("a:eq(0)"));
 			this.rename();
@@ -1032,16 +1033,32 @@ function tree_component () {
 			else return this.error("RENAME: NO NODE SELECTED");
 		},
 		// REMOVE NODES
-		remove : function() {
+		remove : function(obj) {
 			if(this.locked) return this.error("LOCKED");
-			if(this.selected) {
+			if(obj) {
+				obj = this.get_node(obj);
+				if(obj.size()) {
+					if(!this.check("deletable", obj)) return this.error("DELETE: NODE NOT DELETABLE");
+					if(!this.settings.callback.beforedelete.call(null,obj.get(0), _this)) return this.error("DELETE: STOPPED BY USER");
+					$parent = obj.parent();
+					obj = obj.remove();
+					$parent.children("li:last").addClass("last");
+					if($parent.children("li").size() == 0) {
+						$li = $parent.parents("li:eq(0)");
+						$li.removeClass("open").removeClass("closed").addClass("leaf").children("ul").remove();
+						this.set_cookie("open");
+					}
+					this.settings.callback.ondelete.call(null, obj, this);
+				}
+			}
+			else if(this.selected) {
 				if(!this.check("deletable", this.selected)) return this.error("DELETE: NODE NOT DELETABLE");
 				if(!this.settings.callback.beforedelete.call(null,this.selected.get(0), _this)) return this.error("DELETE: STOPPED BY USER");
 				$parent = this.selected.parent();
 				var obj = this.selected;
-				if(!this.settings.rules.multiple != false || this.selected_arr.length == 1) {
+				if(this.settings.rules.multiple == false || this.selected_arr.length == 1) {
 					var stop = true;
-					this.get_prev();
+					this.get_prev(true);
 				}
 				obj = obj.remove();
 				$parent.children("li:last").addClass("last");
@@ -1067,37 +1084,37 @@ function tree_component () {
 			else return this.error("DELETE: NO NODE SELECTED");
 		},
 		// FOR EXPLORER-LIKE KEYBOARD SHORTCUTS
-		get_next : function() {
+		get_next : function(force) {
 			var obj = this.hovered || this.selected;
 			if(obj) {
-				if(obj.hasClass("open"))					return this.hover_branch(obj.find("li:eq(0)"));
-				else if($(obj).nextAll("li").size() > 0)	return this.hover_branch(obj.nextAll("li:eq(0)"));
-				else										return this.hover_branch(obj.parents("li").next("li").eq(0));
+				if(obj.hasClass("open"))					return force ? this.select_branch(obj.find("li:eq(0)")) : this.hover_branch(obj.find("li:eq(0)"));
+				else if($(obj).nextAll("li").size() > 0)	return force ? this.select_branch(obj.nextAll("li:eq(0)")) : this.hover_branch(obj.nextAll("li:eq(0)"));
+				else										return force ? this.select_branch(obj.parents("li").next("li").eq(0)) : this.hover_branch(obj.parents("li").next("li").eq(0));
 			}
 		},
-		get_prev : function() {
+		get_prev : function(force) {
 			var obj = this.hovered || this.selected;
 			if(obj) {
 				if(obj.prev("li").size()) {
 					var obj = obj.prev("li").eq(0);
 					while(obj.hasClass("open")) obj = obj.children("ul:eq(0)").children("li:last");
-					return this.hover_branch(obj);
+					return force ? this.select_branch(obj) : this.hover_branch(obj);
 				}
-				else { return this.hover_branch(obj.parents("li:eq(0)")); }
+				else { return force ? this.select_branch(obj.parents("li:eq(0)")) : this.hover_branch(obj.parents("li:eq(0)")); }
 			}
 		},
-		get_left : function() {
+		get_left : function(force) {
 			var obj = this.hovered || this.selected;
 			if(obj) {
 				if(obj.hasClass("open"))	this.close_branch(obj);
-				else						this.get_prev();
+				else						this.get_prev(force);
 			}
 		},
-		get_right : function() {
+		get_right : function(force) {
 			var obj = this.hovered || this.selected;
 			if(obj) {
 				if(obj.hasClass("closed"))	this.open_branch(obj);
-				else						this.get_next();
+				else						this.get_next(force);
 			}
 		},
 		toggleDots : function () {
