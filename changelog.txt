@@ -7,13 +7,22 @@ NOTES:
 
 TODO:
    FEAT: multitree (multiple instances with communication)
-     * drag rules
+     * drag rules (maybe with a common rules object and tree IDs)
      * language cleanup (Claudio & Gregory)
+   FEAT: copy instead of move while dragging
    FEAT: native undo/redo (Rafi B)
    DOCS: background customization
    DOCS: examples & functions
 
 CHANGELOG:
+ v.0.8.2 
+   get_* functions receive a "force" argument that selects the node even if hover_mode is on
+   create function enhancement - can pass a node to create in (by anotherhero)
+   remove function enhancement - can pass a node to delete (by anotherhero)
+   fixed drag position in IE (by Nuno Mota)
+   implemented drag-to-copy - changes the default behaviour from drag to copy, to activate:
+     - set settings.rules.drag_copy to "ctrl" and drop the dragged nodes with the ctrlKey down
+     - set settings.rules.drag_copy to "on"
  v.0.8.1
    fixed renaming bug (by anotherhero)
    fixed #marker bug (by anotherhero)
@@ -26,7 +35,6 @@ CHANGELOG:
    passed json can now be an object, not an array of objects (by Marius Bratu)
    onchange called in deselect_branch (by jstreeuser)
    id is urlencoded (by Arjan Haverkamp)
-
  v.0.7.1
    fixed create bug in async mode (by William)
    create function returns the created node (by Nuno Mota)
@@ -35,7 +43,6 @@ CHANGELOG:
    fixed async xml loading (empty array && recursion problem)
    fixed leaf bug (by Nuno Mota)
    fixed inside moving to respect the createat rule
-
  v.0.7
    native async loading
    added lock() function to lock/unlock the tree
@@ -48,7 +55,6 @@ CHANGELOG:
    fixed bug where Ctrl+clicking selected node did not deselect the node
    removed optional XML structure for single language
    Google Code issues (typos) (by peter.kalvin)
-
  v.0.6.5
    tree now allows for some node sizing (see demo)
    fixed bug when created nodes did not have the leaf class (by addwin)
@@ -60,11 +66,9 @@ CHANGELOG:
    returned optional path parameter (by Karf)
    added ondblclk callback, which defaults to toggle and then select node (by Arno)
    tree object is passed as final argument in every callback
-
  v.0.6.0.1
    removed bug with switched beforemove/beforecreate callbacks (by Colin)
    fixed mistake with mov / TYPE (by newuni)
-
  v.0.6
    added drag & drop between trees with correct marker placement
    optimized jQuery selectors
@@ -83,7 +87,6 @@ CHANGELOG:
    updated listen plugin
    updated sarissa
    added insertAt option for creating nodes ('top' or 'bottom')
-
  v.0.5
    current language is passed when renaming
    added onbeforechange callback

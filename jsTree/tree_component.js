@@ -41,7 +41,8 @@ function tree_component () {
 				deletable	: "all",	// which node types can the user delete | default - all
 				creatable	: "all",	// which node types can the user create in | default - all
 				draggable	: "none",	// which node types can the user move | default - none | "all"
-				dragrules	: "none"	// what move operations between nodes are allowed | default - none | "all"
+				dragrules	: "none",	// what move operations between nodes are allowed | default - none | "all"
+				drag_copy	: false		// FALSE | CTRL | ON - drag to copy off/ with or without holding Ctrl
 			},
 			lang : {
 				new_node	: "New folder",
@@ -412,7 +413,7 @@ function tree_component () {
 							if(_this.drag && _this.drag.parentNode && _this.drag.parentNode == $(_this.container).get(0)) {
 								$(_this.drag).remove();
 								// CALL FUNCTION FOR COMPLETING MOVE
-								if(_this.moveType) _this.moved(_this.container.find("li.dragged"), _this.moveRef, _this.moveType);
+								if(_this.moveType) _this.moved(_this.container.find("li.dragged"), _this.moveRef, _this.moveType, false, (_this.settings.rules.drag_copy == "on" || (_this.settings.rules.drag_copy == "ctrl" && event.ctrlKey) ) );
 								_this.moveType = false;
 								_this.moveRef = false;
 							}
@@ -434,7 +435,9 @@ function tree_component () {
 								if(_this.to) clearTimeout(_this.to);
 								if(!_this.appended) {
 									_this.container.append(_this.drag);
-									_this.po = $(_this.drag).offsetParent().offset({scroll : false});
+									_this.po = $(_this.drag).offsetParent();
+									if(_this.po.is("html")) _this.po = $("body");
+									_this.po = _this.po.offset({scroll : false});
 									_this.appended = true;
 								}
 								$(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.ui.rtl ? $(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + ($.browser.opera ? _this.container.scrollTop() : 0) + 15) });
@@ -481,7 +484,7 @@ function tree_component () {
 										}
 									}
 
-									if(_this.checkMove(cnt.find("li.dragged"),$(event.target),mov)) {
+									if(_this.checkMove(_this._drag,$(event.target),mov)) {
 										if(mov == "inside")	$("#marker").attr("src", _this.path + "images/plus.gif").width(11);
 										else {
 											if(cnt.hasClass("rtl"))	{ $("#marker").attr("src", _this.path + "images/marker_rtl.gif").width(40); }
@@ -1144,9 +1147,19 @@ function tree_component () {
 				var tmp = this.moved(what.eq(0),where,how, false, is_copy);
 				what.each(function (i) {
 					if(i == 0) return;
-					tmp = _this.moved(this, tmp.children("a:eq(0)"), "after");
+					tmp = _this.moved(this, tmp.children("a:eq(0)"), "after", false, is_copy);
 				})
 				return;
+			}
+			if(is_copy) {
+				what = what.clone();
+				what.each(function (i) {
+					this.id = this.id + "_copy";
+					$(this).find("li").each(function () {
+						this.id = this.id + "_copy";
+					})
+					$(this).find("a.clicked").removeClass("clicked");
+				});
 			}
 			if(is_new) {
 				if(!this.settings.callback.beforecreate.call(null,this.get_node(what).get(0), this.get_node(where).get(0),how,this)) return;
@@ -1235,14 +1248,7 @@ function tree_component () {
 			if(!this.copy_nodes && !this.cut_nodes) return this.error("PASTE: NOTHING TO DO");
 			if(this.copy_nodes && this.copy_nodes.size()) {
 				if(!this.checkMove(this.copy_nodes, this.selected.children("a:eq(0)"), "inside")) return false;
-				tmp = this.copy_nodes.clone();
-				tmp.each(function (i) {
-					this.id = this.id + "_copy";
-					$(this).find("li").each(function () {
-						this.id = this.id + "_copy";
-					})
-				});
-				this.moved(tmp, this.selected.children("a:eq(0)"), "inside", false, true);
+				this.moved(this.copy_nodes, this.selected.children("a:eq(0)"), "inside", false, true);
 				this.copy_nodes = false;
 			}
 			if(this.cut_nodes && this.cut_nodes.size()) {
