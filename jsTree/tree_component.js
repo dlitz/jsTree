@@ -484,7 +484,7 @@ function tree_component () {
 										}
 									}
 
-									if(_this.checkMove(_this._drag,$(event.target),mov)) {
+									if(_this.checkMove(_this.container.find("li.dragged"), $(event.target), mov)) {
 										if(mov == "inside")	$("#marker").attr("src", _this.path + "images/plus.gif").width(11);
 										else {
 											if(cnt.hasClass("rtl"))	{ $("#marker").attr("src", _this.path + "images/marker_rtl.gif").width(40); }
@@ -543,7 +543,7 @@ function tree_component () {
 						var ref = REF_NODE;
 						var mv = TYPE;
 					}
-					if(!_this.check("dragrules", [$(this), mv, ref])) ok = false;
+					if(!_this.check.apply(_this,["dragrules", [$(this), mv, ref]])) ok = false;
 				});
 				if(ok == false) return this.error("MOVE: AGAINST DRAG RULES");
 			}
@@ -605,13 +605,6 @@ function tree_component () {
 							delete this.opened[j];
 							this.open_branch("#" + tmp, true, function () { _this.reselect.apply(_this); } )
 						}
-						/*
-						if(this.open_branch("#" + this.opened[j], true, function () { _this.reselect.apply(_this); } )) {
-							opn = true;
-							delete this.opened[j];
-							$.log("Deleted");
-						}
-						*/
 					}
 					else this.open_branch("#" + this.opened[j], true);
 				}
