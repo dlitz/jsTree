@@ -9,7 +9,6 @@ TODO:
    FEAT: multitree (multiple instances with communication)
      * drag rules (maybe with a common rules object and tree IDs)
      * language cleanup (Claudio & Gregory)
-   FEAT: copy instead of move while dragging
    FEAT: native undo/redo (Rafi B)
    DOCS: background customization
    DOCS: examples & functions
@@ -20,6 +19,7 @@ CHANGELOG:
    create function enhancement - can pass a node to create in (by anotherhero)
    remove function enhancement - can pass a node to delete (by anotherhero)
    fixed drag position in IE (by Nuno Mota)
+   fixed multitree drag rules check against origin tree (by bogdan)
    implemented drag-to-copy - changes the default behaviour from drag to copy, to activate:
      - set settings.rules.drag_copy to "ctrl" and drop the dragged nodes with the ctrlKey down
      - set settings.rules.drag_copy to "on"

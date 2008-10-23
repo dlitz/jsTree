@@ -205,7 +205,13 @@ function tree_component () {
 			}
 			else if(this.settings.data.type == "json") {
 				if(this.settings.data.json) {
-					this.container.html("<ul>" + this.parseJSON(this.settings.data.json) + "</ul>");
+					var str = "";
+					if(this.settings.data.json.length) {
+						for(var i = 0; i < this.settings.data.json.length; i++) {
+							str += this.parseJSON(this.settings.data.json[i]);
+						}
+					} else str = this.parseJSON(this.settings.data.json);
+					this.container.html("<ul>" + str + "</ul>");
 					this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
 					this.container.find("li").not(".open").not(".closed").addClass("leaf");
 					this.reselect();
