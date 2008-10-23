@@ -10,6 +10,7 @@ TODO:
      * drag rules (maybe with a common rules object and tree IDs)
      * language cleanup (Claudio & Gregory)
    FEAT: native undo/redo (Rafi B)
+   FEAT: tree focus (use bogdan's solution)
    DOCS: background customization
    DOCS: examples & functions
 
