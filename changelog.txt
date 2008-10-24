@@ -6,11 +6,11 @@ NOTES:
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
 TODO:
+   FEAT: instance manager & focused instance
    FEAT: multitree (multiple instances with communication)
      * drag rules (maybe with a common rules object and tree IDs)
      * language cleanup (Claudio & Gregory)
    FEAT: native undo/redo (Rafi B)
-   FEAT: tree focus (use bogdan's solution)
    DOCS: background customization
    DOCS: examples & functions
 
@@ -21,6 +21,10 @@ CHANGELOG:
    remove function enhancement - can pass a node to delete (by anotherhero)
    fixed drag position in IE (by Nuno Mota)
    fixed multitree drag rules check against origin tree (by bogdan)
+   rename function fix (when ESC is used) (by bogdan)
+   #marker z-index is now higher (by bogdan)
+   fixed get_json function (an attrib array can now be passed, icon fix) (by bogdan)
+   get_left, get_right functions fixed to match explorer functions' behavious (by bogdan)
    implemented drag-to-copy - changes the default behaviour from drag to copy, to activate:
      - set settings.rules.drag_copy to "ctrl" and drop the dragged nodes with the ctrlKey down
      - set settings.rules.drag_copy to "on"
