@@ -1,5 +1,5 @@
 /*
- * jsTree 0.8.2
+ * jsTree 0.9
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,10 +7,17 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-10-15
+ * Date: 2008-10-24
  *
  */
 function tree_component () {
+	// instance manager
+	if(!tree_component.inst) {
+		tree_component.inst = new Object();
+		tree_component.focusInst = function () {
+			return tree_component.inst[tree_component.focused];
+		}
+	}
 	return {
 		settings : {
 			data	: {
@@ -73,13 +80,18 @@ function tree_component () {
 				ondblclk	: function(NODE, TREE_OBJ) { TREE_OBJ.toggle_branch.call(TREE_OBJ, NODE); TREE_OBJ.select_branch.call(TREE_OBJ, NODE); },
 				// right click - to prevent use: EV.preventDefault(); EV.stopPropagation(); return false
 				onrgtclk	: function(NODE, TREE_OBJ, EV) { },
-				onload		: function(TREE_OBJ) { }
+				onload		: function(TREE_OBJ) { },
+				onfocus		: function(TREE_OBJ) { }
 			}
 		},
 		// INITIALIZATION
 		init : function(elem, opts) {
 			var _this = this;
 			this.container		= $(elem);
+
+			if(!this.container.attr("id")) this.container.attr("id", "jsTree_" + (tree_component.inst + 1) );
+			tree_component.inst[this.container.attr("id")] = this;
+			tree_component.focused = this.container.attr("id");
 
 			// MERGE OPTIONS WITH DEFAULTS
 			if(opts && opts.cookies) {
@@ -165,6 +177,7 @@ function tree_component () {
 			}
 			this.refresh();
 			this.attachEvents();
+			this.focus();
 		},
 		// REPAINT TREE
 		refresh : function (obj) {
@@ -312,6 +325,13 @@ function tree_component () {
 			}
 			return obj;
 		},
+		focus : function () {
+			if(this.locked) return false
+			if(tree_component.focused != this.container.attr("id")) {
+				tree_component.focused = this.container.attr("id");
+				this.settings.callback.onfocus.call(null, this);
+			}
+		},
 		// ALL EVENTS
 		attachEvents : function () {
 			var _this = this;
@@ -322,6 +342,9 @@ function tree_component () {
 			if(!this.li_height) this.li_height = 18;
 
 			this.container
+				.bind("mouseup", function (event) {
+					_this.focus.apply(_this);
+				})
 				.bind("click", function (event) { 
 					event.stopPropagation(); 
 					return true;
@@ -462,7 +485,15 @@ function tree_component () {
 								var mov = false;
 								var st = cnt.scrollTop();
 
-								if(!_this.settings.rules.multitree && cnt.get(0) != _this.container.get(0)) return false;
+								if(!_this.settings.rules.multitree && cnt.get(0) != _this.container.get(0)) {
+									if($(_this.drag).children("IMG").size() == 0) {
+										$(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
+									}
+									_this.moveType = false;
+									_this.moveRef = false;
+									$("#marker").hide();
+									return false;
+								}
 
 								if(event.target.tagName == "A" ) {
 									var goTo = { 
@@ -492,7 +523,7 @@ function tree_component () {
 										}
 									}
 
-									if(_this.checkMove(_this.container.find("li.dragged"), $(event.target), mov)) {
+									if(tree_component.inst[cnt.attr("id")].checkMove(_this.container.find("li.dragged"), $(event.target), mov)) {
 										if(mov == "inside")	$("#marker").attr("src", _this.path + "images/plus.gif").width(11);
 										else {
 											if(cnt.hasClass("rtl"))	{ $("#marker").attr("src", _this.path + "images/marker_rtl.gif").width(40); }
@@ -1107,7 +1138,8 @@ function tree_component () {
 				else { return force ? this.select_branch(obj.parents("li:eq(0)")) : this.hover_branch(obj.parents("li:eq(0)")); }
 			}
 		},
-		get_left : function(force) {
+		get_left : function(force, rtl) {
+			if(this.settings.ui.rtl && !rtl) return this.get_right(force, true);
 			var obj = this.hovered || this.selected;
 			if(obj) {
 				if(obj.hasClass("open"))	this.close_branch(obj);
@@ -1116,7 +1148,8 @@ function tree_component () {
 				}
 			}
 		},
-		get_right : function(force) {
+		get_right : function(force, rtl) {
+			if(this.settings.ui.rtl && !rtl) return this.get_left(force, true);
 			var obj = this.hovered || this.selected;
 			if(obj) {
 				if(obj.hasClass("closed"))	this.open_branch(obj);
@@ -1171,6 +1204,27 @@ function tree_component () {
 			}
 			else {
 				if(!this.settings.callback.beforemove.call(null,this.get_node(what).get(0), this.get_node(where).get(0),how,this)) return;
+			}
+
+			var tmp = $(where).parents(".tree:eq(0)");
+			// if different trees
+			if(tmp.get(0) != this.container.get(0)) {
+				tmp = tree_component.inst[tmp.attr("id")];
+				// if there are languages - otherwise - no cleanup needed
+				if(this.settings.languages.length) {
+					var res = [];
+					// if new tree has no languages - use current visible
+					if(tmp.settings.languages.length == 0) res.push("." + this.current_lang);
+					else {
+						for(i in this.settings.languages) {
+							for(j in tmp.settings.languages) {
+								if(this.settings.languages[i] == tmp.settings.languages[j]) res.push("." + this.settings.languages[i]);
+							}
+						}
+					}
+					if(res.length == 0) return this.error("MOVE: NO COMMON LANGUAGES");
+					what.find("a").removeClass("clicked").not(res.join(",")).remove();
+				}
 			}
 
 			// ADD NODE TO NEW PLACE

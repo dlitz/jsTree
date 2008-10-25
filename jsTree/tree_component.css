@@ -194,7 +194,8 @@ html:first-child .tree ul {
 	background-position:right 1px; 
 	margin-right:1px;
 }
-.rtl li a:hover {
+.rtl li a:hover, 
+.rtl li a.hover {
 	background-color: #e7f4f9;
 	border:1px solid #d8f0fa;
 	padding:0px 23px 0px 3px !important;
