@@ -16,7 +16,8 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 		background:#ebebeb;
 	}
 	p.buttons {
-		margin:10px auto;
+		margin:0px auto;
+		padding:10px;
 		width:500px;
 	}
 	p.buttons span {
@@ -86,43 +87,25 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 		$(function() {
 			tree1 = new tree_component();
 			tree1.init($("#nested"),{ 
-				data		: "nested.xml", 
-				xsl			: "nested.xsl", 
+				data		: { type : "xml_nested", url : "nested.xml" },
 				dflt		: "#site_24",
-				dots		: true,
+				ui : {
+					dots		: true
+				},
 				languages	: [ "en", "bg" ],
-				//metadata	: "data",
-				metadata	: false,
 				rules		: {
-					//use_inline	: true,
 					use_inline	: false,
 					clickable	: "all",
 					draggable	: "all",
 					dragrules	: "all",
-					deletable	: "none"/*
-					dragrules	: [
-						"folder after folder",
-						"folder before folder",
-						"folder inside folder"
-					]*/
-				},
-				callback	: {
-					onopen		: function(NODE) { },
-					onchange	: function(NODE) { },
-					onbeforechange	: function() { },
-					onrename	: function(NODE) { },
-					onmove		: function(NODE,REF_NODE,TYPE) { },
-					oncreate	: function(NODE,REF_NODE,TYPE) { },
-					onmove		: function(NODE) { },
-					onopen		: function(NODE) { },
-					onclose		: function(NODE) { }
+					deletable	: "none"
 				}
 			});
 
 			tree2 = new tree_component();
 			tree2.init($("#json"),{ 
-				path		: "jsTree/",
-				data		:	{ 
+				path		: "../jsTree/",
+				data		: { type: "json", json : { 
 									attributes: { id : "node_1" , rel : "drive" }, 
 									data: "C:", 
 									icons: "images/hd.png",
@@ -157,13 +140,17 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 											icons: "images/locked.png"
 										}
 									] 
-								},
+								} 
+				},
 				dflt		: "#node_2",
-				dots		: true,
-				rules		: {
+				ui : {
+					dots		: true,
+					rtl			: true
+				},
+				rules : {
 					clickable	: ["folder", "drive"],
 					draggable	: ["folder"],
-					dragrules	: ["folder after folder", "folder before folder", "folder inside folder", "folder after adm", "folder before adm"],
+					dragrules	: ["folder * folder", "folder after adm", "folder before adm"],
 					deletable	: ["folder"]
 				}
 			});

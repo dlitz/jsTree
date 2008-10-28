@@ -1,5 +1,5 @@
 /*
- * jsTree 0.9
+ * jsTree 0.9.1
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,18 +7,20 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-10-24
+ * Date: 2008-10-28
  *
  */
 function tree_component () {
 	// instance manager
-	if(!tree_component.inst) {
-		tree_component.inst = new Object();
+	if(typeof tree_component.inst == "undefined") {
+		tree_component.cntr = 0;
+		tree_component.inst = new Array();
 		tree_component.focusInst = function () {
 			return tree_component.inst[tree_component.focused];
 		}
 	}
 	return {
+		cntr : tree_component.cntr ++,
 		settings : {
 			data	: {
 				type	: "predefined",	// ENUM [json, xml_flat, xml_nested, predefined]
@@ -89,9 +91,10 @@ function tree_component () {
 			var _this = this;
 			this.container		= $(elem);
 
-			if(!this.container.attr("id")) this.container.attr("id", "jsTree_" + (tree_component.inst + 1) );
-			tree_component.inst[this.container.attr("id")] = this;
-			tree_component.focused = this.container.attr("id");
+			tree_component.inst[this.cntr] = this;
+			if(!this.container.attr("id")) this.container.attr("id","jstree_" + this.cntr); 
+			tree_component.inst[this.container.attr("id")] = tree_component.inst[this.cntr];
+			tree_component.focused = this.cntr;
 
 			// MERGE OPTIONS WITH DEFAULTS
 			if(opts && opts.cookies) {
@@ -125,7 +128,7 @@ function tree_component () {
 			if(this.settings.path == false) {
 				this.path = "";
 				$("script").each( function () { 
-					if(this.src.toString().match(/tree_component.js$/)) {
+					if(this.src.toString().match(/tree_component.*?js$/)) {
 						_this.path = this.src.toString().replace("tree_component.js", "");
 					}
 				});
@@ -151,6 +154,7 @@ function tree_component () {
 			if(this.settings.ui.rtl) this.container.addClass("rtl");
 			if(this.settings.rules.multiple) this.selected_arr = [];
 			this.offset = this.container.offset();
+			this.offset.top = this.offset.top + parseInt($.curCSS(this.container.get(0), "paddingTop", true),10) + parseInt($.curCSS(this.container.get(0), "borderTopWidth", true),10);
 			this.container.css({ position : "" });
 			if(this.settings.ui.dots == false) this.container.addClass("no_dots");
 
@@ -327,8 +331,8 @@ function tree_component () {
 		},
 		focus : function () {
 			if(this.locked) return false
-			if(tree_component.focused != this.container.attr("id")) {
-				tree_component.focused = this.container.attr("id");
+			if(tree_component.focused != this.cntr) {
+				tree_component.focused = this.cntr;
 				this.settings.callback.onfocus.call(null, this);
 			}
 		},
@@ -439,8 +443,8 @@ function tree_component () {
 						})
 						.bind("mouseup", function (event) {
 							// CLEAR TIMEOUT FOR OPENING HOVERED NODES WHILE DRAGGING
-							if(_this.to)	clearTimeout(_this.to);
-							if(_this.sto)	clearTimeout(_this.sto);
+							if(tree_component.to)	clearTimeout(tree_component.to);
+							if(tree_component.sto)	clearTimeout(tree_component.sto);
 							if(_this.drag && _this.drag.parentNode && _this.drag.parentNode == $(_this.container).get(0)) {
 								$(_this.drag).remove();
 								// CALL FUNCTION FOR COMPLETING MOVE
@@ -463,29 +467,23 @@ function tree_component () {
 							if(_this.locked) return _this.error("LOCKED");
 							if(_this.isdown) {
 								// CLEAR TIMEOUT FOR OPENING HOVERED NODES WHILE DRAGGING
-								if(_this.to) clearTimeout(_this.to);
+								if(tree_component.to) clearTimeout(tree_component.to);
 								if(!_this.appended) {
 									_this.container.append(_this.drag);
-									_this.po = $(_this.drag).offsetParent();
-									if(_this.po.is("html")) _this.po = $("body");
-									_this.po = _this.po.offset({scroll : false});
+									var tmp = $(_this.drag).offsetParent();
+									if(tmp.is("html")) tmp = $("body");
+									_this.po = tmp.offset();
 									_this.appended = true;
 								}
 								$(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.ui.rtl ? $(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + ($.browser.opera ? _this.container.scrollTop() : 0) + 15) });
 
 								var cnt = $(event.target).parents(".tree:eq(0)");
 								if(cnt.size() == 0) {
-									if(_this.sto) clearTimeout(_this.sto);
+									if(tree_component.sto) clearTimeout(tree_component.sto);
 									return false;
 								}
 
-								if(_this.sto) clearTimeout(_this.sto);
-								_this.sto = setTimeout( function() { _this.scrollCheck(event.pageX,event.pageY, cnt); }, 50);
-
-								var mov = false;
-								var st = cnt.scrollTop();
-
-								if(!_this.settings.rules.multitree && cnt.get(0) != _this.container.get(0)) {
+								if( cnt.get(0) != _this.container.get(0) && (!_this.settings.rules.multitree || !tree_component.inst[cnt.attr("id")].settings.rules.multitree) ) {
 									if($(_this.drag).children("IMG").size() == 0) {
 										$(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
 									}
@@ -495,10 +493,16 @@ function tree_component () {
 									return false;
 								}
 
+								if(tree_component.sto) clearTimeout(tree_component.sto);
+								tree_component.sto = setTimeout( function() { tree_component.inst[cnt.attr("id")].scrollCheck(event.pageX,event.pageY); }, 50);
+
+								var mov = false;
+								var st = cnt.scrollTop();
+
 								if(event.target.tagName == "A" ) {
 									var goTo = { 
-										x : ($(event.target).offset({scroll : false}).left - 1),
-										y : (event.pageY - cnt.offset({scroll : false}).top)
+										x : ($(event.target).offset().left - 1),
+										y : (event.pageY - tree_component.inst[cnt.attr("id")].offset.top)
 									}
 									if(cnt.hasClass("rtl")) {
 										goTo.x += $(event.target).width() - 8;
@@ -519,7 +523,7 @@ function tree_component () {
 										}
 										goTo.y = event.pageY - (goTo.y + st)%_this.li_height + Math.floor(_this.li_height/2) - 2 ;
 										if(_this.get_node(event.target).hasClass("closed")) {
-											_this.to = setTimeout( function () { _this.open_branch(_this.get_node(event.target)); }, 500);
+											tree_component.to = setTimeout( function () { _this.open_branch(_this.get_node(event.target)); }, 500);
 										}
 									}
 
@@ -686,15 +690,10 @@ function tree_component () {
 			else return obj.attr(this.settings.rules.type_attr);
 		},
 		// SCROLL CONTAINER WHILE DRAGGING
-		scrollCheck : function (x,y, cntr) { 
+		scrollCheck : function (x,y) { 
 			var _this = this;
-			if(!cntr) {
-				var cnt = _this.container;
-				var off = _this.offset;
-			} else {
-				var cnt = cntr;
-				var off = cnt.offset({scroll:false});
-			}
+			var cnt = _this.container;
+			var off = _this.offset;
 			// NEAR TOP
 			if(y - off.top < 20) {
 				cnt.scrollTop(Math.max(cnt.scrollTop()-4,0));
@@ -712,7 +711,7 @@ function tree_component () {
 			if(cnt.width() - (x - off.left) < 40) {
 				cnt.scrollLeft(cnt.scrollLeft()+4);
 			}
-			_this.sto = setTimeout( function() { _this.scrollCheck(x,y,cntr); }, 50);
+			tree_component.sto = setTimeout( function() { _this.scrollCheck(x,y); }, 50);
 		},
 		check : function (rule, nodes) {
 			if(this.locked) return this.error("LOCKED");
@@ -758,8 +757,8 @@ function tree_component () {
 			this.hovered.children("a").removeClass("hover").addClass("hover");
 
 			// SCROLL SELECTED NODE INTO VIEW
-			var off_t = this.hovered.offset({ scroll : false }).top;
-			var beg_t = this.container.offset({ scroll : false }).top;
+			var off_t = this.hovered.offset().top;
+			var beg_t = this.container.offset().top;
 			var end_t = beg_t + this.container.height();
 			var h_cor = (this.container.get(0).scrollWidth > this.container.width()) ? 40 : 20;
 			if(off_t + 5 < beg_t) this.container.scrollTop(this.container.scrollTop() - (beg_t - off_t + 5) );
@@ -804,8 +803,8 @@ function tree_component () {
 			this.selected.children("a").removeClass("clicked").addClass("clicked").end().parents("li.closed").each( function () { _this.open_branch(this, true); });
 
 			// SCROLL SELECTED NODE INTO VIEW
-			var off_t = this.selected.offset({ scroll : false }).top;
-			var beg_t = this.container.offset({ scroll : false }).top;
+			var off_t = this.selected.offset().top;
+			var beg_t = this.container.offset().top;
 			var end_t = beg_t + this.container.height();
 			var h_cor = (this.container.get(0).scrollWidth > this.container.width()) ? 40 : 20;
 			if(off_t + 5 < beg_t) this.container.scrollTop(this.container.scrollTop() - (beg_t - off_t + 5) );
@@ -959,11 +958,11 @@ function tree_component () {
 			if(i > this.settings.languages.length - 1) i = 0;
 			this.show_lang(i);
 		},
-		create : function (type, obj) {
+		create : function (type, obj, data, icon ) {
 			if(this.locked) return this.error("LOCKED");
 			// NOTHING SELECTED
 			obj = obj ? this.get_node(obj) : this.selected;
-			if(!obj.size()) return this.error("CREATE: NO NODE SELECTED");
+			if(!obj || !obj.size()) return this.error("CREATE: NO NODE SELECTED");
 			if(!this.check("creatable", obj)) return this.error("CREATE: CANNOT CREATE IN NODE");
 
 			var t = type || this.get_type(obj);
@@ -999,26 +998,37 @@ function tree_component () {
 			else {
 				$li.attr(this.settings.rules.type_attr, t)
 			}
+			var icn = (typeof icon).toLowerCase() == "string" ? icon : "";
 			if(this.settings.languages.length) {
 				for(i = 0; i < this.settings.languages.length; i++) {
-					var val = "New folder";
-					if(this.settings.lang.new_node) {
-						if((typeof this.settings.lang.new_node).toLowerCase() != "string" && this.settings.lang.new_node[i]) val = this.settings.lang.new_node[i];
-						else val = this.settings.lang.new_node;
+					if((typeof data).toLowerCase() == "string") val = data;
+					else if(data && data[i]) {
+						val = data[i];
 					}
-					$li.append("<a href='#' class='" + this.settings.languages[i] + "'>" + val + "</a>");
+					else if(this.settings.lang.new_node) {
+						if((typeof this.settings.lang.new_node).toLowerCase() != "string" && this.settings.lang.new_node[i]) 
+							val = this.settings.lang.new_node[i];
+						else 
+							val = this.settings.lang.new_node;
+					}
+					else {
+						val = "New folder";
+					}
+					if((typeof icon).toLowerCase() != "string" && icon[i]) icn = icon[i];
+
+					$li.append("<a href='#'" + ( icn.length ? " style='background-image:url(\"" + icn + "\");' " : " ") + "class='" + this.settings.languages[i] + "'>" + val + "</a>");
 				}
 			}
-			else { $li.append("<a href='#'>" + (this.settings.lang.new_node || "New folder") + "</a>"); }
+			else { $li.append("<a href='#'" + ( icn.length ? " style='background-image:url(\"" + icn + "\");' " : " ") + ">" + (data || this.settings.lang.new_node || "New folder") + "</a>"); }
 			$li.addClass("leaf");
-			if(this.settings.rules.createat == "top" || this.selected.children("ul").size() == 0) {
+			if(this.settings.rules.createat == "top" || obj.children("ul").size() == 0) {
 				this.moved($li,obj.children("a:eq(0)"),"inside", true);
 			}
 			else {
 				this.moved($li,obj.children("ul:eq(0)").children("li:last").children("a:eq(0)"),"after",true);
 			}
 			this.select_branch($li.children("a:eq(0)"));
-			this.rename();
+			if(!data) this.rename();
 			return $li;
 		},
 		rename : function () {

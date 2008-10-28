@@ -6,11 +6,16 @@ NOTES:
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
 TODO:
+   FEAT: multitree accept from/send to rules; both trees should be enabled
+   FEAT: dragrules "!"
    FEAT: native undo/redo (Rafi B)
    DOCS: background customization
    DOCS: examples & functions
 
 CHANGELOG:
+ v.0.9.1
+   various minor bugs fixed & optimizations
+   create function now accepts value & icon for the newly created node
  v.0.9
    multitree drag & drop - now the receiving tree's dragrules are respected
    multitree language cleanup

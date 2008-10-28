@@ -57,7 +57,7 @@
 	margin:0;
 	padding:0 0;
 	display:block;
-	height:12px;
+	height:12px !important;
 	border:1px solid white;
 	background:white;
 	font-size:10px;
