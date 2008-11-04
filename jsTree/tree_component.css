@@ -73,7 +73,7 @@
 }
 
 /* FOR DOTS */
-.tree ul ul {
+.tree ul {
 	background:url("images/dot.gif") 6px 1px repeat-y;
 }
 .tree li {
@@ -84,7 +84,7 @@
 	background-color:white !important;
 }
 /* NO DOTS */
-.no_dots ul ul {
+.no_dots ul {
 	background:transparent;
 }
 .no_dots li {
@@ -214,7 +214,7 @@ html:first-child .tree ul {
 .rtl li span.clicked {
 	padding:0px 21px 0px 3px !important;
 }
-.rtl ul ul {
+.rtl ul {
 	background:url("images/dot.gif") right 1px repeat-y;
 }
 .rtl li {

@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-10-28
+ * Date: 2008-11-04
  *
  */
 function tree_component () {
@@ -90,6 +90,7 @@ function tree_component () {
 		init : function(elem, opts) {
 			var _this = this;
 			this.container		= $(elem);
+			if(this.container.size == 0) { alert("Invalid container node!"); return }
 
 			tree_component.inst[this.cntr] = this;
 			if(!this.container.attr("id")) this.container.attr("id","jstree_" + this.cntr); 
@@ -129,7 +130,7 @@ function tree_component () {
 				this.path = "";
 				$("script").each( function () { 
 					if(this.src.toString().match(/tree_component.*?js$/)) {
-						_this.path = this.src.toString().replace("tree_component.js", "");
+						_this.path = this.src.toString().replace(/tree_component.*?js$/, "");
 					}
 				});
 			}
@@ -297,12 +298,21 @@ function tree_component () {
 		},
 		// getJSON from HTML
 		getJSON : function (nod, attrib) {
-			if(!nod || $(nod).size() == 0)	nod = this.container.find("li:eq(0)");
-			else							nod = $(nod);
+			var _this = this;
+			if(!nod || $(nod).size() == 0) {
+				nod = this.container.children("ul").children("li");
+			}
+			else nod = $(nod);
+
+			if(nod.size() > 1) {
+				var arr = [];
+				nod.each(function () {
+					arr.push(_this.getJSON(this));
+				});
+				return arr;
+			}
 
 			if(!attrib) attrib = [ "id", "rel", "class" ]
-
-			var _this = this;
 			var obj = { attributes : {}, data : false, icons : false };
 			for(i in attrib) {
 				obj.attributes[attrib[i]] = nod.attr(attrib[i]);
@@ -330,7 +340,7 @@ function tree_component () {
 			return obj;
 		},
 		focus : function () {
-			if(this.locked) return false
+			if(this.locked) return false;
 			if(tree_component.focused != this.cntr) {
 				tree_component.focused = this.cntr;
 				this.settings.callback.onfocus.call(null, this);
