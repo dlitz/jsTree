@@ -87,7 +87,7 @@ var xslTransform = {
 	 * @param xml Mixed the xml data
 	 * @returns Object
 	 */
-	load: function( xml ){
+	load: function( xml, meth ){
 		if(this.debug) jQuery.log( 'load(): received ' + typeof(xml) );
 		// the result
 		var r;
@@ -102,7 +102,7 @@ var xslTransform = {
 		if( xml.substring(0,1) == '<' ){
 			r = this.loadString( xml );
 		}else{
-			r = this.loadFile( xml );
+			r = this.loadFile( xml , meth );
 		}
 
 		if( r ){
@@ -144,7 +144,7 @@ var xslTransform = {
 	 * @param url Mixed
 	 * @returns Object
 	 */
-	loadFile: function( url ){
+	loadFile: function( url, meth ){
 		if(this.debug) jQuery.log( 'loadFile(): ' + url + '::' + typeof(url) );
 
 		if( !url ){
@@ -170,8 +170,9 @@ var xslTransform = {
 		};
 
 		// make asynchronous ajax call and call functions defined above on success/error
+		if(!meth) meth = "GET";
 		$.ajax({
-			type:		'GET',
+			type:		meth,
 			url:		url,
 			async:		false,
 			success:	this.xhrsuccess,
@@ -213,7 +214,7 @@ var xslTransform = {
 		options = options || {};
 
 		// initialize the xml object and store it in xml.doc
-		var xml = { 'request':xml, 'doc':this.load(xml) };
+		var xml = { 'request':xml, 'doc':this.load(xml, options.meth) };
 		// if we have an xpath, replace xml.doc with the results of running it
 		// as of 2007-12-03, IE throws a "msxml6: the parameter is incorrect" error, so removing this
 		if( options.xpath && xml.doc && !jQuery.browser.msie ){
@@ -223,7 +224,7 @@ var xslTransform = {
 		}
 
 		// initialize the result object ... store the primary steps of the transform in result
-		var result = { 'xsl':this.load(xsl) };
+		var result = { 'xsl':this.load(xsl, options.meth) };
 
 		result.json = false;
 		if( options.json && xml.doc ) {
@@ -293,7 +294,8 @@ jQuery.fn.getTransform = function( xsl, xml, options ){
 		xpath: '',		// xpath, used to send only a portion of the XML file to the XSL stylesheet
 		eval: true,		// evaluate <script> blocks found in the transformed result
 		callback: '',	// callback function, to be run on completion of the transformation
-		json: false
+		json: false,
+		meth : "GET"
 	};
 	// initialize options hash; override the defaults with supplied options
 	jQuery.extend( settings, options );

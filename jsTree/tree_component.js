@@ -1,5 +1,5 @@
 /*
- * jsTree 0.9.1
+ * jsTree 0.9.2
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-11-04
+ * Date: 2008-11-12
  *
  */
 function tree_component () {
@@ -24,11 +24,13 @@ function tree_component () {
 		settings : {
 			data	: {
 				type	: "predefined",	// ENUM [json, xml_flat, xml_nested, predefined]
+				method	: "GET",		// HOW TO REQUEST FILES
 				async	: false,		// BOOL - async loading onopen
+				async_data : function (NODE) { return { id : $(NODE).attr("id") } }, // PARAMETERS PASSED TO SERVER
 				url		: false,		// FALSE or STRING - url to document to be used (async or not)
 				json	: false			// FALSE or OBJECT if type is JSON and async is false - the tree dump as json
 			},
-			dflt		: false,		// FALSE or STRING 
+			dflt		: false,		// FALSE or STRING or ARRAY
 			languages	: [],			// ARRAY of string values (which will be used as CSS classes - si they must be valid)
 			path		: false,		// FALSE or STRING (if false - will be autodetected)
 			cookies		: false,		// FALSE or OBJECT (prefix, opts - from jqCookie - expires, path, domain, secure)
@@ -188,8 +190,17 @@ function tree_component () {
 		refresh : function (obj) {
 			if(this.locked) return this.error("LOCKED");
 			var _this = this;
+
+			this.opened = Array();
 			// SAVE SELECTED
-			this.settings.dflt = (this.selected) ? "#" + this.selected.attr("id") : this.settings.dflt;
+			if((typeof this.settings.dflt).toLowerCase() == "object") {
+				this.opened = this.settings.dflt;
+				this.settings.dflt = "#" + this.opened.pop().replace(/^#/,"");
+				for(var i = 0; i < this.opened.length; i ++) this.opened[i] = this.opened[i].replace(/^#/,"");
+			}
+			else {
+				this.settings.dflt = (this.selected) ? "#" + this.selected.attr("id") : this.settings.dflt;
+			}
 			if(this.settings.cookies) {
 				var str = $.cookie(this.settings.cookies.prefix + '_selected');
 				if(str) this.settings.dflt = "#" + str;
@@ -204,12 +215,13 @@ function tree_component () {
 				return this.open_branch(obj, true, function () { _this.reselect.apply(_this); });
 			}
 
-			this.opened = Array();
 			if(this.settings.cookies) {
 				var str = $.cookie(this.settings.cookies.prefix + '_open');
-				if(str && str.length)	str = str.split(",");
-				else					str = [];
-				if(str.length) this.opened = str;
+				if(str) {
+					if(str.length)	str = str.split(",");
+					else			str = [];
+					if(str.length)	this.opened = str;
+				}
 			}
 			else {
 				this.container.find("li.open").each(function (i) { _this.opened.push(this.id); });
@@ -218,7 +230,7 @@ function tree_component () {
 			if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 				this.scrtop = this.container.get(0).scrollTop;
 				var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
-				this.container.getTransform(this.path + xsl, this.settings.data.url, { callback: function () { _this.reselect.apply(_this); } });
+				this.container.getTransform(this.path + xsl, this.settings.data.url, { meth : _this.settings.data.method ,callback: function () { _this.reselect.apply(_this); } });
 				return;
 			}
 			else if(this.settings.data.type == "json") {
@@ -236,17 +248,23 @@ function tree_component () {
 				}
 				else {
 					var _this = this;
-					$.getJSON(this.settings.data.url, { id : 0 }, function (data) {
-						var str = "";
-						if(data.length) {
-							for(var i = 0; i < data.length; i++) {
-								str += _this.parseJSON(data[i]);
-							}
-						} else str = _this.parseJSON(data);
-						_this.container.html("<ul>" + str + "</ul>");
-						_this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
-						_this.container.find("li").not(".open").not(".closed").addClass("leaf");
-						_this.reselect.apply(_this);
+					$.ajax({
+						type		: this.settings.data.method,
+						url			: this.settings.data.url, 
+						data		: this.settings.data.async_data(false), 
+						dataType	: "json",
+						success		: function (data) {
+							var str = "";
+							if(data.length) {
+								for(var i = 0; i < data.length; i++) {
+									str += _this.parseJSON(data[i]);
+								}
+							} else str = _this.parseJSON(data);
+							_this.container.html("<ul>" + str + "</ul>");
+							_this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
+							_this.container.find("li").not(".open").not(".closed").addClass("leaf");
+							_this.reselect.apply(_this);
+						} 
 					});
 				}
 			}
@@ -864,7 +882,7 @@ function tree_component () {
 				if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 					var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
 					var str = (this.settings.data.url.indexOf("?") == -1) ? "?id=" + encodeURIComponent(obj.attr("id")) : "&id=" + encodeURIComponent(obj.attr("id"));
-					obj.children("ul:eq(0)").getTransform(this.path + xsl, this.settings.data.url + str, { repl : true, callback: function (str, json) { 
+					obj.children("ul:eq(0)").getTransform(this.path + xsl, this.settings.data.url + str, { meth : this.settings.data.method, repl : true, callback: function (str, json) { 
 							if(str.length < 10) {
 								obj.removeClass("closed").removeClass("open").addClass("leaf").children("ul").remove();
 								if(callback) callback.call();
@@ -876,24 +894,30 @@ function tree_component () {
 					});
 				}
 				else {
-					$.getJSON(this.settings.data.url, { id : obj.attr("id") }, function (data, textStatus) {
-						if(!data || data.length == 0) {
-							obj.removeClass("closed").removeClass("open").addClass("leaf").children("ul").remove();
-							if(callback) callback.call();
-							return;
-						}
-						var str = "";
-						if(data.length) {
-							for(var i = 0; i < data.length; i++) {
-								str += _this.parseJSON(data[i]);
+					$.ajax({
+						type		: this.settings.data.method,
+						url			: this.settings.data.url, 
+						data		: this.settings.data.async_data(obj), 
+						dataType	: "json",
+						success		: function (data, textStatus) {
+							if(!data || data.length == 0) {
+								obj.removeClass("closed").removeClass("open").addClass("leaf").children("ul").remove();
+								if(callback) callback.call();
+								return;
 							}
+							var str = "";
+							if(data.length) {
+								for(var i = 0; i < data.length; i++) {
+									str += _this.parseJSON(data[i]);
+								}
+							}
+							else str = _this.parseJSON(data);
+							obj.children("ul:eq(0)").replaceWith("<ul>" + str + "</ul>");
+							obj.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
+							obj.find("li").not(".open").not(".closed").addClass("leaf");
+							_this.open_branch.apply(_this, [obj]);
+							if(callback) callback.call();
 						}
-						else str = _this.parseJSON(data);
-						obj.children("ul:eq(0)").replaceWith("<ul>" + str + "</ul>");
-						obj.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
-						obj.find("li").not(".open").not(".closed").addClass("leaf");
-						_this.open_branch.apply(_this, [obj]);
-						if(callback) callback.call();
 					});
 				}
 				return true;

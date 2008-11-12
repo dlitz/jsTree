@@ -6,13 +6,18 @@ NOTES:
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
 TODO:
-   FEAT: multitree accept from/send to rules; both trees should be enabled
+   BUG:  multiselect in dflt, multiselect when refresh (if no cookie)
+   FEAT: multitree accept from/send to rules
    FEAT: dragrules "!"
    FEAT: native undo/redo (Rafi B)
-   DOCS: background customization
-   DOCS: examples & functions
 
 CHANGELOG:
+ v.0.9.2
+   async_data added in settings.data
+     - a function to return an object that will be passed to the server in async mode
+   method added in settings.data - set all requests to GET or POST
+   settings.dflt can now be an array - if so the array is parsed onload and all the node IDs in are opened and the last is selected
+   !NOTE that if you use the cookie functionality this opening will happen only on the first load (which is also the correct behaviour)
  v.0.9.1
    various minor bugs fixed & optimizations
    create function now accepts value & icon for the newly created node
