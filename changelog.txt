@@ -7,12 +7,16 @@ NOTES:
 
 TODO:
    BUG:  multiselect in dflt, multiselect when refresh (if no cookie)
+   FEAT: jQuery plugin mode
    FEAT: multitree accept from/send to rules
-   FEAT: dragrules "!"
-   FEAT: native undo/redo (Rafi B)
 
 CHANGELOG:
  v.0.9.2
+   negation dragrules - begin with "!" (order is respected)
+   drag various nodes on the tree (settings.rules.droppable)
+   jQuery compatible mode (all $ are now jQuery)
+   fixed remove bug when a node appears as selected but isn't (by nomen)
+   fixed create bug when passing a name for the new node and the parent node is closed (by Oliver)
    async_data added in settings.data
      - a function to return an object that will be passed to the server in async mode
    method added in settings.data - set all requests to GET or POST

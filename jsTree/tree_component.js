@@ -26,7 +26,7 @@ function tree_component () {
 				type	: "predefined",	// ENUM [json, xml_flat, xml_nested, predefined]
 				method	: "GET",		// HOW TO REQUEST FILES
 				async	: false,		// BOOL - async loading onopen
-				async_data : function (NODE) { return { id : $(NODE).attr("id") } }, // PARAMETERS PASSED TO SERVER
+				async_data : function (NODE) { return { id : jQuery(NODE).attr("id") } }, // PARAMETERS PASSED TO SERVER
 				url		: false,		// FALSE or STRING - url to document to be used (async or not)
 				json	: false			// FALSE or OBJECT if type is JSON and async is false - the tree dump as json
 			},
@@ -53,7 +53,8 @@ function tree_component () {
 				creatable	: "all",	// which node types can the user create in | default - all
 				draggable	: "none",	// which node types can the user move | default - none | "all"
 				dragrules	: "none",	// what move operations between nodes are allowed | default - none | "all"
-				drag_copy	: false		// FALSE | CTRL | ON - drag to copy off/ with or without holding Ctrl
+				drag_copy	: false,	// FALSE | CTRL | ON - drag to copy off/ with or without holding Ctrl
+				droppable	: []
 			},
 			lang : {
 				new_node	: "New folder",
@@ -85,13 +86,14 @@ function tree_component () {
 				// right click - to prevent use: EV.preventDefault(); EV.stopPropagation(); return false
 				onrgtclk	: function(NODE, TREE_OBJ, EV) { },
 				onload		: function(TREE_OBJ) { },
-				onfocus		: function(TREE_OBJ) { }
+				onfocus		: function(TREE_OBJ) { },
+				ondrop		: function(NODE,REF_NODE,TYPE,TREE_OBJ) {}
 			}
 		},
 		// INITIALIZATION
 		init : function(elem, opts) {
 			var _this = this;
-			this.container		= $(elem);
+			this.container		= jQuery(elem);
 			if(this.container.size == 0) { alert("Invalid container node!"); return }
 
 			tree_component.inst[this.cntr] = this;
@@ -101,36 +103,36 @@ function tree_component () {
 
 			// MERGE OPTIONS WITH DEFAULTS
 			if(opts && opts.cookies) {
-				this.settings.cookies = $.extend({},this.settings.cookies,opts.cookies);
+				this.settings.cookies = jQuery.extend({},this.settings.cookies,opts.cookies);
 				delete opts.cookies;
 				if(!this.settings.cookies.opts) this.settings.cookies.opts = {};
 			}
 			if(opts && opts.callback) {
-				this.settings.callback = $.extend({},this.settings.callback,opts.callback);
+				this.settings.callback = jQuery.extend({},this.settings.callback,opts.callback);
 				delete opts.callback;
 			}
 			if(opts && opts.data) {
-				this.settings.data = $.extend({},this.settings.data,opts.data);
+				this.settings.data = jQuery.extend({},this.settings.data,opts.data);
 				delete opts.data;
 			}
 			if(opts && opts.ui) {
-				this.settings.ui = $.extend({},this.settings.ui,opts.ui);
+				this.settings.ui = jQuery.extend({},this.settings.ui,opts.ui);
 				delete opts.ui;
 			}
 			if(opts && opts.rules) {
-				this.settings.rules = $.extend({},this.settings.rules,opts.rules);
+				this.settings.rules = jQuery.extend({},this.settings.rules,opts.rules);
 				delete opts.rules;
 			}
 			if(opts && opts.lang) {
-				this.settings.lang = $.extend({},this.settings.lang,opts.lang);
+				this.settings.lang = jQuery.extend({},this.settings.lang,opts.lang);
 				delete opts.lang;
 			}
-			this.settings		= $.extend({},this.settings,opts);
+			this.settings		= jQuery.extend({},this.settings,opts);
 
 			// PATH TO IMAGES AND XSL
 			if(this.settings.path == false) {
 				this.path = "";
-				$("script").each( function () { 
+				jQuery("script").each( function () { 
 					if(this.src.toString().match(/tree_component.*?js$/)) {
 						_this.path = this.src.toString().replace(/tree_component.*?js$/, "");
 					}
@@ -157,7 +159,7 @@ function tree_component () {
 			if(this.settings.ui.rtl) this.container.addClass("rtl");
 			if(this.settings.rules.multiple) this.selected_arr = [];
 			this.offset = this.container.offset();
-			this.offset.top = this.offset.top + parseInt($.curCSS(this.container.get(0), "paddingTop", true),10) + parseInt($.curCSS(this.container.get(0), "borderTopWidth", true),10);
+			this.offset.top = this.offset.top + parseInt(jQuery.curCSS(this.container.get(0), "paddingTop", true),10) + parseInt(jQuery.curCSS(this.container.get(0), "borderTopWidth", true),10);
 			this.container.css({ position : "" });
 			if(this.settings.ui.dots == false) this.container.addClass("no_dots");
 
@@ -167,7 +169,7 @@ function tree_component () {
 			// CREATE DUMMY FOR MOVING
 			if(this.settings.rules.draggable != "none" && this.settings.rules.dragrules != "none") {
 				var _this = this;
-				$("<img>")
+				jQuery("<img>")
 					.attr({
 						id		: "marker", 
 						src	: _this.path + "images/marker.gif" 
@@ -202,7 +204,7 @@ function tree_component () {
 				this.settings.dflt = (this.selected) ? "#" + this.selected.attr("id") : this.settings.dflt;
 			}
 			if(this.settings.cookies) {
-				var str = $.cookie(this.settings.cookies.prefix + '_selected');
+				var str = jQuery.cookie(this.settings.cookies.prefix + '_selected');
 				if(str) this.settings.dflt = "#" + str;
 			}
 
@@ -216,7 +218,7 @@ function tree_component () {
 			}
 
 			if(this.settings.cookies) {
-				var str = $.cookie(this.settings.cookies.prefix + '_open');
+				var str = jQuery.cookie(this.settings.cookies.prefix + '_open');
 				if(str) {
 					if(str.length)	str = str.split(",");
 					else			str = [];
@@ -248,7 +250,7 @@ function tree_component () {
 				}
 				else {
 					var _this = this;
-					$.ajax({
+					jQuery.ajax({
 						type		: this.settings.data.method,
 						url			: this.settings.data.url, 
 						data		: this.settings.data.async_data(false), 
@@ -317,10 +319,10 @@ function tree_component () {
 		// getJSON from HTML
 		getJSON : function (nod, attrib) {
 			var _this = this;
-			if(!nod || $(nod).size() == 0) {
+			if(!nod || jQuery(nod).size() == 0) {
 				nod = this.container.children("ul").children("li");
 			}
-			else nod = $(nod);
+			else nod = jQuery(nod);
 
 			if(nod.size() > 1) {
 				var arr = [];
@@ -427,7 +429,38 @@ function tree_component () {
 
 				// ATTACH DRAG & DROP ONLY IF NEEDED
 				if(this.settings.rules.draggable != "none" && this.settings.rules.dragrules != "none") {
-					$(this.container)
+					if(_this.settings.rules.droppable.length > 0) {
+						jQuery(document)
+							.listen("mousedown", "." + _this.settings.rules.droppable.join(", ."), function (event) {
+								if(_this.locked) return _this.error("LOCKED");
+								var tmp = jQuery(event.target);
+								var t = false;
+								for(var i = 0; i < _this.settings.rules.droppable.length; i++) {
+									if(tmp.hasClass(_this.settings.rules.droppable[i])) {
+										t = _this.settings.rules.droppable[i];
+										break;
+									}
+								}
+								if(t === false) return;
+								_this.drag		= jQuery("<li id='dragged' class='dragged'><a href='#'>" + tmp.text() + "</a></li>");
+								// NEW NODE IS OF PASSED TYPE OR PARENT'S TYPE
+								if(_this.settings.rules.metadata) {
+									jQuery.metadata.setType("attr", _this.settings.rules.metadata);
+									_this.drag.attr(this.settings.rules.metadata, "type: '" + t + "'");
+								}
+								else {
+									_this.drag.attr(_this.settings.rules.type_attr, t);
+								}
+								_this._drag = _this.drag;
+								_this.isdown	= true;
+								_this.foreign	= tmp;
+								tmp.blur();
+								event.preventDefault(); 
+								event.stopPropagation();
+								return false;
+							});
+					}
+					jQuery(this.container)
 						.listen("mousedown", "a", function (event) {
 							if(_this.locked) return _this.error("LOCKED");
 							// SELECT LIST ITEM NODE
@@ -447,7 +480,7 @@ function tree_component () {
 									_this.isdown	= true;
 									_this.drag		= _this._drag.get(0).cloneNode(true);
 									_this.drag.id	= "dragged";
-									$(_this.drag).children("a").html("Multiple selection").end().children("ul").remove();
+									jQuery(_this.drag).children("a").html("Multiple selection").end().children("ul").remove();
 								}
 							}
 							else {
@@ -456,6 +489,7 @@ function tree_component () {
 									_this.drag		= obj.get(0).cloneNode(true);
 									_this.drag.id	= "dragged";
 									_this.isdown	= true;
+									_this.foreign	= false;
 									obj.addClass("dragged");
 								}
 							}
@@ -464,7 +498,7 @@ function tree_component () {
 							event.stopPropagation();
 							return false;
 						});
-					$(document)
+					jQuery(document)
 						.bind("mousedown", function (event) {
 							event.stopPropagation();
 							return true;
@@ -473,15 +507,22 @@ function tree_component () {
 							// CLEAR TIMEOUT FOR OPENING HOVERED NODES WHILE DRAGGING
 							if(tree_component.to)	clearTimeout(tree_component.to);
 							if(tree_component.sto)	clearTimeout(tree_component.sto);
-							if(_this.drag && _this.drag.parentNode && _this.drag.parentNode == $(_this.container).get(0)) {
-								$(_this.drag).remove();
+							if(_this.foreign === false && _this.drag && _this.drag.parentNode && _this.drag.parentNode == jQuery(_this.container).get(0)) {
+								jQuery(_this.drag).remove();
 								// CALL FUNCTION FOR COMPLETING MOVE
 								if(_this.moveType) _this.moved(_this.container.find("li.dragged"), _this.moveRef, _this.moveType, false, (_this.settings.rules.drag_copy == "on" || (_this.settings.rules.drag_copy == "ctrl" && event.ctrlKey) ) );
 								_this.moveType = false;
 								_this.moveRef = false;
 							}
+							if(_this.drag && _this.foreign !== false) {
+								_this.drag.remove();
+								if(_this.moveType) _this.settings.callback.ondrop.call(null, _this.foreign.get(0), _this.get_node( _this.moveRef).get(0), _this.moveType, _this);
+								_this.foreign	= false;
+								_this.moveType = false;
+								_this.moveRef = false;
+							}
 							// RESET EVERYTHING
-							$("#marker").hide();
+							jQuery("#marker").hide();
 							_this._drag		= false;
 							_this.drag		= false;
 							_this.isdown	= false;
@@ -498,26 +539,26 @@ function tree_component () {
 								if(tree_component.to) clearTimeout(tree_component.to);
 								if(!_this.appended) {
 									_this.container.append(_this.drag);
-									var tmp = $(_this.drag).offsetParent();
-									if(tmp.is("html")) tmp = $("body");
+									var tmp = jQuery(_this.drag).offsetParent();
+									if(tmp.is("html")) tmp = jQuery("body");
 									_this.po = tmp.offset();
 									_this.appended = true;
 								}
-								$(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.ui.rtl ? $(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + ($.browser.opera ? _this.container.scrollTop() : 0) + 15) });
+								jQuery(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.ui.rtl ? jQuery(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + (jQuery.browser.opera ? _this.container.scrollTop() : 0) + 15) });
 
-								var cnt = $(event.target).parents(".tree:eq(0)");
+								var cnt = jQuery(event.target).parents(".tree:eq(0)");
 								if(cnt.size() == 0) {
 									if(tree_component.sto) clearTimeout(tree_component.sto);
 									return false;
 								}
 
-								if( cnt.get(0) != _this.container.get(0) && (!_this.settings.rules.multitree || !tree_component.inst[cnt.attr("id")].settings.rules.multitree) ) {
-									if($(_this.drag).children("IMG").size() == 0) {
-										$(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
+								if( _this.foreign === false && cnt.get(0) != _this.container.get(0) && (!_this.settings.rules.multitree || !tree_component.inst[cnt.attr("id")].settings.rules.multitree) ) {
+									if(jQuery(_this.drag).children("IMG").size() == 0) {
+										jQuery(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
 									}
 									_this.moveType = false;
 									_this.moveRef = false;
-									$("#marker").hide();
+									jQuery("#marker").hide();
 									return false;
 								}
 
@@ -529,11 +570,11 @@ function tree_component () {
 
 								if(event.target.tagName == "A" ) {
 									var goTo = { 
-										x : ($(event.target).offset().left - 1),
+										x : (jQuery(event.target).offset().left - 1),
 										y : (event.pageY - tree_component.inst[cnt.attr("id")].offset.top)
 									}
 									if(cnt.hasClass("rtl")) {
-										goTo.x += $(event.target).width() - 8;
+										goTo.x += jQuery(event.target).width() - 8;
 									}
 									if( (goTo.y + st)%_this.li_height < _this.li_height/3 + 1 ) {
 										mov = "before";
@@ -555,24 +596,24 @@ function tree_component () {
 										}
 									}
 
-									if(tree_component.inst[cnt.attr("id")].checkMove(_this.container.find("li.dragged"), $(event.target), mov)) {
-										if(mov == "inside")	$("#marker").attr("src", _this.path + "images/plus.gif").width(11);
+									if(tree_component.inst[cnt.attr("id")].checkMove(_this.container.find("li.dragged"), jQuery(event.target), mov)) {
+										if(mov == "inside")	jQuery("#marker").attr("src", _this.path + "images/plus.gif").width(11);
 										else {
-											if(cnt.hasClass("rtl"))	{ $("#marker").attr("src", _this.path + "images/marker_rtl.gif").width(40); }
-											else					{ $("#marker").attr("src", _this.path + "images/marker.gif").width(40); }
+											if(cnt.hasClass("rtl"))	{ jQuery("#marker").attr("src", _this.path + "images/marker_rtl.gif").width(40); }
+											else					{ jQuery("#marker").attr("src", _this.path + "images/marker.gif").width(40); }
 										}
 										_this.moveType	= mov;
 										_this.moveRef	= event.target;
-										$(_this.drag).children("IMG").remove();
-										$("#marker").css({ "left" : goTo.x , "top" : goTo.y }).show();
+										jQuery(_this.drag).children("IMG").remove();
+										jQuery("#marker").css({ "left" : goTo.x , "top" : goTo.y }).show();
 									}
 									else {
-										if($(_this.drag).children("IMG").size() == 0) {
-											$(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
+										if(jQuery(_this.drag).children("IMG").size() == 0) {
+											jQuery(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
 										}
 										_this.moveType = false;
 										_this.moveRef = false;
-										$("#marker").hide();
+										jQuery("#marker").hide();
 									}
 								}
 								else if(event.target.tagName == "IMG" && event.target.id == "marker") {
@@ -581,7 +622,7 @@ function tree_component () {
 								else {
 									_this.moveType = false;
 									_this.moveRef = false;
-									$("#marker").hide();
+									jQuery("#marker").hide();
 								}
 								event.preventDefault();
 								event.stopPropagation();
@@ -614,7 +655,7 @@ function tree_component () {
 						var ref = REF_NODE;
 						var mv = TYPE;
 					}
-					if(!_this.check.apply(_this,["dragrules", [$(this), mv, ref]])) ok = false;
+					if(!_this.check.apply(_this,["dragrules", [jQuery(this), mv, ref]])) ok = false;
 				});
 				if(ok == false) return this.error("MOVE: AGAINST DRAG RULES");
 			}
@@ -630,7 +671,7 @@ function tree_component () {
 						var ok = true;
 						NODES.each(function (i) {
 							if(ok == false) return false;
-							if($.inArray(_this.get_type(this), tmp) == -1) ok = false;
+							if(jQuery.inArray(_this.get_type(this), tmp) == -1) ok = false;
 						});
 						if(ok == false) return this.error("MOVE: NOT A VALID CHILD");
 					}
@@ -642,7 +683,7 @@ function tree_component () {
 					var incr = 0;
 					NODES.each(function (i) {
 						var i = 1;
-						var t = $(this);
+						var t = jQuery(this);
 						while(i < 100) {
 							t = t.children("ul:eq(0)");
 							if(t.size() == 0) break;
@@ -653,8 +694,8 @@ function tree_component () {
 					var ok = true;
 					nd.parents("li").each(function(i) {
 						if(ok == false) return false;
-						if($(this).metadata().max_depth) {
-							if( (i + incr) >= $(this).metadata().max_depth) ok = false;
+						if(jQuery(this).metadata().max_depth) {
+							if( (i + incr) >= jQuery(this).metadata().max_depth) ok = false;
 						}
 					});
 					if(ok == false) return this.error("MOVE: MAX_DEPTH REACHED");
@@ -695,8 +736,8 @@ function tree_component () {
 					this.select_branch("#" + tmp[i].attr("id"), true);
 				}
 			}
-			else if(this.settings.dflt && $(this.settings.dflt).size() == 1) {
-				this.selected		= $(this.settings.dflt);
+			else if(this.settings.dflt && jQuery(this.settings.dflt).size() == 1) {
+				this.selected		= jQuery(this.settings.dflt);
 				this.settings.dflt	= false;
 				this.select_branch(this.selected);
 			}
@@ -704,7 +745,7 @@ function tree_component () {
 		},
 		// GET THE EXTENDED LI ELEMENT
 		get_node : function (obj) {
-			var obj = $(obj);
+			var obj = jQuery(obj);
 			return obj.is("li") ? obj : obj.parents("li:eq(0)");
 		},
 		// GET THE TYPE OF THE NODE
@@ -712,7 +753,7 @@ function tree_component () {
 			obj = !obj ? this.selected : this.get_node(obj);
 			if(!obj) return;
 			if(this.settings.rules.metadata) {
-				$.metadata.setType("attr", this.settings.rules.metadata);
+				jQuery.metadata.setType("attr", this.settings.rules.metadata);
 				return obj.metadata().type;
 			} 
 			else return obj.attr(this.settings.rules.type_attr);
@@ -745,7 +786,7 @@ function tree_component () {
 			if(this.locked) return this.error("LOCKED");
 			// CHECK LOCAL RULES IF METADATA
 			if(rule != "dragrules" && this.settings.rules.use_inline && this.settings.rules.metadata) {
-				$.metadata.setType("attr", this.settings.rules.metadata);
+				jQuery.metadata.setType("attr", this.settings.rules.metadata);
 				if(typeof this.get_node(nodes).metadata()[rule] != "undefined") return this.get_node(nodes).metadata()[rule];
 			}
 			if(!this.settings.rules[rule])			return false;
@@ -757,16 +798,19 @@ function tree_component () {
 				nds[1] = nodes[1];
 				nds[2] = this.get_type(nodes[2]);
 				for(var i = 0; i < this.settings.rules.dragrules.length; i++) {
-					var tmp = this.settings.rules.dragrules[i].split(" ");
+					var r = this.settings.rules.dragrules[i];
+					var n = (r.indexOf("!") === 0) ? false : true;
+					if(!n) r = r.replace("!","");
+					var tmp = r.split(" ");
 					for(var j = 0; j < 3; j++) {
 						if(tmp[j] == nds[j] || tmp[j] == "*") tmp[j] = true;
 					}
-					if(tmp[0] === true && tmp[1] === true && tmp[2] === true) return true;
+					if(tmp[0] === true && tmp[1] === true && tmp[2] === true) return n;
 				}
 				return false;
 			}
 			else 
-				return ($.inArray(this.get_type(nodes),this.settings.rules[rule]) != -1) ? true : false;
+				return (jQuery.inArray(this.get_type(nodes),this.settings.rules[rule]) != -1) ? true : false;
 		},
 		hover_branch : function (obj) {
 			if(this.locked) return this.error("LOCKED");
@@ -849,7 +893,7 @@ function tree_component () {
 			if(this.settings.rules.multiple != false && this.selected_arr.length > 1) {
 				this.selected_arr = [];
 				this.container.find("a.clicked").filter(":first-child").parent().each(function () {
-					_this.selected_arr.push($(this));
+					_this.selected_arr.push(jQuery(this));
 				});
 				if(obj.get(0) == this.selected.get(0)) {
 					this.selected = this.selected_arr[0];
@@ -894,7 +938,7 @@ function tree_component () {
 					});
 				}
 				else {
-					$.ajax({
+					jQuery.ajax({
 						type		: this.settings.data.method,
 						url			: this.settings.data.url, 
 						data		: this.settings.data.async_data(obj), 
@@ -923,11 +967,11 @@ function tree_component () {
 				return true;
 			}
 			else {
-				if(parseInt(this.settings.ui.animation) > 0 && !disable_animation && !($.browser.msie && $.browser.version < 7) ) {
+				if(parseInt(this.settings.ui.animation) > 0 && !disable_animation && !(jQuery.browser.msie && jQuery.browser.version < 7) ) {
 					obj.children("ul:eq(0)").css("display","none");
 					obj.removeClass("closed").addClass("open");
 					obj.children("ul:eq(0)").slideDown(parseInt(this.settings.ui.animation), function() {
-						$(this).css("display","");
+						jQuery(this).css("display","");
 						if(callback) callback.call();
 					});
 				} else {
@@ -943,11 +987,11 @@ function tree_component () {
 			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			var obj = this.get_node(obj);
-			if(parseInt(this.settings.ui.animation) > 0 && !disable_animation && !($.browser.msie && $.browser.version < 7) && obj.children("ul:eq(0)").size() == 1) {
+			if(parseInt(this.settings.ui.animation) > 0 && !disable_animation && !(jQuery.browser.msie && jQuery.browser.version < 7) && obj.children("ul:eq(0)").size() == 1) {
 				obj.children("ul:eq(0)").slideUp(parseInt(this.settings.ui.animation), function() {
 					obj.removeClass("open").addClass("closed");
 					_this.set_cookie("open");
-					$(this).css("display","");
+					jQuery(this).css("display","");
 				});
 			} 
 			else {
@@ -965,13 +1009,13 @@ function tree_component () {
 		open_all : function (obj) {
 			if(this.locked) return this.error("LOCKED");
 			var _this = this;
-			obj = obj ? $(obj) : this.container;
+			obj = obj ? jQuery(obj) : this.container;
 			obj.find("li.closed").each( function () { var __this = this; _this.open_branch.apply(_this, [this, true, function() { _this.open_all.apply(_this, [__this]); } ]); });
 		},
 		close_all : function () {
 			if(this.locked) return this.error("LOCKED");
 			var _this = this;
-			$(this.container).find("li.open").each( function () { _this.close_branch(this); });
+			jQuery(this.container).find("li.open").each( function () { _this.close_branch(this); });
 		},
 		show_lang : function (i) { 
 			if(this.locked) return this.error("LOCKED");
@@ -987,7 +1031,7 @@ function tree_component () {
 		},
 		cycle_lang : function() {
 			if(this.locked) return this.error("LOCKED");
-			var i = $.inArray(this.current_lang, this.settings.languages);
+			var i = jQuery.inArray(this.current_lang, this.settings.languages);
 			i ++;
 			if(i > this.settings.languages.length - 1) i = 0;
 			this.show_lang(i);
@@ -1001,17 +1045,17 @@ function tree_component () {
 
 			var t = type || this.get_type(obj);
 			if(this.settings.rules.use_inline && this.settings.rules.metadata) {
-				$.metadata.setType("attr", this.settings.rules.metadata);
+				jQuery.metadata.setType("attr", this.settings.rules.metadata);
 				if(typeof obj.metadata()["valid_children"] != "undefined") {
-					if($.inArray(t, obj.metadata()["valid_children"]) == -1) return this.error("CREATE: NODE NOT A VALID CHILD");
+					if(jQuery.inArray(t, obj.metadata()["valid_children"]) == -1) return this.error("CREATE: NODE NOT A VALID CHILD");
 				}
 				if(typeof obj.metadata()["max_children"] != "undefined") {
 					if( (obj.children("ul:eq(0)").children("li").size() + 1) > obj.metadata().max_children) return this.error("CREATE: MAX_CHILDREN REACHED");
 				}
 				var ok = true;
 				obj.parents("li").each(function(i) {
-					if($(this).metadata().max_depth) {
-						if( (i + 1) >= $(this).metadata().max_depth) {
+					if(jQuery(this).metadata().max_depth) {
+						if( (i + 1) >= jQuery(this).metadata().max_depth) {
 							ok = false;
 						}
 					}
@@ -1020,13 +1064,13 @@ function tree_component () {
 			}
 			if(obj.hasClass("closed")) {
 				var _this = this;
-				return this.open_branch(obj, true, function () { _this.create.apply(_this, [type, obj]); } );
+				return this.open_branch(obj, true, function () { _this.create.apply(_this, [type, obj, data, icon]); } );
 			}
 
-			$li = $("<li />");
+			$li = jQuery("<li />");
 			// NEW NODE IS OF PASSED TYPE OR PARENT'S TYPE
 			if(this.settings.rules.metadata) {
-				$.metadata.setType("attr", this.settings.rules.metadata);
+				jQuery.metadata.setType("attr", this.settings.rules.metadata);
 				$li.attr(this.settings.rules.metadata, "type: '" + t + "'");
 			}
 			else {
@@ -1084,7 +1128,7 @@ function tree_component () {
 				c_wid = Math.min(w_max,c_wid);
 				*/
 
-				_this.inp = $("<input type='text' />");
+				_this.inp = jQuery("<input type='text' />");
 				_this.inp
 					.val(last_value)
 					.bind("mousedown",		function (event) { event.stopPropagation(); })
@@ -1097,15 +1141,15 @@ function tree_component () {
 						});
 				_this.inp.blur(function(event) {
 						if(this.value == "") this.value == last_value; 
-						$(obj).html( $(obj).parent().find("input").eq(0).attr("value") ).get(0).style.display = ""; 
-						$(obj).prevAll("span").remove(); 
+						jQuery(obj).html( jQuery(obj).parent().find("input").eq(0).attr("value") ).get(0).style.display = ""; 
+						jQuery(obj).prevAll("span").remove(); 
 						if(this.value != last_value) _this.settings.callback.onrename.call(null, _this.get_node(obj).get(0), _this.current_lang, _this);
 						_this.inp = false;
 					});
-				var spn = $("<span />").addClass(obj.className).append(_this.inp);
-				spn.attr("style", $(obj).attr("style"));
+				var spn = jQuery("<span />").addClass(obj.className).append(_this.inp);
+				spn.attr("style", jQuery(obj).attr("style"));
 				obj.style.display = "none";
-				$(obj).parent().prepend(spn);
+				jQuery(obj).parent().prepend(spn);
 				_this.inp.get(0).focus();
 				_this.inp.get(0).select();
 			}
@@ -1146,13 +1190,13 @@ function tree_component () {
 					$li.removeClass("open").removeClass("closed").addClass("leaf").children("ul").remove();
 					this.set_cookie("open");
 				}
-				this.selected = false;
+				//this.selected = false;
 				this.settings.callback.ondelete.call(null, obj, this);
 				if(this.settings.rules.multiple != false && !stop) {
 					var _this = this;
 					this.selected_arr = [];
 					this.container.find("a.clicked").filter(":first-child").parent().each(function () {
-						_this.selected_arr.push($(this));
+						_this.selected_arr.push(jQuery(this));
 					});
 					if(this.selected_arr.length > 0) {
 						this.selected = this.selected_arr[0];
@@ -1167,7 +1211,7 @@ function tree_component () {
 			var obj = this.hovered || this.selected;
 			if(obj) {
 				if(obj.hasClass("open"))					return force ? this.select_branch(obj.find("li:eq(0)")) : this.hover_branch(obj.find("li:eq(0)"));
-				else if($(obj).nextAll("li").size() > 0)	return force ? this.select_branch(obj.nextAll("li:eq(0)")) : this.hover_branch(obj.nextAll("li:eq(0)"));
+				else if(jQuery(obj).nextAll("li").size() > 0)	return force ? this.select_branch(obj.nextAll("li:eq(0)")) : this.hover_branch(obj.nextAll("li:eq(0)"));
 				else										return force ? this.select_branch(obj.parents("li").next("li").eq(0)) : this.hover_branch(obj.parents("li").next("li").eq(0));
 			}
 		},
@@ -1210,19 +1254,19 @@ function tree_component () {
 			switch(type) {
 				case "selected":
 					var val = this.selected ? this.selected.attr("id") : false;
-					$.cookie(this.settings.cookies.prefix + '_selected',val,this.settings.cookies.opts);
+					jQuery.cookie(this.settings.cookies.prefix + '_selected',val,this.settings.cookies.opts);
 					break;
 				case "open":
 					var str = "";
 					this.container.find("li.open").each(function (i) { str += this.id + ","; });
-					$.cookie(this.settings.cookies.prefix + '_open',str.replace(/,$/ig,""),this.settings.cookies.opts);
+					jQuery.cookie(this.settings.cookies.prefix + '_open',str.replace(/,$/ig,""),this.settings.cookies.opts);
 					break;
 			}
 		},
 		moved : function (what, where, how, is_new, is_copy) {
-			var what	= $(what);
-			var $parent	= $(what).parents("ul:eq(0)");
-			var $where	= $(where);
+			var what	= jQuery(what);
+			var $parent	= jQuery(what).parents("ul:eq(0)");
+			var $where	= jQuery(where);
 			// IF MULTIPLE
 			if(what.size() > 1) {
 				var _this = this;
@@ -1237,10 +1281,10 @@ function tree_component () {
 				what = what.clone();
 				what.each(function (i) {
 					this.id = this.id + "_copy";
-					$(this).find("li").each(function () {
+					jQuery(this).find("li").each(function () {
 						this.id = this.id + "_copy";
 					})
-					$(this).find("a.clicked").removeClass("clicked");
+					jQuery(this).find("a.clicked").removeClass("clicked");
 				});
 			}
 			if(is_new) {
@@ -1250,7 +1294,7 @@ function tree_component () {
 				if(!this.settings.callback.beforemove.call(null,this.get_node(what).get(0), this.get_node(where).get(0),how,this)) return;
 			}
 
-			var tmp = $(where).parents(".tree:eq(0)");
+			var tmp = jQuery(where).parents(".tree:eq(0)");
 			// if different trees
 			if(tmp.get(0) != this.container.get(0)) {
 				tmp = tree_component.inst[tmp.attr("id")];
