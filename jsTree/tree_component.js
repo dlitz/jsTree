@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-11-12
+ * Date: 2008-11-24
  *
  */
 function tree_component () {
@@ -327,7 +327,7 @@ function tree_component () {
 			if(nod.size() > 1) {
 				var arr = [];
 				nod.each(function () {
-					arr.push(_this.getJSON(this));
+					arr.push(_this.getJSON(this, attrib));
 				});
 				return arr;
 			}
@@ -354,7 +354,7 @@ function tree_component () {
 			if(nod.children("ul").size() > 0) {
 				obj.children = [];
 				nod.children("ul").children("li").each(function () {
-					obj.children.push(_this.getJSON(this));
+					obj.children.push(_this.getJSON(this, attrib));
 				});
 			}
 			return obj;
