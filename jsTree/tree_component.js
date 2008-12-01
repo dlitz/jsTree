@@ -26,7 +26,7 @@ function tree_component () {
 				type	: "predefined",	// ENUM [json, xml_flat, xml_nested, predefined]
 				method	: "GET",		// HOW TO REQUEST FILES
 				async	: false,		// BOOL - async loading onopen
-				async_data : function (NODE) { return { id : jQuery(NODE).attr("id") } }, // PARAMETERS PASSED TO SERVER
+				async_data : function (NODE) { return { id : jQuery(NODE).attr("id") || 0 } }, // PARAMETERS PASSED TO SERVER
 				url		: false,		// FALSE or STRING - url to document to be used (async or not)
 				json	: false			// FALSE or OBJECT if type is JSON and async is false - the tree dump as json
 			},
