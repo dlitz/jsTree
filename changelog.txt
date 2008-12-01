@@ -6,22 +6,26 @@ NOTES:
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
 TODO:
-   BUG:  multiselect in dflt, multiselect when refresh (if no cookie)
+   ASYNC TESTS WITH 0.9.2
+   A COMPLEX TEST EXAMPLE WITH EVERYTHING ON
+   CHECK FOR PLUGIN UPDATES (_LIB)
    FEAT: jQuery plugin mode
-   FEAT: multitree accept from/send to rules
 
 CHANGELOG:
  v.0.9.2
+   remove enhancement and event order fix (j9850s)
+   create bug fixed (j9850s)
+   borderTopWidth bug in IE fixed (by me.khaled)
+   !NO MORE settings.dflt - now settings.selected - false, string or array & settings.opened - array
+   selected cookie is now CSV (if multiple is on)
+   getJSON attrib bug fixed (by eddie.con.carne)
    negation dragrules - begin with "!" (order is respected)
    drag various nodes on the tree (settings.rules.droppable)
    jQuery compatible mode (all $ are now jQuery)
    fixed remove bug when a node appears as selected but isn't (by nomen)
    fixed create bug when passing a name for the new node and the parent node is closed (by Oliver)
-   async_data added in settings.data
-     - a function to return an object that will be passed to the server in async mode
+   async_data added in settings.data - a function to return an object that will be passed to the server in async mode
    method added in settings.data - set all requests to GET or POST
-   settings.dflt can now be an array - if so the array is parsed onload and all the node IDs in are opened and the last is selected
-   !NOTE that if you use the cookie functionality this opening will happen only on the first load (which is also the correct behaviour)
  v.0.9.1
    various minor bugs fixed & optimizations
    create function now accepts value & icon for the newly created node

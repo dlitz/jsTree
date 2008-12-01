@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-11-24
+ * Date: 2008-12-01
  *
  */
 function tree_component () {
@@ -30,7 +30,8 @@ function tree_component () {
 				url		: false,		// FALSE or STRING - url to document to be used (async or not)
 				json	: false			// FALSE or OBJECT if type is JSON and async is false - the tree dump as json
 			},
-			dflt		: false,		// FALSE or STRING or ARRAY
+			selected	: false,		// FALSE or STRING or ARRAY
+			opened		: [],			// ARRAY OF INITIALLY OPENED NODES
 			languages	: [],			// ARRAY of string values (which will be used as CSS classes - si they must be valid)
 			path		: false,		// FALSE or STRING (if false - will be autodetected)
 			cookies		: false,		// FALSE or OBJECT (prefix, opts - from jqCookie - expires, path, domain, secure)
@@ -158,8 +159,14 @@ function tree_component () {
 			this.container.addClass("tree").css({ position: "relative" });
 			if(this.settings.ui.rtl) this.container.addClass("rtl");
 			if(this.settings.rules.multiple) this.selected_arr = [];
+
 			this.offset = this.container.offset();
-			this.offset.top = this.offset.top + parseInt(jQuery.curCSS(this.container.get(0), "paddingTop", true),10) + parseInt(jQuery.curCSS(this.container.get(0), "borderTopWidth", true),10);
+			var tmp = 0;
+			tmp = parseInt(jQuery.curCSS(this.container.get(0), "paddingTop", true),10);
+			if(tmp) this.offset.top += tmp;
+			tmp = parseInt(jQuery.curCSS(this.container.get(0), "borderTopWidth", true),10);
+			if(tmp) this.offset.top += tmp;
+
 			this.container.css({ position : "" });
 			if(this.settings.ui.dots == false) this.container.addClass("no_dots");
 
@@ -193,40 +200,62 @@ function tree_component () {
 			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 
+			// SAVE OPENED
 			this.opened = Array();
-			// SAVE SELECTED
-			if((typeof this.settings.dflt).toLowerCase() == "object") {
-				this.opened = this.settings.dflt;
-				this.settings.dflt = "#" + this.opened.pop().replace(/^#/,"");
-				for(var i = 0; i < this.opened.length; i ++) this.opened[i] = this.opened[i].replace(/^#/,"");
+			if(this.settings.cookies && jQuery.cookie(this.settings.cookies.prefix + '_open')) {
+				var str = jQuery.cookie(this.settings.cookies.prefix + '_open');
+				var tmp = str.split(",");
+				jQuery.each(tmp, function () {
+					_this.opened.push("#" + this.replace(/^#/,""));
+				});
+				this.settings.opened = false;
+			}
+			else if(this.settings.opened != false) {
+				jQuery.each(this.settings.opened, function (i, item) {
+					_this.opened.push("#" + this.replace(/^#/,""));
+				});
+				this.settings.opened = false;
 			}
 			else {
-				this.settings.dflt = (this.selected) ? "#" + this.selected.attr("id") : this.settings.dflt;
+				this.container.find("li.open").each(function (i) { _this.opened.push("#" + this.id); });
 			}
-			if(this.settings.cookies) {
+
+			// SAVE SELECTED
+			if(this.selected) {
+				this.settings.selected = Array();
+				if(this.selected_arr) {
+					jQuery.each(this.selected_arr, function () {
+						_this.settings.selected.push("#" + this.attr("id"));
+					});
+				}
+				else this.settings.selected.push("#" + this.selected.attr("id"));
+			}
+			else if(this.settings.cookies && jQuery.cookie(this.settings.cookies.prefix + '_selected')) {
+				this.settings.selected = Array();
 				var str = jQuery.cookie(this.settings.cookies.prefix + '_selected');
-				if(str) this.settings.dflt = "#" + str;
+				var tmp = str.split(",");
+				jQuery.each(tmp, function () {
+					_this.settings.selected.push("#" + this.replace(/^#/,""));
+				});
+			}
+			else if(this.settings.selected !== false) {
+				var tmp = Array();
+				if((typeof this.settings.selected).toLowerCase() == "object") {
+					jQuery.each(this.settings.selected, function () {
+						tmp.push("#" + this.replace(/^#/,""));
+					});
+				}
+				else tmp.push("#" + this.settings.selected.replace(/^#/,""));
+				this.settings.selected = tmp;
 			}
 
 			if(obj && this.settings.data.async) {
 				this.opened = Array();
 				obj = this.get_node(obj);
-				obj.find("li.open").each(function (i) { _this.opened.push(this.id); });
+				obj.find("li.open").each(function (i) { _this.opened.push("#" + this.id); });
 				this.close_branch(obj, true);
 				obj.children("ul:eq(0)").html("");
 				return this.open_branch(obj, true, function () { _this.reselect.apply(_this); });
-			}
-
-			if(this.settings.cookies) {
-				var str = jQuery.cookie(this.settings.cookies.prefix + '_open');
-				if(str) {
-					if(str.length)	str = str.split(",");
-					else			str = [];
-					if(str.length)	this.opened = str;
-				}
-			}
-			else {
-				this.container.find("li.open").each(function (i) { _this.opened.push(this.id); });
 			}
 
 			if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
@@ -711,35 +740,29 @@ function tree_component () {
 				var opn = false;
 				for(var j = 0; j < this.opened.length; j++) {
 					if(this.settings.data.async) {
-						if(this.get_node("#" + this.opened[j]).size() > 0) {
+						if(this.get_node(this.opened[j]).size() > 0) {
 							opn = true;
 							var tmp = this.opened[j];
 							delete this.opened[j];
-							this.open_branch("#" + tmp, true, function () { _this.reselect.apply(_this); } )
+							this.open_branch(tmp, true, function () { _this.reselect.apply(_this); } )
 						}
 					}
-					else this.open_branch("#" + this.opened[j], true);
+					else this.open_branch(this.opened[j], true);
 				}
 				if(this.settings.data.async && opn) return;
 				delete this.opened;
 			}
-			// REPOSITION SCROLL - WHEN QUEUE IMPLEMENTED - SHOULD BE AT THE END
+			// REPOSITION SCROLL
 			if(this.scrtop) {
 				this.container.scrollTop(_this.scrtop);
 				delete this.scrtop;
 			}
-			// RESELECT PREVIOUSLY SELECTED OR DEFAULT
-			if(this.settings.rules.multiple != false && this.selected_arr.length > 1) {
-				var tmp = this.selected_arr;
-				this.selected_arr = [];
-				for(i in tmp) {
-					this.select_branch("#" + tmp[i].attr("id"), true);
-				}
-			}
-			else if(this.settings.dflt && jQuery(this.settings.dflt).size() == 1) {
-				this.selected		= jQuery(this.settings.dflt);
-				this.settings.dflt	= false;
-				this.select_branch(this.selected);
+			// RESELECT PREVIOUSLY SELECTED
+			if(this.settings.selected !== false) {
+				jQuery.each(this.settings.selected, function (i) {
+					_this.select_branch(jQuery(_this.settings.selected[i]), (_this.settings.rules.multiple !== false && i > 0) );
+				});
+				this.settings.selected = false;
 			}
 			this.settings.callback.onload.call(null, _this);
 		},
@@ -1092,7 +1115,7 @@ function tree_component () {
 					else {
 						val = "New folder";
 					}
-					if((typeof icon).toLowerCase() != "string" && icon[i]) icn = icon[i];
+					if((typeof icon).toLowerCase() != "string" && icon && icon[i]) icn = icon[i];
 
 					$li.append("<a href='#'" + ( icn.length ? " style='background-image:url(\"" + icn + "\");' " : " ") + "class='" + this.settings.languages[i] + "'>" + val + "</a>");
 				}
@@ -1181,7 +1204,8 @@ function tree_component () {
 				var obj = this.selected;
 				if(this.settings.rules.multiple == false || this.selected_arr.length == 1) {
 					var stop = true;
-					this.get_prev(true);
+					var tmp = (this.selected.prev("li:eq(0)").size()) ? this.selected.prev("li:eq(0)") : this.selected.parents("li:eq(0)");
+					// this.get_prev(true);
 				}
 				obj = obj.remove();
 				$parent.children("li:last").addClass("last");
@@ -1192,6 +1216,7 @@ function tree_component () {
 				}
 				//this.selected = false;
 				this.settings.callback.ondelete.call(null, obj, this);
+				if(stop && tmp) this.select_branch(tmp);
 				if(this.settings.rules.multiple != false && !stop) {
 					var _this = this;
 					this.selected_arr = [];
@@ -1253,7 +1278,14 @@ function tree_component () {
 			if(this.settings.cookies === false) return false;
 			switch(type) {
 				case "selected":
-					var val = this.selected ? this.selected.attr("id") : false;
+					if(this.settings.multiple != false && this.selected_arr.length > 1) {
+						var val = Array();
+						jQuery.each(this.selected_arr, function () {
+							val.push(this.attr("id"));
+						});
+						val = val.join(",");
+					}
+					else var val = this.selected ? this.selected.attr("id") : false;
 					jQuery.cookie(this.settings.cookies.prefix + '_selected',val,this.settings.cookies.opts);
 					break;
 				case "open":
