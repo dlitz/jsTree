@@ -1,5 +1,5 @@
 /*
- * jsTree 0.9.2
+ * jsTree 0.9.5
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,9 +7,19 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-12-01
+ * Date: 2008-12-02
  *
  */
+
+// jQuery plugin
+jQuery.fn.tree = function (opts) {
+	return this.each(function() {
+		var tmp = new tree_component();
+		tmp.init(this, opts);
+	});
+};
+
+// core
 function tree_component () {
 	// instance manager
 	if(typeof tree_component.inst == "undefined") {
@@ -1435,6 +1445,61 @@ function tree_component () {
 				this.moved(this.cut_nodes, this.selected.children("a:eq(0)"), "inside");
 				this.cut_nodes = false;
 			}
+		},
+		search : function(str) {
+			var _this = this;
+			if(!str || (this.srch && str != this.srch) ) {
+				this.srch = "";
+				this.srch_opn = false;
+				this.container.find("a.search").removeClass("search");
+			}
+			this.srch = str;
+			if(!str) return;
+			if(this.settings.data.async) {
+				if(!this.srch_opn) {
+					var dd = jQuery.extend( { "search" : str } , this.settings.data.async_data(false) );
+					jQuery.ajax({
+						type		: this.settings.data.method,
+						url			: this.settings.data.url, 
+						data		: dd, 
+						dataType	: "text",
+						success		: function (data) {
+							_this.srch_opn = jQuery.unique(data.split(","));
+							_this.search.apply(_this,[str]);
+						} 
+					});
+				}
+				else if(this.srch_opn.length) {
+					if(this.srch_opn && this.srch_opn.length) {
+						var opn = false;
+						for(var j = 0; j < this.srch_opn.length; j++) {
+							if(this.get_node("#" + this.srch_opn[j]).size() > 0) {
+								opn = true;
+								var tmp = "#" + this.srch_opn[j];
+								delete this.srch_opn[j];
+								this.open_branch(tmp, true, function () { _this.search.apply(_this,[str]); } );
+							}
+						}
+						if(!opn) {
+							this.srch_opn = [];
+							 _this.search.apply(_this,[str]);
+						}
+					}
+				}
+				else {
+					var selector = "a";
+					// IF LANGUAGE VERSIONS
+					if(this.settings.languages.length) selector += "." + this.current_lang;
+					this.container.find(selector + ":contains('" + str + "')").addClass("search");
+					this.srch_opn = false;
+				}
+			}
+			else {
+				var selector = "a";
+				// IF LANGUAGE VERSIONS
+				if(this.settings.languages.length) selector += "." + this.current_lang;
+				this.container.find(selector + ":contains('" + str + "')").addClass("search").parents("li.closed").each( function () { _this.open_branch(this, true); });
+			}
 		}
 	}
-}
+};

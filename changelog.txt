@@ -6,15 +6,23 @@ NOTES:
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
 TODO:
-   ASYNC TESTS WITH 0.9.2
-   A COMPLEX TEST EXAMPLE WITH EVERYTHING ON
-   CHECK FOR PLUGIN UPDATES (_LIB)
+   TEST: ASYNC TESTS WITH 0.9.2
+   EXAMPLES: A COMPLEX TEST EXAMPLE WITH EVERYTHING ON
+   UPDATE: hotkeys (http://code.google.com/p/js-hotkeys/)
+   FEAT: SEARCH FUNCTION (expand and select & offline search)
    FEAT: jQuery plugin mode
+   DOC: programmer's API
+   DOC: UPDATE DOCUMENTATION WITH NEW PROPERTIES (dflt, etc)
 
 CHANGELOG:
+ v.0.9.5
+   added search functionality (opens all parents and adds class "search" to results) 
+    - if async - a request is made to the server with a GET parameter, that should return commaseparated id's of nodes to be opened
+   jQuery plugin mode - $().tree({opts})
  v.0.9.2
-   remove enhancement and event order fix (j9850s)
-   create bug fixed (j9850s)
+   async_data function fixed (by Alvin Schur)
+   remove enhancement and event order fix (by j9850s)
+   create bug fixed (by j9850s)
    borderTopWidth bug in IE fixed (by me.khaled)
    !NO MORE settings.dflt - now settings.selected - false, string or array & settings.opened - array
    selected cookie is now CSV (if multiple is on)
