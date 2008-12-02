@@ -6,13 +6,9 @@ NOTES:
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
 TODO:
-   TEST: ASYNC TESTS WITH 0.9.2
-   EXAMPLES: A COMPLEX TEST EXAMPLE WITH EVERYTHING ON
+   THROUGH TESTS & COMPLEX EXAMPLE
    UPDATE: hotkeys (http://code.google.com/p/js-hotkeys/)
-   FEAT: SEARCH FUNCTION (expand and select & offline search)
-   FEAT: jQuery plugin mode
-   DOC: programmer's API
-   DOC: UPDATE DOCUMENTATION WITH NEW PROPERTIES (dflt, etc)
+   DOC: UPDATE DOCUMENTATION WITH NEW PROPERTIES (dflt, etc) & API
 
 CHANGELOG:
  v.0.9.5
