@@ -586,17 +586,26 @@ function tree_component () {
 								jQuery(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.ui.rtl ? jQuery(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + (jQuery.browser.opera ? _this.container.scrollTop() : 0) + 15) });
 
 								var cnt = jQuery(event.target).parents(".tree:eq(0)");
+
+								// if not moving over a tree
 								if(cnt.size() == 0) {
 									if(tree_component.sto) clearTimeout(tree_component.sto);
+									if(jQuery(_this.drag).children("IMG").size() == 0) {
+										jQuery(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
+									}
+									_this.moveType = false;
+									_this.moveRef  = false;
+									jQuery("#marker").hide();
 									return false;
 								}
 
+								// if moving over another tree and multitree is false
 								if( _this.foreign === false && cnt.get(0) != _this.container.get(0) && (!_this.settings.rules.multitree || !tree_component.inst[cnt.attr("id")].settings.rules.multitree) ) {
 									if(jQuery(_this.drag).children("IMG").size() == 0) {
 										jQuery(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
 									}
 									_this.moveType = false;
-									_this.moveRef = false;
+									_this.moveRef  = false;
 									jQuery("#marker").hide();
 									return false;
 								}
@@ -608,6 +617,9 @@ function tree_component () {
 								var st = cnt.scrollTop();
 
 								if(event.target.tagName == "A" ) {
+									// just in case if hover is over the draggable
+									if(jQuery(event.target).is("#dragged")) return false;
+
 									var goTo = { 
 										x : (jQuery(event.target).offset().left - 1),
 										y : (event.pageY - tree_component.inst[cnt.attr("id")].offset.top)
