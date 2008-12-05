@@ -585,6 +585,8 @@ function tree_component () {
 								}
 								jQuery(_this.drag).css({ "left" : (event.pageX - _this.po.left - (_this.settings.ui.rtl ? jQuery(_this.drag).width() : -5 ) ), "top" : (event.pageY - _this.po.top  + (jQuery.browser.opera ? _this.container.scrollTop() : 0) + 15) });
 
+								if(event.target.tagName == "IMG" && event.target.id == "marker") return false;
+
 								var cnt = jQuery(event.target).parents(".tree:eq(0)");
 
 								// if not moving over a tree
@@ -667,10 +669,10 @@ function tree_component () {
 										jQuery("#marker").hide();
 									}
 								}
-								else if(event.target.tagName == "IMG" && event.target.id == "marker") {
-									;
-								}
 								else {
+									if(jQuery(_this.drag).children("IMG").size() == 0) {
+										jQuery(_this.drag).append("<img style='position:absolute; " + (_this.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + _this.path + "images/remove.png' />");
+									}
 									_this.moveType = false;
 									_this.moveRef = false;
 									jQuery("#marker").hide();
