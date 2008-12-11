@@ -5,13 +5,14 @@ NOTES:
    xml_flat in async mode - do not set parent_id
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
-TODO:
-   THROUGH TESTS & COMPLEX EXAMPLE
-   UPDATE: hotkeys (http://code.google.com/p/js-hotkeys/)
-   DOC: UPDATE DOCUMENTATION WITH NEW PROPERTIES (dflt, etc) & API
-
 CHANGELOG:
  v.0.9.5
+   can supply id in create function
+   more "IE8 compatible" :)
+   added support for themes (+2 themes) (by j9850s)
+    - in any data type if icon does not contain a "/" it is loaded form the theme folder
+   fixed opening leaf nodes (by Limor.Schweitzer)
+   dragging bug (by ignoranceisbliss0)
    added search functionality (opens all parents and adds class "search" to results) 
     - if async - a request is made to the server with a GET parameter, that should return commaseparated id's of nodes to be opened
    jQuery plugin mode - $().tree({opts})
