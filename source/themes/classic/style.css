@@ -1,0 +1,19 @@
+.tree .tree-classic li.open {
+	background:url("minus.gif") 2px 5px no-repeat;
+}
+.tree .tree-classic li.closed {
+	background:url("plus.gif") 2px 5px no-repeat;
+}
+.tree .tree-classic #dragged li.open {
+	background:url("plus.gif") 2px 5px no-repeat;
+}
+
+.tree .tree-classic li.open a {
+	background-image:url("folderopen.gif");
+}
+.tree .tree-classic li.closed a {
+	background-image:url("folder.gif");
+}
+.tree .tree-classic li.leaf a {
+	background-image:url("folder.gif");
+}

@@ -1,0 +1,43 @@
+/* DOTS */
+.tree .tree-default ul {
+	background-image:url("dot.gif");
+}
+.tree .tree-default li {
+	background-image:url("li.gif");
+}
+.tree .tree-default li.last {
+	background-image:url("lastli.gif");
+	background-color:white !important;
+}
+
+/* OPEN or CLOSED */
+.tree .tree-default li.open {
+	background:url("fminus.gif") 4px 6px no-repeat;
+}
+
+.tree .tree-default li.closed {
+	background:url("fplus.gif") 5px 5px no-repeat;
+}
+
+.tree .tree-default #dragged li.open {
+	background:url("fplus.gif") 5px 5px no-repeat;
+}
+
+/* RIGHT TO LEFT SUPPORT */
+.rtl .tree-default li.last {
+	background-image:url("lastli_rtl.gif");
+}
+.rtl .tree-default li.open {
+	background:url("fminus_rtl.gif") right 6px no-repeat;
+}
+.rtl .tree-default li.closed {
+	background:url("fplus_rtl.gif") right 4px no-repeat;
+}
+.rtl .tree-default #dragged li.open {
+	background-position: right 5px;
+}
+
+/* DEFAULT ICON */
+.tree .tree-default li a {
+	background-image:url("f.png");
+}
