@@ -991,7 +991,7 @@ function tree_component () {
 					var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
 					var str = (this.settings.data.url.indexOf("?") == -1) ? "?id=" + encodeURIComponent(obj.attr("id")) : "&id=" + encodeURIComponent(obj.attr("id"));
 					obj.children("ul:eq(0)").getTransform(this.path + xsl, this.settings.data.url + str, { params : { theme_path : _this.theme }, meth : this.settings.data.method, repl : true, callback: function (str, json) { 
-							if(str.length < 10) {
+							if(str.length < 15) {
 								obj.removeClass("closed").removeClass("open").addClass("leaf").children("ul").remove();
 								if(callback) callback.call();
 								return;

@@ -7,7 +7,8 @@ NOTES:
 
 CHANGELOG:
  v.0.9.5
-   can supply id in create function
+   xml_flat and async bug fixed (by Alain)
+   can supply id in create function (by ludo)
    more "IE8 compatible" :)
    added support for themes (+2 themes) (by j9850s)
     - in any data type if icon does not contain a "/" it is loaded form the theme folder
