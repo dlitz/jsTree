@@ -1,4 +1,5 @@
 /* DOTS */
+.tree .tree-default, 
 .tree .tree-default ul {
 	background-image:url("dot.gif");
 }
@@ -24,14 +25,23 @@
 }
 
 /* RIGHT TO LEFT SUPPORT */
+.rtl .tree-default li {
+	margin-right:1px;
+}
 .rtl .tree-default li.last {
 	background-image:url("lastli_rtl.gif");
+	margin-right:0;
+	padding-right:16px;
 }
 .rtl .tree-default li.open {
 	background:url("fminus_rtl.gif") right 6px no-repeat;
+	margin-right:0;
+	padding-right:16px;
 }
 .rtl .tree-default li.closed {
 	background:url("fplus_rtl.gif") right 4px no-repeat;
+	margin-right:0;
+	padding-right:16px;
 }
 .rtl .tree-default #dragged li.open {
 	background-position: right 5px;

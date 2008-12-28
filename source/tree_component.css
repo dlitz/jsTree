@@ -201,8 +201,9 @@ html:first-child .tree ul {
 .rtl li span.clicked {
 	padding:0px 21px 0px 3px !important;
 }
+
 .rtl ul {
-	background-position:6px 1px;
+	background-position:right 1px;
 }
 .rtl li {
 	background-position:right center;
