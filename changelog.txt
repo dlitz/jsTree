@@ -7,6 +7,11 @@ NOTES:
 
 CHANGELOG:
  v.0.9.5
+   event optimization (fixed bug where beforemove/copy/etc where called from the origin tree)
+   added scroll_spd setting (the speed at which the container scrolls if dragging near the edge)
+   fixed scoll while drag & drop
+   Safari & Chrome drag & drop fix
+   close_all - no animation
    xml_flat and async bug fixed (by Alain)
    can supply id in create function (by ludo)
    more "IE8 compatible" :)
