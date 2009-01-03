@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2008-12-10
+ * Date: 2009-01-03
  *
  */
 
@@ -548,21 +548,43 @@ function tree_component () {
 			str += ">";
 			if(this.settings.languages.length) {
 				for(var i = 0; i < this.settings.languages.length; i++) {
-					str += "<a href='#' class='" + this.settings.languages[i] + "' ";
-					if(data.icons && data.icons[this.settings.languages[i]]) {
-						var icn = data.icons[this.settings.languages[i]].indexOf("/") == -1 ? this.theme + data.icons[this.settings.languages[i]] : data.icons[this.settings.languages[i]];
-						str += " style='background-image:url(\"" + icn + "\");' ";
+					var attr = [];
+					attr["href"] = "#";
+					attr["style"] = "";
+					attr["class"] = this.settings.languages[i];
+					if(data.data[this.settings.languages[i]] && (typeof data.data[this.settings.languages[i]].attributes).toLowerCase() != "undefined") {
+						for(j in data.data[this.settings.languages[i]].attributes) {
+							if(j == "style" || j == "class")	attr[j] += " " + data.data[this.settings.languages[i]].attributes[j];
+							else								attr[j]  = data.data[this.settings.languages[i]].attributes[j];
+						}
 					}
-					str += ">" + data.data[this.settings.languages[i]] + "</a>";
+					if(data.data[this.settings.languages[i]] && data.data[this.settings.languages[i]].icon) {
+						var icn = data.data[this.settings.languages[i]].icon.indexOf("/") == -1 ? this.theme + data.data[this.settings.languages[i]].icon : data.data[this.settings.languages[i]].icon;
+						attr["style"] += " ; background-image:url('" + icn + "'); ";
+					}
+					str += "<a";
+					for(j in attr) str += ' ' + j + '="' + attr[j] + '" ';
+					str += ">" + ( (typeof data.data[this.settings.languages[i]].title).toLowerCase() != "undefined" ? data.data[this.settings.languages[i]].title : data.data[this.settings.languages[i]] ) + "</a>";
 				}
 			}
 			else {
-				str += "<a href='#' ";
-				if(data.icons) {
-					var icn = data.icons.indexOf("/") == -1 ? this.theme + data.icons : data.icons;
-					str += " style='background-image:url(\"" + icn + "\");' ";
+				var attr = [];
+				attr["href"] = "#";
+				attr["style"] = "";
+				attr["class"] = "";
+				if((typeof data.data.attributes).toLowerCase() != "undefined") {
+					for(i in data.data.attributes) {
+						if(i == "style" || i == "class")	attr[i] += " " + data.data.attributes[i];
+						else								attr[i]  = data.data.attributes[i];
+					}
 				}
-				str += ">" + data.data + "</a>";
+				if(data.data.icon) {
+					var icn = data.data.icon.indexOf("/") == -1 ? this.theme + data.data.icon : data.data.icon;
+					attr["style"] += " ; background-image:url('" + icn + "');";
+				}
+				str += "<a";
+				for(i in attr) str += ' ' + i + '="' + attr[i] + '" ';
+				str += ">" + ( (typeof data.data.title).toLowerCase() != "undefined" ? data.data.title : data.data ) + "</a>";
 			}
 			if(data.children && data.children.length) {
 				str += '<ul>';
@@ -575,7 +597,7 @@ function tree_component () {
 			return str;
 		},
 		// getJSON from HTML
-		getJSON : function (nod, attrib) {
+		getJSON : function (nod, outer_attrib, inner_attrib, force) {
 			var _this = this;
 			if(!nod || jQuery(nod).size() == 0) {
 				nod = this.container.children("ul").children("li");
@@ -585,34 +607,63 @@ function tree_component () {
 			if(nod.size() > 1) {
 				var arr = [];
 				nod.each(function () {
-					arr.push(_this.getJSON(this, attrib));
+					arr.push(_this.getJSON(this, outer_attrib, inner_attrib));
 				});
 				return arr;
 			}
 
-			if(!attrib) attrib = [ "id", "rel", "class" ]
-			var obj = { attributes : {}, data : false, icons : false };
-			for(i in attrib) {
-				obj.attributes[attrib[i]] = nod.attr(attrib[i]);
+			if(!outer_attrib) outer_attrib = [ "id", "rel", "class" ];
+			if(!inner_attrib) inner_attrib = [ ];
+			var obj = { attributes : {}, data : false };
+			for(i in outer_attrib) {
+				obj.attributes[outer_attrib[i]] = nod.attr(outer_attrib[i]);
 			}
-
-			var a = nod.children("a");
-			if(a.size() > 1) {
-				obj.data = [];
-				obj.icons = [];
-				a.each(function () {
-					obj.data.push(this.innerHTML);
-					obj.icons.push(this.style.backgroundImage.replace("url(","").replace(")",""));
-				});
+			if(this.settings.languages.length) {
+				obj.data = {};
+				for(i in this.settings.languages) {
+					var a = nod.children("a." + this.settings.languages[i]);
+					if(force || inner_attrib.length || a.get(0).style.backgroundImage.toString().length) {
+						obj.data[this.settings.languages[i]] = {};
+						obj.data[this.settings.languages[i]].title = a.text();
+						if(a.get(0).style.backgroundImage.length) {
+							obj.data[this.settings.languages[i]].icon = a.get(0).style.backgroundImage.replace("url(","").replace(")","");
+						}
+						if(inner_attrib.length) {
+							obj.data[this.settings.languages[i]].attributes = {};
+							for(j in inner_attrib) {
+								obj.data[this.settings.languages[i]].attributes[inner_attrib[j]] = a.attr(inner_attrib[j]);
+							}
+						}
+					}
+					else {
+						obj.data[this.settings.languages[i]] = a.text();
+					}
+				}
 			}
 			else {
-				obj.data = a.text();
-				obj.icons = a.css("backgroundImage").replace("url(","").replace(")","");
+				var a = nod.children("a");
+				if(force || inner_attrib.length || a.get(0).style.backgroundImage.toString().length) {
+					obj.data = {};
+					obj.data.title = a.text();
+					if(a.get(0).style.backgroundImage.length) {
+						obj.data.icon = a.get(0).style.backgroundImage.replace("url(","").replace(")","");
+					}
+					if(inner_attrib.length) {
+						obj.data.attributes = {};
+						for(j in inner_attrib) {
+							obj.data.attributes[inner_attrib[j]] = a.attr(inner_attrib[j]);
+						}
+					}
+				}
+				else {
+					obj.data = a.text();
+				}
 			}
+
 			if(nod.children("ul").size() > 0) {
 				obj.children = [];
 				nod.children("ul").children("li").each(function () {
-					obj.children.push(_this.getJSON(this, attrib));
+					obj.children.push(_this.getJSON(this, outer_attrib, inner_attrib));
 				});
 			}
 			return obj;

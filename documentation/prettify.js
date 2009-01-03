@@ -1,29 +1,3 @@
-$(function() { 
-	prettyPrint();
-	var str = "";
-	var level = 2;
-	$(":header[id]").each(function (i) {
-		var curr_level = this.tagName.replace("H","");
-		if(level < curr_level) {
-			while(level != curr_level) {
-				str += "<ul>";
-				level ++;
-			}
-		}
-		else if(level > curr_level) {
-			while(level != curr_level) {
-				str += "</ul></li>";
-				level --;
-			}
-		}
-		else {
-			if(i != 0) str += "</li>";
-		}
-		str += "<li><a href='#" + this.id + "'>" + this.innerHTML + "</a>";
-	});
-	$("#menu").html(str);
-});
-
 // Copyright (C) 2006 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -134,7 +108,7 @@ var PR_ATTRIB_NAME = 'atn';
 var PR_ATTRIB_VALUE = 'atv';
 
 /** the number of characters between tab columns */
-var PR_TAB_WIDTH = 8;
+var PR_TAB_WIDTH = 4;
 
 // some string utilities
 function PR_isWordChar(ch) {
@@ -852,7 +826,7 @@ function PR_recombineTagsAndDecorations(
       // chunkify.
       var htmlChunk = PR_textToHtml(
           tabExpander(sourceText.substring(outputIdx, sourceIdx)))
-          .replace(/(\r\n?|\n| ) /g, '$1&nbsp;')
+          .replace(/(\r\n?|\n| ) /g, '$1 ')
           .replace(/\r\n?|\n/g, '<br>');
       html.push(htmlChunk);
       outputIdx = sourceIdx;
@@ -977,14 +951,14 @@ function prettyPrint(opt_whenDone) {
                    : Infinity);
     for (; k < elements.length && new Date().getTime() < endTime; k++) {
       var cs = elements[k];
-      if (cs.className && cs.className.indexOf('prettyprint') >= 0) {
+      if (cs.className && cs.className.indexOf('prettyprint') >= 0 || true) {
 
         // make sure this is not nested in an already prettified element
         var nested = false;
         for (var p = cs.parentNode; p != null; p = p.parentNode) {
           if ((p.tagName == 'pre' || p.tagName == 'code' ||
                p.tagName == 'xmp') &&
-              p.className && p.className.indexOf('prettyprint') >= 0) {
+              (p.className && p.className.indexOf('prettyprint') >= 0 || true)) {
             nested = true;
             break;
           }

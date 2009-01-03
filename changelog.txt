@@ -5,8 +5,19 @@ NOTES:
    xml_flat in async mode - do not set parent_id
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
+TODO:
+ examples:
+   one page with getJSON calls (bind, unbind)
+   complex example
+ update: 
+   hotkeys (http://code.google.com/p/js-hotkeys/)
+   faq
+   home screenshots
+
+
 CHANGELOG:
  v.0.9.5
+   can now specify attributes for the nested <a> nodes (href, etc) - updated json format
    event optimization (fixed bug where beforemove/copy/etc where called from the origin tree)
    added scroll_spd setting (the speed at which the container scrolls if dragging near the edge)
    fixed scoll while drag & drop
