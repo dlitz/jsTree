@@ -211,3 +211,20 @@ html:first-child .tree ul {
 .rtl #dragged li.open {
 	background-position: right 5px;
 }
+
+/* CONTEXT MENU */
+.tree .context {
+	display:none;
+	position:absolute;
+	list-style-type:none;
+	margin:0;
+	padding:0;
+}
+.tree .context .separator {
+	display:none;
+}
+.tree .context a {
+	display:block;
+	margin:0;
+	padding:0;
+}

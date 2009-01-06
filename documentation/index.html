@@ -29,7 +29,6 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	</style>
 </head>
 <body onload="prettyPrint();">
-<div id="menu"></div>
 <div id="documentation">
 <h1 id="inc">Getting started</h1>
 <p>First of all you need to include jsTree's files in your code. Note, that you could use the minified version.<br />Only five files are <strong>required</strong>:</p>
@@ -210,6 +209,52 @@ tree.init(<em>container_node</em>,[{ <em>options</em> }]);</pre>
 				<span class="var">theme_name</span>
 				<p>String - sets the tree's theme. This should be a name of a folder inside the <span class="var">theme_path</span>.<br />Default is <span class="val">"default"</span>.</p>
 			</li>
+			<li>
+				<span class="var">context</span>
+				<p>Array or <span class="val">false</span> - whether to use the native context menu.<br />If set to <span class="val">false</span> there is no context menu. Below you can see the expected format. the <span class="var">visible</span> function on each element is called when showing the menu - if it returns <span class="val">false</span> - the item is not shown on the menu. If the <span class="var">icon</span> does not contain a <span class="val">"/"</span> it is looked up in the current theme directory. The <span class="var">label</span> and <span class="var">action</span> functions are self explanatory. The <span class="val">"separator"</span> item can be used to group similar commands.<br />Default is:</p>
+<pre>
+[ 
+	{
+		id		: "create",
+		label	: "Create", 
+		icon	: "create.png",
+		visible	: function (NODE, TREE_OBJ) { 
+			if(NODE.length != 1) 
+			return false; return TREE_OBJ.check("creatable", NODE); 
+		}, 
+		action	: function (NODE, TREE_OBJ) { 
+			TREE_OBJ.create(false, NODE); 
+		} 
+	},
+	"separator",
+	{ 
+		id		: "rename",
+		label	: "Rename", 
+		icon	: "rename.png",
+		visible	: function (NODE, TREE_OBJ) { 
+			if(NODE.length != 1) return false; 
+			return TREE_OBJ.check("renameable", NODE); 
+		}, 
+		action	: function (NODE, TREE_OBJ) { 
+			TREE_OBJ.rename(); 
+		} 
+	},
+	{ 
+		id		: "delete",
+		label	: "Delete",
+		icon	: "remove.png",
+		visible	: function (NODE, TREE_OBJ) { 
+			return TREE_OBJ.check("deletable", NODE); 
+		}, 
+		action	: function (NODE, TREE_OBJ) { 
+			NODE.each(function () { 
+				TREE_OBJ.remove(this); 
+			}); 
+		} 
+	}
+]
+</pre>
+			</li>
 		</ul>
 	</li>
 	<li>
@@ -353,7 +398,31 @@ tree.init(<em>container_node</em>,[{ <em>options</em> }]);</pre>
 		animation	: 0,
 		hover_mode	: true,
 		theme_path	: false,
-		theme_name	: "default"
+		theme_name	: "default",
+		context		: [ 
+			{
+				id		: "create",
+				label	: "Create", 
+				icon	: "create.png",
+				visible	: function (NODE, TREE_OBJ) { if(NODE.length != 1) return false; return TREE_OBJ.check("creatable", NODE); }, 
+				action	: function (NODE, TREE_OBJ) { TREE_OBJ.create(false, NODE); } 
+			},
+			"separator",
+			{ 
+				id		: "rename",
+				label	: "Rename", 
+				icon	: "rename.png",
+				visible	: function (NODE, TREE_OBJ) { if(NODE.length != 1) return false; return TREE_OBJ.check("renameable", NODE); }, 
+				action	: function (NODE, TREE_OBJ) { TREE_OBJ.rename(); } 
+			},
+			{ 
+				id		: "delete",
+				label	: "Delete",
+				icon	: "remove.png",
+				visible	: function (NODE, TREE_OBJ) { return TREE_OBJ.check("deletable", NODE); }, 
+				action	: function (NODE, TREE_OBJ) { NODE.each( function () { TREE_OBJ.remove(this); }); } 
+			}
+		]
 	},
 	rules		: {
 		multiple	: false,
@@ -835,6 +904,48 @@ data : { title : &quot;<em>node_title</em>&quot;, icon : &quot;<em>path_to_icon<
 	height:18px;
 }
 </pre>
+<div class='source'>Context menu</div>
+<pre>
+/* Using this selector you can set 
+ * background, width, etc.
+ * Below are the defaults. */
+.tree .tree-default .context {
+	width:160px;
+	background:#F0F0F0 url("context.jpg") 22px 0 repeat-y;
+	border:1px solid silver;
+}
+/* The actual items in the context menu.
+ * Below are the defaults. */
+.tree .tree-default .context a, 
+.tree .tree-default .context a:hover {
+	text-decoration:none;
+	color:black;
+	text-indent:26px;
+	line-height:20px;
+	background-repeat: no-repeat;
+	background-position: 3px center;
+	padding:1px 0;
+}
+.tree .tree-default .context a:hover {
+	background-color: #e7f4f9;
+	border:1px solid #d8f0fa;
+	background-position: 2px center;
+	padding:0;
+	text-indent:25px;
+}
+/* The separator.
+ * Below are the defaults. */
+.tree .tree-default .context .separator {
+	background:#FFFFFF;;
+	border-top:1px solid #E0E0E0;
+	font-size:1px;
+	height:1px;
+	line-height:1px;
+	margin:0 2px 0 24px;
+	min-height:1px;
+	display:block;
+}
+</pre>
 <div class='source'>Background color</div>
 <pre>
 .tree,
@@ -842,6 +953,7 @@ data : { title : &quot;<em>node_title</em>&quot;, icon : &quot;<em>path_to_icon<
 .tree li.last {
 	background-color:#666 !important;
 }
+</pre>
 </div>
 
 </body>

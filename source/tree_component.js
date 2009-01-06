@@ -235,7 +235,31 @@ function tree_component () {
 				hover_mode	: true,		// SHOULD get_* functions chage focus or change hovered item
 				scroll_spd	: 4,
 				theme_path	: false,	// Path to themes
-				theme_name	: "default"	// Name of theme
+				theme_name	: "default",// Name of theme
+				context		: [ 
+					{
+						id		: "create",
+						label	: "Create", 
+						icon	: "create.png",
+						visible	: function (NODE, TREE_OBJ) { if(NODE.length != 1) return false; return TREE_OBJ.check("creatable", NODE); }, 
+						action	: function (NODE, TREE_OBJ) { TREE_OBJ.create(false, NODE); } 
+					},
+					"separator",
+					{ 
+						id		: "rename",
+						label	: "Rename", 
+						icon	: "rename.png",
+						visible	: function (NODE, TREE_OBJ) { if(NODE.length != 1) return false; return TREE_OBJ.check("renameable", NODE); }, 
+						action	: function (NODE, TREE_OBJ) { TREE_OBJ.rename(); } 
+					},
+					{ 
+						id		: "delete",
+						label	: "Delete",
+						icon	: "remove.png",
+						visible	: function (NODE, TREE_OBJ) { return TREE_OBJ.check("deletable", NODE); }, 
+						action	: function (NODE, TREE_OBJ) { NODE.each( function () { TREE_OBJ.remove(this); }); } 
+					}
+				]
 			},
 			rules	: {
 				multiple	: false,	// FALSE | CTRL | ON - multiple selection off/ with or without holding Ctrl
@@ -249,7 +273,7 @@ function tree_component () {
 				deletable	: "all",	// which node types can the user delete | default - all
 				creatable	: "all",	// which node types can the user create in | default - all
 				draggable	: "none",	// which node types can the user move | default - none | "all"
-				dragrules	: "none",	// what move operations between nodes are allowed | default - none | "all"
+				dragrules	: "all",	// what move operations between nodes are allowed | default - none | "all"
 				drag_copy	: false,	// FALSE | CTRL | ON - drag to copy off/ with or without holding Ctrl
 				droppable	: []
 			},
@@ -372,6 +396,25 @@ function tree_component () {
 			this.offset = false;
 
 			if(this.settings.ui.dots == false) this.container.addClass("no_dots");
+
+			// CONTEXT MENU
+			this.context = false;
+			if(this.settings.ui.context != false) {
+				var str = '<div class="context">';
+				for(i in this.settings.ui.context) {
+					if(this.settings.ui.context[i] == "separator") {
+						str += "<span class='separator'>&nbsp;</span>";
+						continue;
+					}
+					var icn = "";
+					if(this.settings.ui.context[i].icon) icn = 'background-image:url(\'' + ( this.settings.ui.context[i].icon.indexOf("/") == -1 ? this.theme + this.settings.ui.context[i].icon : this.settings.ui.context[i].icon ) + '\');';
+					str += '<a rel="' + this.settings.ui.context[i].id + '" href="#" style="' + icn + '">' + this.settings.ui.context[i].label + '</a>';
+				}
+				str += '</div>';
+				this.context = jQuery(str);
+				this.context.hide();
+				this.context.append = false;
+			}
 
 			this.hovered = false;
 			this.locked = false;
@@ -675,6 +718,15 @@ function tree_component () {
 				this.settings.callback.onfocus.call(null, this);
 			}
 		},
+		show_context : function (obj, x, y) {
+			var tmp = this.context.show().offsetParent();
+			if(tmp.is("html")) tmp = jQuery("body");
+			tmp = tmp.offset();
+			this.context.css({ "left" : (x - tmp.left - (this.settings.ui.rtl ? jQuery(this.context).width() : -5 ) ), "top" : (y - tmp.top  + (jQuery.browser.opera ? this.container.scrollTop() : 0) + 15) });
+		},
+		hide_context : function () {
+			this.context.hide();
+		},
 		// ALL EVENTS
 		attachEvents : function () {
 			var _this = this;
@@ -716,8 +768,50 @@ function tree_component () {
 					event.target.blur();
 				})
 				.listen("contextmenu", "a", function (event) {
-					if(_this.locked) return _this.error("LOCKED");
-					return _this.settings.callback.onrgtclk.call(null, _this.get_node(event.target).get(0), _this, event);
+					if(_this.locked) {
+						event.target.blur();
+						return _this.error("LOCKED");
+					}
+					_this.settings.callback.onrgtclk.call(null, _this.get_node(event.target).get(0), _this, event);
+					if(_this.context) {
+						if(_this.context.append == false) {
+							_this.container.find("ul:eq(0)").append(_this.context);
+							_this.context.append = true;
+							for(i in _this.settings.ui.context) {
+								if(_this.settings.ui.context[i] == "separator") continue;
+								(function () {
+									var func = _this.settings.ui.context[i].action;
+									_this.context.children("[rel=" + _this.settings.ui.context[i].id +"]").bind("click", function (event) {
+										func.call(null, _this.selected_arr || _this.selected, _this);
+										_this.hide_context();
+										event.stopPropagation();
+										event.preventDefault();
+										return false;
+									});
+								})();
+							}
+						}
+						var obj = _this.get_node(event.target);
+						if(_this.inp) { _this.inp.blur(); }
+						if(obj) {
+							if(!obj.children("a:eq(0)").hasClass("clicked")) {
+								_this.select_branch.apply(_this, [event.target, event.ctrlKey || _this.settings.rules.multiple == "on"]);
+								event.target.blur();
+							}
+							_this.context.children("li").show();
+							var go = false;
+							for(i in _this.settings.ui.context) {
+								if(_this.settings.ui.context[i] == "separator") continue;
+								if(!_this.settings.ui.context[i].visible.call(null, _this.selected_arr || _this.selected, _this)) _this.context.children("[rel=" + _this.settings.ui.context[i].id +"]").hide();
+								else go = true;
+							}
+							if(go == true) _this.show_context(obj, event.pageX, event.pageY);
+							event.preventDefault(); 
+							event.stopPropagation(); 
+							return false;
+						}
+					}
+					return true;
 				})
 				.listen("mouseover", "a", function (event) {
 					if(_this.locked) {
@@ -778,6 +872,7 @@ function tree_component () {
 						.bind("mousemove",	tree_component.mousemove);
 				} 
 				// ENDIF OF DRAG & DROP FUNCTIONS
+			if(_this.context) jQuery(document).bind("mouseup", function() { _this.hide_context(); });
 		},
 		checkMove : function (NODES, REF_NODE, TYPE) {
 			if(this.locked) return this.error("LOCKED");
@@ -1203,7 +1298,7 @@ function tree_component () {
 			if(!obj || !obj.size()) return this.error("CREATE: NO NODE SELECTED");
 			if(!this.check("creatable", obj)) return this.error("CREATE: CANNOT CREATE IN NODE");
 
-			var t = type || this.get_type(obj);
+			var t = type || this.get_type(obj) || "";
 			if(this.settings.rules.use_inline && this.settings.rules.metadata) {
 				jQuery.metadata.setType("attr", this.settings.rules.metadata);
 				if(typeof obj.metadata()["valid_children"] != "undefined") {
@@ -1287,7 +1382,6 @@ function tree_component () {
 				if(this.current_lang)	obj = obj.find("a." + this.current_lang).get(0);
 				else					obj = obj.find("a:first").get(0);
 				last_value = obj.innerHTML;
-
 				_this.inp = jQuery("<input type='text' />");
 				_this.inp
 					.val(last_value)
@@ -1415,7 +1509,7 @@ function tree_component () {
 			if(this.settings.cookies === false) return false;
 			switch(type) {
 				case "selected":
-					if(this.settings.multiple != false && this.selected_arr.length > 1) {
+					if(this.settings.rules.multiple != false && this.selected_arr.length > 1) {
 						var val = Array();
 						jQuery.each(this.selected_arr, function () {
 							val.push(this.attr("id"));
@@ -1462,25 +1556,27 @@ function tree_component () {
 			else {
 				if(!this.settings.callback.beforemove.call(null,this.get_node(what).get(0), this.get_node(where).get(0),how,this)) return;
 			}
-
-			var tmp = jQuery(what).parents(".tree:eq(0)");
-			// if different trees
-			if(tmp.get(0) != this.container.get(0)) {
-				tmp = tree_component.inst[tmp.attr("id")];
-				// if there are languages - otherwise - no cleanup needed
-				if(tmp.settings.languages.length) {
-					var res = [];
-					// if new tree has no languages - use current visible
-					if(this.settings.languages.length == 0) res.push("." + tmp.current_lang);
-					else {
-						for(i in this.settings.languages) {
-							for(j in tmp.settings.languages) {
-								if(this.settings.languages[i] == tmp.settings.languages[j]) res.push("." + this.settings.languages[i]);
+			
+			if(!is_new) {
+				var tmp = jQuery(what).parents(".tree:eq(0)");
+				// if different trees
+				if(tmp.get(0) != this.container.get(0)) {
+					tmp = tree_component.inst[tmp.attr("id")];
+					// if there are languages - otherwise - no cleanup needed
+					if(tmp.settings.languages.length) {
+						var res = [];
+						// if new tree has no languages - use current visible
+						if(this.settings.languages.length == 0) res.push("." + tmp.current_lang);
+						else {
+							for(i in this.settings.languages) {
+								for(j in tmp.settings.languages) {
+									if(this.settings.languages[i] == tmp.settings.languages[j]) res.push("." + this.settings.languages[i]);
+								}
 							}
 						}
+						if(res.length == 0) return this.error("MOVE: NO COMMON LANGUAGES");
+						what.find("a").removeClass("clicked").not(res.join(",")).remove();
 					}
-					if(res.length == 0) return this.error("MOVE: NO COMMON LANGUAGES");
-					what.find("a").removeClass("clicked").not(res.join(",")).remove();
 				}
 			}
 
@@ -1635,7 +1731,7 @@ function tree_component () {
 				for(i in evts) {
 					var idxer = this.container.indexer(evts[i]);
 					idxer.stop();
-					$.removeData( idxer.listener, idxer.event + '.indexer' );
+					jQuery.removeData( idxer.listener, idxer.event + '.indexer' );
 				}
 			} catch(err) { }
 			this.container.unbind();
