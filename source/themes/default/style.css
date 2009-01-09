@@ -53,6 +53,10 @@
 	background-image:url("f.png");
 }
 
+.tree .tree-default li a.loading {
+	background-image:url("throbber.gif");
+}
+
 /* CONTEXT MENU */
 .tree .tree-default .context {
 	width:160px;

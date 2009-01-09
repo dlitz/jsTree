@@ -575,17 +575,20 @@ function tree_component () {
 		},
 		// CONVERT JSON TO HTML
 		parseJSON : function (data) {
+			if(!data || !data.data) return "";
 			var str = "";
 			str += "<li ";
 			var cls = false;
-			for(i in data.attributes) {
-				if(i == "class") {
-					str += " class='" + data.attributes[i] + " ";
-					if(data.state == "closed" || data.state == "open") str += " " + data.state + " ";
-					str += "' ";
-					cls = true;
+			if(data.attributes) {
+				for(i in data.attributes) {
+					if(i == "class") {
+						str += " class='" + data.attributes[i] + " ";
+						if(data.state == "closed" || data.state == "open") str += " " + data.state + " ";
+						str += "' ";
+						cls = true;
+					}
+					else str += " " + i + "='" + data.attributes[i] + "' ";
 				}
-				else str += " " + i + "='" + data.attributes[i] + "' ";
 			}
 			if(!cls && (data.state == "closed" || data.state == "open")) str += " class='" + data.state + "' ";
 			str += ">";
@@ -1176,7 +1179,7 @@ function tree_component () {
 
 			if(this.settings.data.async && obj.find("li").size() == 0) {
 				var _this = this;
-				obj.children("ul:eq(0)").remove().end().append("<ul><li class='last'><a style='background-image:url(" + _this.settings.ui.theme_path + "default/throbber.gif)' href='#'>" + (_this.settings.lang.loading || "Loading ...") + "</a></li></ul>");
+				obj.children("ul:eq(0)").remove().end().append("<ul><li class='last'><a class='loading' href='#'>" + (_this.settings.lang.loading || "Loading ...") + "</a></li></ul>");
 				obj.removeClass("closed").addClass("open");
 				if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 					var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
@@ -1211,10 +1214,13 @@ function tree_component () {
 								}
 							}
 							else str = _this.parseJSON(data);
-							obj.children("ul:eq(0)").replaceWith("<ul>" + str + "</ul>");
-							obj.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
-							obj.find("li").not(".open").not(".closed").addClass("leaf");
-							_this.open_branch.apply(_this, [obj]);
+							if(str.length > 0) {
+								obj.children("ul:eq(0)").replaceWith("<ul>" + str + "</ul>");
+								obj.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
+								obj.find("li").not(".open").not(".closed").addClass("leaf");
+								_this.open_branch.apply(_this, [obj]);
+							}
+							else obj.removeClass("closed").removeClass("open").addClass("leaf").children("ul").remove();
 							if(callback) callback.call();
 						}
 					});

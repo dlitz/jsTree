@@ -17,6 +17,8 @@ TODO:
 
 CHANGELOG:
  v.0.9.5
+   fixed async JSON bug when server returned empty result (by JensGabe)
+   loading icon is now part of the theme
    native context menu (by damir.secki)
    multiple typeO (by JensGabe)
    can now specify attributes for the nested <a> nodes (href, etc) - updated json format
