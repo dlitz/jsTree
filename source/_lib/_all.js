@@ -10,8 +10,8 @@ function add_css(rule_name,stylesheet){rule_name=rule_name.toLowerCase();stylesh
 function get_sheet_num(href_name){if(!document.styleSheets)return false;for(var i=0;i<document.styleSheets.length;i++){if(document.styleSheets[i].href&&document.styleSheets[i].href.toString().match(href_name))return i;}
 return false;}
 function remove_css(rule_name,stylesheet){return get_css(rule_name,stylesheet,true);}
-function add_sheet(url){if(document.createStyleSheet){document.createStyleSheet(url);}
-else{var styles="@import url(' "+url+" ');";var newSS=document.createElement('link');newSS.rel='stylesheet';newSS.href='data:text/css,'+escape(styles);document.getElementsByTagName("head")[0].appendChild(newSS);}}
+function add_sheet(url,media){if(document.createStyleSheet){document.createStyleSheet(url);}
+else{var newSS=document.createElement('link');newSS.rel='stylesheet';newSS.type='text/css';newSS.media=media||"all";newSS.href=url;document.getElementsByTagName("head")[0].appendChild(newSS);}}
 
 // jquery.js
 

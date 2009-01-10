@@ -5,18 +5,9 @@ NOTES:
    xml_flat in async mode - do not set parent_id
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
-TODO:
- examples:
-   one page with getJSON calls (bind, unbind)
-   complex example
- update: 
-   hotkeys (http://code.google.com/p/js-hotkeys/)
-   faq
-   home screenshots
-
-
 CHANGELOG:
  v.0.9.5
+   fixed theme including on Mac OS (FF, Safari) (by alvin.schur)
    fixed async JSON bug when server returned empty result (by JensGabe)
    loading icon is now part of the theme
    native context menu (by damir.secki)

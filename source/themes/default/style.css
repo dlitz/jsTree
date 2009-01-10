@@ -63,8 +63,9 @@
 	background:#F0F0F0 url("context.gif") 22px 0 repeat-y;
 	border:1px solid silver;
 }
-.tree .tree-default .context a, 
-.tree .tree-default .context a:hover {
+
+.tree .tree-default .context a,
+.tree .tree-default .context a.disabled:hover {
 	text-decoration:none;
 	color:black;
 	text-indent:26px;
@@ -72,6 +73,8 @@
 	background-repeat: no-repeat;
 	background-position: 3px center;
 	padding:1px 0;
+	background-color:transparent;
+	border:0;
 }
 .tree .tree-default .context a:hover {
 	background-color: #e7f4f9;
@@ -79,6 +82,10 @@
 	background-position: 2px center;
 	padding:0;
 	text-indent:25px;
+}
+.tree .tree-default .context a.disabled,
+.tree .tree-default .context a.disabled:hover {
+	color:silver;
 }
 
 .tree .tree-default .context .separator {

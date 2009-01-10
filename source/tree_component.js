@@ -784,13 +784,24 @@ function tree_component () {
 								if(_this.settings.ui.context[i] == "separator") continue;
 								(function () {
 									var func = _this.settings.ui.context[i].action;
-									_this.context.children("[rel=" + _this.settings.ui.context[i].id +"]").bind("click", function (event) {
-										func.call(null, _this.selected_arr || _this.selected, _this);
-										_this.hide_context();
-										event.stopPropagation();
-										event.preventDefault();
-										return false;
-									});
+									_this.context.children("[rel=" + _this.settings.ui.context[i].id +"]")
+										.bind("click", function (event) {
+											if(!$(this).hasClass("disabled")) {
+												func.call(null, _this.selected_arr || _this.selected, _this);
+												_this.hide_context();
+											}
+											event.stopPropagation();
+											event.preventDefault();
+											return false;
+										})
+										.bind("mouseup", function (event) {
+											this.blur();
+											if($(this).hasClass("disabled")) {
+												event.stopPropagation();
+												event.preventDefault();
+												return false;
+											}
+										});
 								})();
 							}
 						}
@@ -801,12 +812,14 @@ function tree_component () {
 								_this.select_branch.apply(_this, [event.target, event.ctrlKey || _this.settings.rules.multiple == "on"]);
 								event.target.blur();
 							}
-							_this.context.children("li").show();
+							_this.context.children("a").removeClass("disabled").show();
 							var go = false;
 							for(i in _this.settings.ui.context) {
 								if(_this.settings.ui.context[i] == "separator") continue;
-								if(!_this.settings.ui.context[i].visible.call(null, _this.selected_arr || _this.selected, _this)) _this.context.children("[rel=" + _this.settings.ui.context[i].id +"]").hide();
-								else go = true;
+								var state = _this.settings.ui.context[i].visible.call(null, _this.selected_arr || _this.selected, _this);
+								if(state === false)	_this.context.children("[rel=" + _this.settings.ui.context[i].id +"]").addClass("disabled");
+								if(state === -1)	_this.context.children("[rel=" + _this.settings.ui.context[i].id +"]").hide();
+								else				go = true;
 							}
 							if(go == true) _this.show_context(obj, event.pageX, event.pageY);
 							event.preventDefault(); 

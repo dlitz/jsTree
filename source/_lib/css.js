@@ -32,15 +32,19 @@ function get_sheet_num (href_name) {
 }
 function remove_css(rule_name, stylesheet) { return get_css(rule_name, stylesheet, true); }
 
-function add_sheet(url) {
+function add_sheet(url, media) {
 	if(document.createStyleSheet) {
 		document.createStyleSheet(url);
 	}
 	else {
-		var styles	= "@import url(' " + url + " ');";
 		var newSS	= document.createElement('link');
-		newSS.rel	='stylesheet';
-		newSS.href	='data:text/css,'+escape(styles);
+		newSS.rel	= 'stylesheet';
+		newSS.type	= 'text/css';
+		newSS.media	= media || "all";
+
+		newSS.href	= url;
+		// var styles	= "@import url(' " + url + " ');";
+		// newSS.href	='data:text/css,'+escape(styles);
 		document.getElementsByTagName("head")[0].appendChild(newSS);
 	}
 }
