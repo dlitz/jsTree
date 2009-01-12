@@ -1,5 +1,6 @@
 /*
  * jsTree 0.9.5
+ * (jstree.com)
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
  *
@@ -7,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2009-01-10
+ * Date: 2009-01-12
  *
  */
 
@@ -775,7 +776,7 @@ function tree_component () {
 						event.target.blur();
 						return _this.error("LOCKED");
 					}
-					_this.settings.callback.onrgtclk.call(null, _this.get_node(event.target).get(0), _this, event);
+					var val = _this.settings.callback.onrgtclk.call(null, _this.get_node(event.target).get(0), _this, event);
 					if(_this.context) {
 						if(_this.context.append == false) {
 							_this.container.find("ul:eq(0)").append(_this.context);
@@ -827,7 +828,7 @@ function tree_component () {
 							return false;
 						}
 					}
-					return true;
+					return val;
 				})
 				.listen("mouseover", "a", function (event) {
 					if(_this.locked) {

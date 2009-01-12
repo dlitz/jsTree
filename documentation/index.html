@@ -7,6 +7,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	<title>jsTree :: documentation</title>
 	<link rel="stylesheet" type="text/css" href="prettify.css" />
 	<script type="text/javascript" src="prettify.js"></script>
+	<script type="text/javascript" src="jquery.js"></script>
 	<style type="text/css">
 	html { margin:0; padding:0; }
 	body { width:800px; margin:0 auto; padding:0; font-family:Verdana, Helvetica, Arial, Serif; font-size:10pt; color:#333; }
@@ -27,8 +28,37 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	.source { font-weight:bold; margin-top:1em; line-height:1.1em; background:gray; text-indent:5px; color:white; text-transform:uppercase; padding:4px 0 0 0; }
 	code, pre { border:3px solid gray; padding:5px; display:block; margin:0 0 1em 0; }
 	</style>
+
+	<script type="text/javascript">
+	$(function() { 
+		prettyPrint();
+		var str = "";
+		var level = 2;
+		$(":header[id]").each(function (i) {
+			var curr_level = this.tagName.replace("H","");
+			if(level < curr_level) {
+				while(level != curr_level) {
+					str += "<ul>";
+					level ++;
+				}
+			}
+			else if(level > curr_level) {
+				while(level != curr_level) {
+					str += "</ul></li>";
+					level --;
+				}
+			}
+			else {
+				if(i != 0) str += "</li>";
+			}
+			str += "<li><a href='#" + this.id + "'>" + this.innerHTML + "</a>";
+		});
+		$("#menu").html(str);
+	});
+	</script>
 </head>
 <body onload="prettyPrint();">
+<div id="menu"></div>
 <div id="documentation">
 <h1 id="inc">Getting started</h1>
 <p>First of all you need to include jsTree's files in your code. Note, that you could use the minified version.<br />Only five files are <strong>required</strong>:</p>
@@ -211,7 +241,7 @@ tree.init(<em>container_node</em>,[{ <em>options</em> }]);</pre>
 			</li>
 			<li>
 				<span class="var">context</span>
-				<p>Array or <span class="val">false</span> - whether to use the native context menu.<br />If set to <span class="val">false</span> there is no context menu. Below you can see the expected format. the <span class="var">visible</span> function on each element is called when showing the menu - if it returns <span class="val">false</span> - the item is not shown on the menu. If the <span class="var">icon</span> does not contain a <span class="val">"/"</span> it is looked up in the current theme directory. The <span class="var">label</span> and <span class="var">action</span> functions are self explanatory. The <span class="val">"separator"</span> item can be used to group similar commands.<br />Default is:</p>
+				<p>Array or <span class="val">false</span> - whether to use the native context menu.<br />If set to <span class="val">false</span> there is no context menu. Below you can see the expected format. The <span class="var">visible</span> function on each element is called when showing the menu - if it returns <span class="val">false</span> - the item is shown as disabled, if it returns <span class="val">-1</span> the item is not shown. If the <span class="var">icon</span> does not contain a <span class="val">"/"</span> it is looked up in the current theme directory. The <span class="var">label</span> and <span class="var">action</span> functions are self explanatory. The <span class="val">"separator"</span> item can be used to group similar commands.<br />Default is:</p>
 <pre>
 [ 
 	{
@@ -917,7 +947,7 @@ data : { title : &quot;<em>node_title</em>&quot;, icon : &quot;<em>path_to_icon<
 /* The actual items in the context menu.
  * Below are the defaults. */
 .tree .tree-default .context a, 
-.tree .tree-default .context a:hover {
+.tree .tree-default .context a.disabled:hover {
 	text-decoration:none;
 	color:black;
 	text-indent:26px;
@@ -925,6 +955,8 @@ data : { title : &quot;<em>node_title</em>&quot;, icon : &quot;<em>path_to_icon<
 	background-repeat: no-repeat;
 	background-position: 3px center;
 	padding:1px 0;
+	background-color:transparent;
+	border:0;
 }
 .tree .tree-default .context a:hover {
 	background-color: #e7f4f9;
@@ -932,6 +964,11 @@ data : { title : &quot;<em>node_title</em>&quot;, icon : &quot;<em>path_to_icon<
 	background-position: 2px center;
 	padding:0;
 	text-indent:25px;
+}
+/* The disabled state */
+.tree .tree-default .context a.disabled,
+.tree .tree-default .context a.disabled:hover {
+	color:silver;
 }
 /* The separator.
  * Below are the defaults. */

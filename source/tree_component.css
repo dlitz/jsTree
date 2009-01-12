@@ -87,13 +87,13 @@
 }
 /* NO DOTS */
 .no_dots ul {
-	background:transparent;
+	background:transparent !important;
 }
-.no_dots li {
-	background:transparent;
+.no_dots li, .no_dots li.last {
+	background-color:transparent !important;
 }
-.no_dots li.last {
-	background:transparent;
+.no_dots li.leaf {
+	background-image:none !important;
 	background-color:transparent !important;
 }
 

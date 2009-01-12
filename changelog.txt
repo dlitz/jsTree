@@ -7,6 +7,7 @@ NOTES:
 
 CHANGELOG:
  v.0.9.5
+   context menu items can be hidden or DISABLED (using the visible function)
    fixed theme including on Mac OS (FF, Safari) (by alvin.schur)
    fixed async JSON bug when server returned empty result (by JensGabe)
    loading icon is now part of the theme
