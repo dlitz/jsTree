@@ -34,7 +34,7 @@ function tree_component () {
 
 		tree_component.focusInst = function () {
 			return tree_component.inst[tree_component.focused];
-		}
+		};
 		tree_component.mousedown = function(event) {
 			var _this = tree_component.focusInst();
 			if(!_this) return;
@@ -154,7 +154,7 @@ function tree_component () {
 					var goTo = { 
 						x : (jQuery(event.target).offset().left - 1),
 						y : (event.pageY - tree_component.inst[cnt.attr("id")].offset.top)
-					}
+					};
 					if(cnt.hasClass("rtl")) {
 						goTo.x += jQuery(event.target).width() - 8;
 					}
@@ -212,7 +212,7 @@ function tree_component () {
 			}
 			return true;
 		};
-	}
+	};
 	return {
 		cntr : tree_component.cntr ++,
 		settings : {
@@ -802,6 +802,10 @@ function tree_component () {
 												event.preventDefault();
 												return false;
 											}
+										})
+										.bind("mousedown", function (event) {
+											event.stopPropagation();
+											event.preventDefault();
 										});
 								})();
 							}
@@ -1557,7 +1561,7 @@ function tree_component () {
 				what.each(function (i) {
 					if(i == 0) return;
 					tmp = _this.moved(this, tmp.children("a:eq(0)"), "after", false, is_copy);
-				})
+				});
 				return;
 			}
 			if(is_copy) {
@@ -1566,7 +1570,7 @@ function tree_component () {
 					this.id = this.id + "_copy";
 					jQuery(this).find("li").each(function () {
 						this.id = this.id + "_copy";
-					})
+					});
 					jQuery(this).find("a.clicked").removeClass("clicked");
 				});
 			}
@@ -1650,7 +1654,7 @@ function tree_component () {
 				$parent.children("li:last").addClass("last");
 			}
 			if(is_new && how != "inside") where = this.get_node(where).parents("li:eq(0)");
-			if(is_copy)		this.settings.callback.oncopy.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how, this)
+			if(is_copy)		this.settings.callback.oncopy.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how, this);
 			else if(is_new)	this.settings.callback.oncreate.call(null, this.get_node(what).get(0), this.get_node(where).get(0), this.settings.insertAt, this);
 			else			this.settings.callback.onmove.call(null, this.get_node(what).get(0), this.get_node(where).get(0), how, this);
 			return what;

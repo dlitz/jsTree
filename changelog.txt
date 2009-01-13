@@ -6,6 +6,11 @@ NOTES:
    onopen callback in async mode is fired AFTER the content has loaded and displayed
 
 CHANGELOG:
+ SVN
+   can now use Dean Edward's packer
+   create bug fixed (by dantan)
+   drag_copy bug fixed (by dantan)
+   theme background bug fixed (by JensGabe)
  v.0.9.5
    context menu items can be hidden or DISABLED (using the visible function)
    fixed theme including on Mac OS (FF, Safari) (by alvin.schur)
