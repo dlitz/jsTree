@@ -8,7 +8,6 @@
 }
 .tree .tree-default li.last {
 	background-image:url("lastli.gif");
-	background-color:white !important;
 }
 
 /* OPEN or CLOSED */
@@ -22,6 +21,9 @@
 
 .tree .tree-default #dragged li.open {
 	background:url("fplus.gif") 5px 5px no-repeat;
+}
+.tree .tree-default li.last {
+	background-color:white;
 }
 
 /* RIGHT TO LEFT SUPPORT */

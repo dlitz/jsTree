@@ -1561,8 +1561,8 @@ function tree_component () {
 				return;
 			}
 			if(is_copy) {
-				what = what.clone();
-				what.each(function (i) {
+				_what = what.clone();
+				_what.each(function (i) {
 					this.id = this.id + "_copy";
 					jQuery(this).find("li").each(function () {
 						this.id = this.id + "_copy";
@@ -1570,6 +1570,7 @@ function tree_component () {
 					jQuery(this).find("a.clicked").removeClass("clicked");
 				});
 			}
+			else _what = what;
 			if(is_new) {
 				if(!this.settings.callback.beforecreate.call(null,this.get_node(what).get(0), this.get_node(where).get(0),how,this)) return;
 			}
@@ -1599,6 +1600,7 @@ function tree_component () {
 					}
 				}
 			}
+			what = _what;
 
 			// ADD NODE TO NEW PLACE
 			switch(how) {
