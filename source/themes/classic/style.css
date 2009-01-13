@@ -1,11 +1,13 @@
 .tree .tree-classic li.open {
-	background:url("minus.gif") 2px 5px no-repeat;
+	background-image:url("minus.gif") 
+	background-position:2px 5px;
+	background-repeat: no-repeat;
 }
-.tree .tree-classic li.closed {
-	background:url("plus.gif") 2px 5px no-repeat;
-}
+.tree .tree-classic li.closed,
 .tree .tree-classic #dragged li.open {
-	background:url("plus.gif") 2px 5px no-repeat;
+	background-image:url("plus.gif") 
+	background-position:2px 5px;
+	background-repeat: no-repeat;
 }
 
 .tree .tree-classic li.open a {
