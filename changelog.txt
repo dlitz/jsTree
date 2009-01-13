@@ -7,7 +7,9 @@ NOTES:
 
 CHANGELOG:
  SVN
-   can now use Dean Edward's packer
+   beforeopen and beforeclose callbacks added (by starmonkey)
+   context menu fix when refreshing (by airbedman)
+   can now use Dean Edward's packer (by Hafeyang)
    create bug fixed (by dantan)
    drag_copy bug fixed (by dantan)
    theme background bug fixed (by JensGabe)

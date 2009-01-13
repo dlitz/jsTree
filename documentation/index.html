@@ -385,6 +385,8 @@ tree.init(<em>container_node</em>,[{ <em>options</em> }]);</pre>
 		<p>A javascript object, containing only functions that are executed on certain events within the tree. You can use them to attach your custom logic.<br />Defaults: all of the functions are empty ones, only the doubleclick function defaults to open/close (invert the state) and select the node involved.</p>
 		<ul>
 			<li><span class="var">beforechange</span><p><strong>Arguments:</strong> the node about to be selected, the tree object.<br />Executed before a change of selection occurs. If you return <span class="val">false</span> in this function the change does not happen.</p></li>
+			<li><span class="var">beforeopen</span><p><strong>Arguments:</strong> the node about to be opened, the tree object.<br />Executed before a node is opened. If you return <span class="val">false</span> in this function the open does not happen.</p></li>
+			<li><span class="var">beforeclose</span><p><strong>Arguments:</strong> the node about to be closed, the tree object.<br />Executed before a node is closed. If you return <span class="val">false</span> in this function the close does not happen.</p></li>
 			<li><span class="var">beforemove</span><p><strong>Arguments:</strong> the node about to be moved, the reference node in the move, the new location of the node - before, after or inside the reference node, the tree object.<br />Executed before the move occurs, if you return <span class="val">false</span> - you prevent the move.</p></li>
 			<li><span class="var">beforecreate</span><p>Same as above, but fires before creation of a node.</p></li>
 			<li><span class="var">beforerename</span><p><strong>Arguments:</strong> the node about to be renamed, the current language of the tree (if language versions are used), the tree object.<br />Executed before the rename occurs - return <span class="val">false</span> to prevent the rename.</p></li>
@@ -476,6 +478,8 @@ tree.init(<em>container_node</em>,[{ <em>options</em> }]);</pre>
 	},
 	callback	: {
 		beforechange	: function(NODE,TREE_OBJ) { return true },
+		beforeopen		: function(NODE,TREE_OBJ) { return true },
+		beforecclose	: function(NODE,TREE_OBJ) { return true },
 		beforemove		: function(NODE,REF_NODE,TYPE,TREE_OBJ) { return true }, 
 		beforecreate	: function(NODE,REF_NODE,TYPE,TREE_OBJ) { return true }, 
 		beforerename	: function(NODE,LANG,TREE_OBJ) { return true }, 
@@ -803,6 +807,10 @@ data : { title : &quot;<em>node_title</em>&quot;, icon : &quot;<em>path_to_icon<
 			</li>
 			<li><span class="var">search</span>
 				<p><strong>Arguments:</strong> <span class='req' title='required'>[REQ]</span>search string<br />This function performs a search by opening all parent nodes of nodes which contain the search string. Those nodes receive the class <span class="val">"search"</span>. If <span class="var">settings.data.async</span> is set to <span class="val">true</span>, a request is also made to <span class="var">settings.data.url</span> along with the parameter (GET or POST) <span class="val">"search"</span> containing the search string - the expected response is a list of comma-separated IDs which will be loaded.</p>
+			</li>
+			<li>
+				<span class="var">context_menu</span><br />
+				<p><strong>Arguments:</strong> none<br />Builds the context menu onload and after a refresh.</p>
 			</li>
 			<li><span class="var">destroy</span>
 				<p><strong>Arguments:</strong>none<br />This function destroys the instance. It also unbinds all events associated with it. If the instance was focused - the first available instance is focused.</p>

@@ -8,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2009-01-12
+ * Date: 2009-01-13
  *
  */
 
@@ -285,6 +285,8 @@ function tree_component () {
 			callback	: {				// various callbacks to attach custom logic to
 				// before focus  - should return true | false
 				beforechange: function(NODE,TREE_OBJ) { return true },
+				beforeopen	: function(NODE,TREE_OBJ) { return false },
+				beforeclose	: function(NODE,TREE_OBJ) { return true },
 				// before move   - should return true | false
 				beforemove  : function(NODE,REF_NODE,TYPE,TREE_OBJ) { return true }, 
 				// before create - should return true | false
@@ -399,23 +401,7 @@ function tree_component () {
 			if(this.settings.ui.dots == false) this.container.addClass("no_dots");
 
 			// CONTEXT MENU
-			this.context = false;
-			if(this.settings.ui.context != false) {
-				var str = '<div class="context">';
-				for(i in this.settings.ui.context) {
-					if(this.settings.ui.context[i] == "separator") {
-						str += "<span class='separator'>&nbsp;</span>";
-						continue;
-					}
-					var icn = "";
-					if(this.settings.ui.context[i].icon) icn = 'background-image:url(\'' + ( this.settings.ui.context[i].icon.indexOf("/") == -1 ? this.theme + this.settings.ui.context[i].icon : this.settings.ui.context[i].icon ) + '\');';
-					str += '<a rel="' + this.settings.ui.context[i].id + '" href="#" style="' + icn + '">' + this.settings.ui.context[i].label + '</a>';
-				}
-				str += '</div>';
-				this.context = jQuery(str);
-				this.context.hide();
-				this.context.append = false;
-			}
+			this.context_menu();
 
 			this.hovered = false;
 			this.locked = false;
@@ -458,6 +444,25 @@ function tree_component () {
 				this.li_height = tmp.height();
 				if(tmp.children("ul:eq(0)").size()) this.li_height -= tmp.children("ul:eq(0)").height();
 				if(!this.li_height) this.li_height = 18;
+			}
+		},
+		context_menu : function () {
+			this.context = false;
+			if(this.settings.ui.context != false) {
+				var str = '<div class="context">';
+				for(i in this.settings.ui.context) {
+					if(this.settings.ui.context[i] == "separator") {
+						str += "<span class='separator'>&nbsp;</span>";
+						continue;
+					}
+					var icn = "";
+					if(this.settings.ui.context[i].icon) icn = 'background-image:url(\'' + ( this.settings.ui.context[i].icon.indexOf("/") == -1 ? this.theme + this.settings.ui.context[i].icon : this.settings.ui.context[i].icon ) + '\');';
+					str += '<a rel="' + this.settings.ui.context[i].id + '" href="#" style="' + icn + '">' + this.settings.ui.context[i].label + '</a>';
+				}
+				str += '</div>';
+				this.context = jQuery(str);
+				this.context.hide();
+				this.context.append = false;
 			}
 		},
 		// REPAINT TREE
@@ -529,7 +534,7 @@ function tree_component () {
 			if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 				this.scrtop = this.container.get(0).scrollTop;
 				var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
-				this.container.getTransform(this.path + xsl, this.settings.data.url, { params : { theme_name : cls, theme_path : _this.theme }, meth : _this.settings.data.method ,callback: function () { _this.reselect.apply(_this); } });
+				this.container.getTransform(this.path + xsl, this.settings.data.url, { params : { theme_name : cls, theme_path : _this.theme }, meth : _this.settings.data.method ,callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
 				return;
 			}
 			else if(this.settings.data.type == "json") {
@@ -543,6 +548,7 @@ function tree_component () {
 					this.container.html("<ul class='" + cls + "'>" + str + "</ul>");
 					this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
 					this.container.find("li").not(".open").not(".closed").addClass("leaf");
+					this.context_menu();
 					this.reselect();
 				}
 				else {
@@ -562,6 +568,7 @@ function tree_component () {
 							_this.container.html("<ul class='" + cls + "'>" + str + "</ul>");
 							_this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
 							_this.container.find("li").not(".open").not(".closed").addClass("leaf");
+							_this.context_menu.apply(_this);
 							_this.reselect.apply(_this);
 						} 
 					});
@@ -1196,6 +1203,7 @@ function tree_component () {
 			if(obj.hasClass("leaf")) return this.error("OPEN: OPENING LEAF NODE");
 
 			if(this.settings.data.async && obj.find("li").size() == 0) {
+				if(this.settings.callback.beforeopen.call(null,obj.get(0),this) === false) return this.error("OPEN: STOPPED BY USER");
 				var _this = this;
 				obj.children("ul:eq(0)").remove().end().append("<ul><li class='last'><a class='loading' href='#'>" + (_this.settings.lang.loading || "Loading ...") + "</a></li></ul>");
 				obj.removeClass("closed").addClass("open");
@@ -1246,6 +1254,9 @@ function tree_component () {
 				return true;
 			}
 			else {
+				if(!this.settings.data.async) {
+					if(this.settings.callback.beforeopen.call(null,obj.get(0),this) === false) return this.error("OPEN: STOPPED BY USER");
+				}
 				if(parseInt(this.settings.ui.animation) > 0 && !disable_animation && !(jQuery.browser.msie && jQuery.browser.version < 7) ) {
 					obj.children("ul:eq(0)").css("display","none");
 					obj.removeClass("closed").addClass("open");
@@ -1266,6 +1277,8 @@ function tree_component () {
 			if(this.locked) return this.error("LOCKED");
 			var _this = this;
 			var obj = this.get_node(obj);
+			if(!obj.size()) return this.error("CLOSE: NO SUCH NODE");
+			if(_this.settings.callback.beforeclose.call(null,obj.get(0),_this) === false) return this.error("CLOSE: STOPPED BY USER");
 			if(parseInt(this.settings.ui.animation) > 0 && !disable_animation && !(jQuery.browser.msie && jQuery.browser.version < 7) && obj.children("ul:eq(0)").size() == 1) {
 				obj.children("ul:eq(0)").slideUp(parseInt(this.settings.ui.animation), function() {
 					obj.removeClass("open").addClass("closed");
