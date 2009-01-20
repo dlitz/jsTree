@@ -11,6 +11,8 @@ TODO:
 
 CHANGELOG:
  v.0.9.6 beta (SVN)
+   context menu Create & Delete functions fix for multiselect
+   reselect bug (by JensGabe)
    fixed multiselector bug ($(".demo,#demo").tree...)
    rewritten drag events (speed improvements, bug fixes)
    now uses jQuery's native live instead of listen plugin
