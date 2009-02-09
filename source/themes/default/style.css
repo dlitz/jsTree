@@ -88,6 +88,10 @@
 .tree .tree-default .context a.disabled,
 .tree .tree-default .context a.disabled:hover {
 	color:silver;
+	opacity:0.5;
+	-ms-filter:'alpha(opacity=50)';
+	filter:alpha(opacity=50);
+	zoom:1;
 }
 
 .tree .tree-default .context .separator {
