@@ -1,7 +1,7 @@
 /* TREE LAYOUT */
 .tree ul {
 	margin:0 0 0 5px;
-	padding:0;
+	padding:0 0 0 0;
 	list-style-type:none;
 }
 .tree li {
@@ -10,12 +10,21 @@
 	line-height:18px;
 	padding:0 0 0 15px;
 	margin:0 0 0 0;
+
+	/* Background fix */
+	clear:both;
+	_height:18px;
+	#height:auto;
 }
 .tree li ul {
 	display:none;
 }
 .tree li a,
 .tree li span {
+	/*
+	vertical-align:bottom;
+	display:-moz-inline-stack;
+	*/
 	display:inline-block;
 	line-height:16px;
 	height:16px;
@@ -26,9 +35,6 @@
 	background-color:transparent;
 	background-repeat:no-repeat;
 	background-position:4px 1px; 
-	border-radius:3px;
-	-moz-border-radius:3px;
-	-webkit-border-radius:3px;
 	border:0;
 	margin:0;
 }
@@ -83,6 +89,7 @@
 .tree li.last {
 	background-position:5px top;
 	background-repeat:no-repeat;
+	float:left;
 }
 /* NO DOTS */
 .no_dots ul {
@@ -125,54 +132,6 @@
 	display:none;
 }
 
-/* HACKY-HACKY */
-/* FIREFOX 2 */
-.tree li a, x:-moz-any-link { display:inline; float:left; }
-.tree li, .tree li ul, .tree li.open ul, x:-moz-any-link { clear:both; }
-.tree li a, x:-moz-any-link, x:default { display:inline-block; float:none; }
-.tree li, .tree li ul, .tree li.open ul, x:-moz-any-link, x:default { clear:none; }
-/* EXPLORER 7 
-*:first-child+html .tree li {
-	margin-bottom:-2px;
-} 
-*:first-child+html .tree li ul {
-	padding-bottom:2px;
-} */
-/* EXPLORER 6 
-.tree li {
-	_width:50%;
-	_margin-bottom:-2px;
-}
-.tree li ul {
-	_padding-bottom:2px;
-}
-
-.tree li a {
-	_zoom:1;
-	_float:none;
-	_display:inline-block;
-}
-*:first-child+html .tree li a {
-	float:none;
-	
-}*/
-/* 
- * FF & OPERA FIXES
-.tree li:not([class="xxx"]) {
-	margin-bottom:0px;
-}
-html:first-child .tree li {
-	margin-bottom:0px;
-}
-.tree li ul:not([class="xxx"]) {
-	padding-bottom:0;
-}
-html:first-child .tree ul {
-	padding-bottom:0;
-}
-*/
-
-
 /* RTL modification */
 .rtl * {
 	direction:rtl;
@@ -185,6 +144,7 @@ html:first-child .tree ul {
 }
 .rtl li.last {
 	background-position:right top;
+	float:right;
 }
 .rtl li a,
 .rtl li span {
@@ -240,3 +200,10 @@ html:first-child .tree ul {
 	margin:0;
 	padding:0;
 }
+
+.tree li, x:-moz-any-link { overflow:auto; #overflow:visible; }
+/** FF2 stuff **/
+.tree li a, x:-moz-any-link { display:inline; float:left; }
+.tree li, .tree li ul, .tree li.open ul, x:-moz-any-link { clear:both; }
+.tree li a, x:-moz-any-link, x:default { display:inline-block; float:none; }
+.tree li ul, .tree li.open ul, x:-moz-any-link, x:default { clear:none; }

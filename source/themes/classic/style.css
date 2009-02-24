@@ -1,13 +1,20 @@
 .tree .tree-classic li.open {
-	background-image:url("minus.gif") 
+	background-image:url("minus.gif");
 	background-position:2px 5px;
 	background-repeat: no-repeat;
 }
 .tree .tree-classic li.closed,
 .tree .tree-classic #dragged li.open {
-	background-image:url("plus.gif") 
+	background-image:url("plus.gif");
 	background-position:2px 5px;
 	background-repeat: no-repeat;
+}
+
+.tree .tree-classic li a, 
+.tree .tree-classic li span {
+	border-radius:0px;
+	-moz-border-radius:0px;
+	-webkit-border-radius:0px;
 }
 
 .tree .tree-classic li.open a {
@@ -18,10 +25,6 @@
 }
 .tree .tree-classic li.leaf a {
 	background-image:url("folder.gif");
-}
-
-.tree .tree-classic li a {
-	-moz-border-radius:0;
 }
 
 .tree .tree-classic li a:hover {

@@ -22,9 +22,6 @@
 .tree .tree-default #dragged li.open {
 	background:url("fplus.gif") 5px 5px no-repeat;
 }
-.tree .tree-default li.last {
-	background-color:white;
-}
 
 /* RIGHT TO LEFT SUPPORT */
 .rtl .tree-default li {
@@ -53,6 +50,9 @@
 .tree .tree-default li a, 
 .tree .tree-default li span {
 	background-image:url("f.png");
+	border-radius:3px;
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
 }
 
 .tree .tree-default li a.loading {

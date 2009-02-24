@@ -1,22 +1,27 @@
 TODO:
   create position
+  restrict to same parent
   ....
   whole row select
   columns
 
 CHANGELOG:
- can now disable a specific cookie type by setting settings.cookies._type_here_ : false
- rightclick while dragging cancels drag'n'drop (by ali1024)
- CSS rewrite for inline-block, instead of float - speed gain and drag&drop fixes
- $.tree_focused() replaces tree_component.focusInst()
- $.tree_create() replaces new tree_component(). No more leakage to the global name space. (by Johan "Spocke" Sörlin)
- leakage of i and j variables fixed. (by Johan "Spocke" Sörlin)
- wrapped in anonymous function (by Johan "Spocke" Sörlin)
- added onselect, ondeselect callbacks
- context menu in FF3 (linux) fixed (by KasperNyboHansen)
- if theme_name is false, no CSS file is included, only images are looked up in theme_path (by groogs)
-
  v.0.9.6 beta (SVN)
+   smarter drop location calculation (now if hovering a node where the before & after drops are not allowed, the whole node becomes a "inside" drop target)
+   open_all callback
+   no more hardcoded background - can now specify container background image
+   added checkbox theme (with optional onchange callback)
+   added apple theme with alternating background (!not compatible with dots)
+   can now disable a specific cookie type by setting settings.cookies._type_here_ : false
+   rightclick while dragging cancels drag'n'drop (by ali1024)
+   CSS rewrite for inline-block, instead of float - speed gain and drag&drop fixes
+   $.tree_focused() replaces tree_component.focusInst()
+   $.tree_create() replaces new tree_component(). No more leakage to the global name space. (by Johan "Spocke" Sörlin)
+   leakage of i and j variables fixed. (by Johan "Spocke" Sörlin)
+   wrapped in anonymous function (by Johan "Spocke" Sörlin)
+   added onselect, ondeselect callbacks
+   context menu in FF3 (linux) fixed (by KasperNyboHansen)
+   if theme_name is false, no CSS file is included, only images are looked up in theme_path (by groogs)
    context menu Create & Delete functions fix for multiselect
    reselect bug (by JensGabe)
    fixed multiselector bug ($(".demo,#demo").tree...)

@@ -87,7 +87,7 @@ var xslTransform = {
 	 * @param xml Mixed the xml data
 	 * @returns Object
 	 */
-	load: function( xml, meth ){
+	load: function( xml, meth, dat ){
 		if(this.debug) jQuery.log( 'load(): received ' + typeof(xml) );
 		// the result
 		var r;
@@ -102,7 +102,7 @@ var xslTransform = {
 		if( xml.substring(0,1) == '<' ){
 			r = this.loadString( xml );
 		}else{
-			r = this.loadFile( xml , meth );
+			r = this.loadFile( xml , meth, dat );
 		}
 
 		if( r ){
@@ -144,7 +144,7 @@ var xslTransform = {
 	 * @param url Mixed
 	 * @returns Object
 	 */
-	loadFile: function( url, meth ){
+	loadFile: function( url, meth, dat ){
 		if(this.debug) jQuery.log( 'loadFile(): ' + url + '::' + typeof(url) );
 
 		if( !url ){
@@ -170,10 +170,12 @@ var xslTransform = {
 		};
 
 		// make asynchronous ajax call and call functions defined above on success/error
-		if(!meth) meth = "GET";
+		if(!meth)	meth = "GET";
+		if(!dat)	dat = {};
 		$.ajax({
 			type:		meth,
 			url:		url,
+			data:		dat,
 			async:		false,
 			success:	this.xhrsuccess,
 			error:		this.xhrerror
@@ -214,7 +216,7 @@ var xslTransform = {
 		options = options || {};
 
 		// initialize the xml object and store it in xml.doc
-		var xml = { 'request':xml, 'doc':this.load(xml, options.meth) };
+		var xml = { 'request':xml, 'doc':this.load(xml, options.meth, options.dat) };
 		// if we have an xpath, replace xml.doc with the results of running it
 		// as of 2007-12-03, IE throws a "msxml6: the parameter is incorrect" error, so removing this
 		if( options.xpath && xml.doc && !jQuery.browser.msie ){
@@ -224,7 +226,7 @@ var xslTransform = {
 		}
 
 		// initialize the result object ... store the primary steps of the transform in result
-		var result = { 'xsl':this.load(xsl, options.meth) };
+		var result = { 'xsl':this.load(xsl, options.meth, options.dat) };
 
 		result.json = false;
 		if( options.json && xml.doc ) {
@@ -295,7 +297,8 @@ jQuery.fn.getTransform = function( xsl, xml, options ){
 		eval: true,		// evaluate <script> blocks found in the transformed result
 		callback: '',	// callback function, to be run on completion of the transformation
 		json: false,
-		meth : "GET"
+		meth : "GET",
+		dat : { }
 	};
 	// initialize options hash; override the defaults with supplied options
 	jQuery.extend( settings, options );

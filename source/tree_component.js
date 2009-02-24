@@ -1,5 +1,5 @@
 /*
- * jsTree 0.9.6 beta
+ * jsTree 0.9.6
  * http://jstree.com/
  *
  * Copyright (c) 2008 Ivan Bozhanov (vakata.com)
@@ -8,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2009-02-09
+ * Date: 2009-02-24
  *
  */
 
@@ -160,55 +160,58 @@
 					if(event.target.tagName == "A" ) {
 						// just in case if hover is over the draggable
 						if(et.is("#dragged")) return false;
+						if(tree2.get_node(event.target).hasClass("closed")) {
+							tmp.open_time = setTimeout( function () { tree2.open_branch(et); }, 500);
+						}
 
 						var goTo = { 
 							x : (et.offset().left - 1),
 							y : (event.pageY - tree2.offset.top)
 						};
-						if(cnt.hasClass("rtl")) {
-							goTo.x += et.width() - 8;
-						}
-						if( (goTo.y + st)%tree2.li_height < tree2.li_height/3 + 1 ) {
-							mov = "before";
-							goTo.y = event.pageY - (goTo.y + st)%tree2.li_height - 2 ;
-						}
-						else if((goTo.y + st)%tree2.li_height > tree2.li_height*2/3 - 1 ) {
-							mov = "after";
-							goTo.y = event.pageY - (goTo.y + st)%tree2.li_height + tree2.li_height - 2 ;
-						}
+						if(cnt.hasClass("rtl")) goTo.x += et.width() - 8;
+						var arr = [];
+						if( (goTo.y + st)%tree2.li_height < tree2.li_height/3 + 1 )			arr = ["before","inside","after"];
+						else if((goTo.y + st)%tree2.li_height > tree2.li_height*2/3 - 1 )	arr = ["after","inside","before"];
 						else {
-							mov = "inside";
-							goTo.x -= 2;
-							if(cnt.hasClass("rtl")) {
-								goTo.x += 36;
-							}
-							goTo.y = event.pageY - (goTo.y + st)%tree2.li_height + Math.floor(tree2.li_height/2) - 2 ;
-							if(tree2.get_node(event.target).hasClass("closed")) {
-								tmp.open_time = setTimeout( function () { tree2.open_branch(et); }, 500);
-							}
+							if((goTo.y + st)%tree2.li_height < tree2.li_height/2)			arr = ["inside","before","after"];
+							else															arr = ["inside","after","before"];
 						}
-
-						if(tree2.checkMove(tmp.origin_tree.container.find("li.dragged"), et, mov)) {
-							if(mov == "inside")	tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "default/plus.gif").width(11);
-							else {
-								if(cnt.hasClass("rtl"))	{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker_rtl.gif").width(40); }
-								else					{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker.gif").width(40); }
+						var ok	= false;
+						$.each(arr, function(i, val) {
+							if(tree2.checkMove(tmp.origin_tree.container.find("li.dragged"), et, val)) {
+								mov = val;
+								ok = true;
+								return false;
+							}
+						});
+						if(ok) {
+							switch(mov) {
+								case "before":
+									goTo.y = event.pageY - (goTo.y + st)%tree2.li_height - 2 ;
+									if(cnt.hasClass("rtl"))	{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker_rtl.gif").width(40); }
+									else					{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker.gif").width(40); }
+									break;
+								case "after":
+									goTo.y = event.pageY - (goTo.y + st)%tree2.li_height + tree2.li_height - 2 ;
+									if(cnt.hasClass("rtl"))	{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker_rtl.gif").width(40); }
+									else					{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker.gif").width(40); }
+									break;
+								case "inside":
+									goTo.x -= 2;
+									if(cnt.hasClass("rtl")) {
+										goTo.x += 36;
+									}
+									goTo.y = event.pageY - (goTo.y + st)%tree2.li_height + Math.floor(tree2.li_height/2) - 2 ;
+									tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "default/plus.gif").width(11);
+									break;
 							}
 							tmp.move_type	= mov;
 							tmp.ref_node	= $(event.target);
 							tmp.drag_help.children("IMG").remove();
 							tree_component.drag_drop.marker.css({ "left" : goTo.x , "top" : goTo.y }).show();
 						}
-						else {
-							if(tmp.drag_help.children("IMG").size() == 0) {
-								tmp.drag_help.append("<img style='position:absolute; " + (tmp.origin_tree.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + tmp.origin_tree.settings.ui.theme_path + "remove.png' />");
-							}
-							tmp.move_type	= false;
-							tmp.ref_node	= false;
-							tree_component.drag_drop.marker.hide();
-						}
 					}
-					else {
+					if(event.target.tagName != "A" || !ok) {
 						if(tmp.drag_help.children("IMG").size() == 0) {
 							tmp.drag_help.append("<img style='position:absolute; " + (tmp.origin_tree.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + tmp.origin_tree.settings.ui.theme_path + "remove.png' />");
 						}
@@ -315,6 +318,7 @@
 					oncreate	: function(NODE,REF_NODE,TYPE,TREE_OBJ) { },	// node created, parent node (TYPE is createat)
 					ondelete	: function(NODE, TREE_OBJ) { },					// node deleted
 					onopen		: function(NODE, TREE_OBJ) { },					// node opened
+					onopen_all	: function(NODE, TREE_OBJ) { },					// all nodes opened
 					onclose		: function(NODE, TREE_OBJ) { },					// node closed
 					error		: function(TEXT, TREE_OBJ) { },					// error occured
 					// double click on node - defaults to open/close & select
@@ -453,7 +457,7 @@
 					this.container.css({ position : "" });
 				}
 				if(!this.li_height) {
-					var tmp = this.container.find("ul li:eq(0)");
+					var tmp = this.container.find("ul li.closed, ul li.leaf").eq(0);
 					this.li_height = tmp.height();
 					if(tmp.children("ul:eq(0)").size()) this.li_height -= tmp.children("ul:eq(0)").height();
 					if(!this.li_height) this.li_height = 18;
@@ -1340,16 +1344,24 @@
 				}
 				this.settings.callback.onclose.call(null, obj.get(0), this);
 			},
-			open_all : function (obj) {
+			open_all : function (obj, callback) {
 				if(this.locked) return this.error("LOCKED");
 				var _this = this;
 				obj = obj ? $(obj) : this.container;
-				obj.find("li.closed").each( function () { var __this = this; _this.open_branch.apply(_this, [this, true, function() { _this.open_all.apply(_this, [__this]); } ]); });
+
+				var s = obj.find("li.closed").size();
+				if(!callback)	this.cl_count = 0;
+				else			this.cl_count --;
+				if(s > 0) {
+					this.cl_count += s;
+					obj.find("li.closed").each( function () { var __this = this; _this.open_branch.apply(_this, [this, true, function() { _this.open_all.apply(_this, [__this, true]); } ]); });
+				}
+				else if(this.cl_count == 0) this.settings.callback.onopen_all.call(null,this);
 			},
 			close_all : function () {
 				if(this.locked) return this.error("LOCKED");
 				var _this = this;
-				$(this.container).find("li.open").each( function () { _this.close_branch(this, true); });
+				this.container.find("li.open").each( function () { _this.close_branch(this, true); });
 			},
 			show_lang : function (i) { 
 				if(this.locked) return this.error("LOCKED");
@@ -1370,7 +1382,7 @@
 				if(i > this.settings.languages.length - 1) i = 0;
 				this.show_lang(i);
 			},
-			create : function (type, obj, data, icon, id ) {
+			create : function (type, obj, data, icon, id, position) {
 				if(this.locked) return this.error("LOCKED");
 				// NOTHING SELECTED
 				obj = obj ? this.get_node(obj) : this.selected;
@@ -1656,8 +1668,9 @@
 								}
 							}
 							if(res.length == 0) return this.error("MOVE: NO COMMON LANGUAGES");
-							what.find("a").removeClass("clicked").not(res.join(",")).remove();
+							what.find("a").not(res.join(",")).remove();
 						}
+						what.find("a.clicked").removeClass("clicked");
 					}
 				}
 				what = _what;
