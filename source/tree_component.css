@@ -28,33 +28,23 @@
 	display:inline-block;
 	line-height:16px;
 	height:16px;
-	padding:1px 4px 1px 23px !important;
 	color:black;
 	white-space:nowrap;
 	text-decoration:none;
-	background-color:transparent;
-	background-repeat:no-repeat;
-	background-position:4px 1px; 
-	border:0;
+	padding:1px 4px 1px 1px;
 	margin:0;
 }
 .tree li a:hover, 
 .tree li a.hover {
-	background-color: #e7f4f9;
-	border:1px solid #d8f0fa;
-	padding:0px 3px 0px 22px !important;
-	background-position:3px 0px; 
+
 }
 .tree li a.clicked,
 .tree li a.clicked:hover,
 .tree li span.clicked {
-	background-color: #beebff;
-	border:1px solid #99defd;
-	padding:0px 3px 0px 22px !important;
-	background-position:3px 0px; 
+
 }
-.tree li span.clicked {
-	padding:0px 3px 0px 20px !important;
+.tree li a:focus {
+	outline: none;
 }
 
 .tree li a input,
@@ -78,29 +68,8 @@
 }
 
 /* FOR DOTS */
-.tree ul {
-	background-position:6px 1px;
-	background-repeat:repeat-y;
-}
-.tree li {
-	background-position:7px center;
-	background-repeat:no-repeat;
-}
 .tree li.last {
-	background-position:5px top;
-	background-repeat:no-repeat;
 	float:left;
-}
-/* NO DOTS */
-.no_dots ul {
-	background:transparent !important;
-}
-.no_dots li, .no_dots li.last {
-	background-color:transparent !important;
-}
-.no_dots li.leaf {
-	background-image:none !important;
-	background-color:transparent !important;
 }
 
 /* OPEN OR CLOSE */
@@ -110,7 +79,6 @@
 .tree li.closed ul {
 	display:none !important;
 }
-
 
 /* FOR DRAGGING */
 .tree #dragged {
@@ -133,7 +101,7 @@
 }
 
 /* RTL modification */
-.rtl * {
+.rtl, .rtl * {
 	direction:rtl;
 }
 .rtl ul {
@@ -143,45 +111,11 @@
 	padding:0 15px 0 0;
 }
 .rtl li.last {
-	background-position:right top;
-	float:right;
+	float:right !important;
 }
 .rtl li a,
 .rtl li span {
-	float:right;
-	padding:1px 23px 1px 4px !important;
-	background-position:right 1px; 
-	margin-right:1px;
-}
-.rtl li a:hover, 
-.rtl li a.hover {
-	background-color: #e7f4f9;
-	border:1px solid #d8f0fa;
-	padding:0px 23px 0px 3px !important;
-	background-position:right 0px; 
-	margin-right:0px;
-}
-.rtl li a.clicked,
-.rtl li a.clicked:hover,
-.rtl li span.clicked {
-	background-color: #beebff;
-	border:1px solid #99defd;
-	padding:0px 23px 0px 3px !important;
-	background-position:right 0px; 
-	margin-right:0px;
-}
-.rtl li span.clicked {
-	padding:0px 21px 0px 3px !important;
-}
-
-.rtl ul {
-	background-position:right 1px;
-}
-.rtl li {
-	background-position:right center;
-}
-.rtl #dragged li.open {
-	background-position: right 5px;
+	padding:1px 1px 1px 4px;
 }
 
 /* CONTEXT MENU */
@@ -201,9 +135,26 @@
 	padding:0;
 }
 
+/** CLEAR FLOAT - CHROME **/
+body:first-of-type .tree li { overflow:auto; }
+/** CLEAR FLOAT - FIREFOX and RESTORE IE7 **/
 .tree li, x:-moz-any-link { overflow:auto; #overflow:visible; }
-/** FF2 stuff **/
+/** FIREFOX2 fix **/
 .tree li a, x:-moz-any-link { display:inline; float:left; }
+.rtl li a, x:-moz-any-link { display:inline; float:right; }
 .tree li, .tree li ul, .tree li.open ul, x:-moz-any-link { clear:both; }
-.tree li a, x:-moz-any-link, x:default { display:inline-block; float:none; }
+/** FIREFOX3 restore **/
+.tree li a, .rtl li a, x:-moz-any-link, x:default { display:inline-block; float:none; }
 .tree li ul, .tree li.open ul, x:-moz-any-link, x:default { clear:none; }
+
+/* CLEAR 1ST LEVEL FLOATS - FIREFOX */
+@-moz-document url-prefix() {
+	.tree > ul > li { float:left; }
+	.rtl > ul > li { float:right; }
+	.tree > ul > li.leaf { background-image:none; }
+	.tree > ul > li.last.leaf { background-image:none; }
+	/*
+	.tree .tree-default { float:left; }
+	.tree .tree-default > li.last { background-color:white !important; }
+	*/
+}

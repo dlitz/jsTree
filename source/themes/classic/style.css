@@ -32,7 +32,9 @@
 	border-color:white;
 }
 .tree .tree-classic li a.clicked,
-.tree .tree-classic li span.clicked {
+.tree .tree-classic li span.clicked,
+.tree .tree-classic li a.clicked:hover,
+.tree .tree-classic li span.clicked:hover {
 	background-color:navy;
 	border-color:navy;
 	color:white;

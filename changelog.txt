@@ -1,16 +1,35 @@
 TODO:
-  create position
+  preloading content
+  NEW EXAMPLES + DOCS upload (* NOT IN ISSUES)
   restrict to same parent
-  ....
+
   whole row select
+  offline storage
   columns
 
 CHANGELOG:
- v.0.9.6 beta (SVN)
+ Working copy
+   apple theme now works with dots (on/off)
+   added themeroller support - you can pass the classes in every data type (icons too), the active, hover & highlight classes are automatic
+   function to get a tree reference by ID
+   ondelete, oncreate, onmove, oncopy, onrename callbacks now receive additional rollback parameter
+   added getXML function to get the tree as XML (same as getJSON)
+   fixed default theme being included multiple times when more than 1 tree is used
+   fixed rename bug when html entities are used
+   added ability to pass an xml string as data source
+   added position argument in create function
+   option to which button initiates drag'n'drop
+   added 5px threshold for dragging
+   Chrome clear float
+   Fixed scrollbars (issue remains in ff - multiple root elements are not connected with dots)
+   small bug fixes in classic theme & apple theme
+ SVN
+   
+ v.0.9.6
    smarter drop location calculation (now if hovering a node where the before & after drops are not allowed, the whole node becomes a "inside" drop target)
    open_all callback
    no more hardcoded background - can now specify container background image
-   added checkbox theme (with optional onchange callback)
+   added checkbox theme (with optional onchange callback for tri-state checkboxes)
    added apple theme with alternating background (!not compatible with dots)
    can now disable a specific cookie type by setting settings.cookies._type_here_ : false
    rightclick while dragging cancels drag'n'drop (by ali1024)

@@ -10,11 +10,7 @@
 	font-size:14px;
 }
 */
-.tree .tree-apple,
-.tree .tree-apple ul,
-.tree .tree-apple li.leaf {
-	background-image:none;
-}
+
 .tree .tree-apple {
 	background:url("bg.jpg") left top repeat;
 }
@@ -26,7 +22,8 @@
 	background-image:url("plus.gif");
 }
 
-.tree .tree-apple li a {
+.tree .tree-apple li a,
+.tree .tree-apple li span {
 	background-image:url("folder.png");
 }
 
@@ -50,6 +47,7 @@
 	color:white;
 }
 .tree .tree-apple li a.clicked,
+.tree .tree-apple li a.clicked:hover,
 .tree .tree-apple li span.clicked {
 	background-color:#2E72DF;
 	border-color:#2E72DF;
