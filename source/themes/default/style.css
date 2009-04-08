@@ -138,14 +138,16 @@
 }
 
 /* CONTEXT MENU */
-.tree .tree-default .context {
+.tree-default-context {
 	width:160px;
 	background:#F0F0F0 url("context.gif") 22px 0 repeat-y;
 	border:1px solid silver;
+	position:absolute;
 }
 
-.tree .tree-default .context a,
-.tree .tree-default .context a.disabled:hover {
+.tree-default-context a,
+.tree-default-context a.disabled:hover {
+	display:block;
 	text-decoration:none;
 	color:black;
 	text-indent:26px;
@@ -156,15 +158,15 @@
 	background-color:transparent;
 	border:0;
 }
-.tree .tree-default .context a:hover {
+.tree-default-context a:hover {
 	background-color: #e7f4f9;
 	border:1px solid #d8f0fa;
 	background-position: 2px center;
 	padding:0;
 	text-indent:25px;
 }
-.tree .tree-default .context a.disabled,
-.tree .tree-default .context a.disabled:hover {
+.tree-default-context a.disabled,
+.tree-default-context a.disabled:hover {
 	color:silver;
 	opacity:0.5;
 	-ms-filter:'alpha(opacity=50)';
@@ -172,7 +174,7 @@
 	zoom:1;
 }
 
-.tree .tree-default .context .separator {
+.tree-default-context .separator {
 	background:#FFFFFF;
 	border-top:1px solid #E0E0E0;
 	font-size:1px;

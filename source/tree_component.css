@@ -51,7 +51,7 @@
 .tree li span input {
 	margin:0;
 	padding:0 0;
-	display:block;
+	display:inline-block;
 	height:12px !important;
 	border:1px solid white;
 	background:white;
@@ -119,26 +119,22 @@
 }
 
 /* CONTEXT MENU */
-.tree .context {
+.tree-default-context {
 	display:none;
 	position:absolute;
 	list-style-type:none;
 	margin:0;
 	padding:0;
 }
-.tree .context .separator {
+.tree-default-context .separator {
 	display:none;
 }
-.tree .context a {
+.tree-default-context a {
 	display:block;
 	margin:0;
 	padding:0;
 }
 
-/** CLEAR FLOAT - CHROME **/
-body:first-of-type .tree li { overflow:auto; }
-/** CLEAR FLOAT - FIREFOX and RESTORE IE7 **/
-.tree li, x:-moz-any-link { overflow:auto; #overflow:visible; }
 /** FIREFOX2 fix **/
 .tree li a, x:-moz-any-link { display:inline; float:left; }
 .rtl li a, x:-moz-any-link { display:inline; float:right; }
@@ -146,15 +142,12 @@ body:first-of-type .tree li { overflow:auto; }
 /** FIREFOX3 restore **/
 .tree li a, .rtl li a, x:-moz-any-link, x:default { display:inline-block; float:none; }
 .tree li ul, .tree li.open ul, x:-moz-any-link, x:default { clear:none; }
+/** IE7 Restore **/
+.tree li a, .rtl li a { #display:inline-block; #float:none; }
+.tree li ul, .tree li.open ul { #clear:none; }
 
-/* CLEAR 1ST LEVEL FLOATS - FIREFOX */
-@-moz-document url-prefix() {
-	.tree > ul > li { float:left; }
-	.rtl > ul > li { float:right; }
-	.tree > ul > li.leaf { background-image:none; }
-	.tree > ul > li.last.leaf { background-image:none; }
-	/*
-	.tree .tree-default { float:left; }
-	.tree .tree-default > li.last { background-color:white !important; }
-	*/
-}
+.tree li { _width:1px; }
+.tree > ul { float:left; margin-bottom:9px; }
+.tree > ul > li.last { margin-bottom:-9px !important; height:9px; }
+.tree li li { overflow:hidden; #overflow:visible; _overflow:visible; }
+/* @-moz-document url-prefix() {} */

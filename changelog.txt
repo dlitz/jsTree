@@ -1,14 +1,14 @@
-TODO:
-  preloading content
-  NEW EXAMPLES + DOCS upload (* NOT IN ISSUES)
-  restrict to same parent
-
-  whole row select
-  offline storage
-  columns
-
 CHANGELOG:
- Working copy
+ v.0.9.7
+   can now create root nodes with 'create' function
+   create & paste functions rewritten
+   check stylesheet - fallback
+   disabled collapse when clicking below the arrow
+   numerous bugfixes
+   context menu is now appended to the body
+   bringing up the context menu does not change selection
+   tree can be created in a not yet appended node
+   refresh node bug
    apple theme now works with dots (on/off)
    added themeroller support - you can pass the classes in every data type (icons too), the active, hover & highlight classes are automatic
    function to get a tree reference by ID
@@ -23,8 +23,6 @@ CHANGELOG:
    Chrome clear float
    Fixed scrollbars (issue remains in ff - multiple root elements are not connected with dots)
    small bug fixes in classic theme & apple theme
- SVN
-   
  v.0.9.6
    smarter drop location calculation (now if hovering a node where the before & after drops are not allowed, the whole node becomes a "inside" drop target)
    open_all callback

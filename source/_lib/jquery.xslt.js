@@ -111,7 +111,7 @@ var xslTransform = {
 			r.setProperty( 'SelectionLanguage', 'XPath' );
 			return r;
 		}else{
-			if(this.debug) $.log( 'Unable to load ' + xml );
+			if(this.debug) jQuery.log( 'Unable to load ' + xml );
 			return false;
 		}
 	},
@@ -172,7 +172,7 @@ var xslTransform = {
 		// make asynchronous ajax call and call functions defined above on success/error
 		if(!meth)	meth = "GET";
 		if(!dat)	dat = {};
-		$.ajax({
+		jQuery.ajax({
 			type:		meth,
 			url:		url,
 			data:		dat,
@@ -222,7 +222,7 @@ var xslTransform = {
 		if( options.xpath && xml.doc && !jQuery.browser.msie ){
 			// run the xpath
 			xml.doc = xml.doc.selectSingleNode( options.xpath.toString() );
-			if(this.debug) $.log( 'transform(): xpath has been run...resulting doc: ' + (this.serialize(xml.doc)) );
+			if(this.debug) jQuery.log( 'transform(): xpath has been run...resulting doc: ' + (this.serialize(xml.doc)) );
 		}
 
 		// initialize the result object ... store the primary steps of the transform in result
@@ -327,12 +327,12 @@ jQuery.fn.getTransform = function( xsl, xml, options ){
 		//		no idea why yet, so adding a fallback to innerHTML
 		//		::warning:: ie6 has trouble with javascript events such as onclick assigned statically within the html when using innerHTML
 		try {
-			if(settings.append)			$(this).append( trans.string );
-			else if(settings.repl)		$(this).replaceWith( trans.string );
-			else						$(this).html( trans.string );
+			if(settings.append)			jQuery(this).append( trans.string );
+			else if(settings.repl)		jQuery(this).replaceWith( trans.string );
+			else						jQuery(this).html( trans.string );
 		} catch(e) {
-			if(xslTransform.debug) $.log( 'getTransform: error placing results of transform into element, falling back to innerHTML: ' + e.toString() );
-			$(this)[0].innerHTML = trans.string;
+			if(xslTransform.debug) jQuery.log( 'getTransform: error placing results of transform into element, falling back to innerHTML: ' + e.toString() );
+			jQuery(this)[0].innerHTML = trans.string;
 		}
 
 		// there might not be a scripts property

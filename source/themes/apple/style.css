@@ -16,10 +16,12 @@
 }
 .tree .tree-apple li.open {
 	background-image:url("minus.gif");
+	background-position:3px 5px;
 }
 .tree .tree-apple li.closed,
 .tree .tree-apple #dragged li.open {
 	background-image:url("plus.gif");
+	background-position:2px 5px;
 }
 
 .tree .tree-apple li a,
@@ -52,4 +54,26 @@
 	background-color:#2E72DF;
 	border-color:#2E72DF;
 	color:white;
+}
+
+/* RIGHT TO LEFT SUPPORT */
+.rtl .tree-apple li {
+	margin-right:1px;
+}
+.rtl .tree-apple li.last {
+	margin-right:0;
+	padding-right:16px;
+}
+.rtl .tree-apple li.open {
+	background:url("fminus_rtl.gif") right 6px no-repeat;
+	margin-right:0;
+	padding-right:16px;
+}
+.rtl .tree-apple li.closed {
+	background:url("fplus_rtl.gif") right 4px no-repeat;
+	margin-right:0;
+	padding-right:16px;
+}
+.rtl .tree-apple #dragged li.open {
+	background-position: right 5px;
 }
