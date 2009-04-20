@@ -148,6 +148,7 @@
 
 .tree li { _width:1px; }
 .tree > ul { float:left; margin-bottom:9px; }
+.rtl > ul { float:right; }
 .tree > ul > li.last { margin-bottom:-9px !important; height:9px; }
 .tree li li { overflow:hidden; #overflow:visible; _overflow:visible; }
 /* @-moz-document url-prefix() {} */

@@ -26,6 +26,7 @@
 			<xsl:with-param name="node" select="." />
 			<xsl:with-param name="theme_path" select="$theme_path" />
 			<xsl:with-param name="theme_name" select="$theme_name" />
+			<xsl:with-param name="is_last" select="number(position() = last())" />
 		</xsl:call-template>
 	</xsl:for-each>
 	</ul>
@@ -35,12 +36,13 @@
 	<xsl:param name="node" />
 	<xsl:param name="theme_path" />
 	<xsl:param name="theme_name" />
+	<xsl:param name="is_last" />
 
 	<xsl:variable name="children" select="count(//item[@parent_id=$node/attribute::id]) &gt; 0" />
 	
 	<li>
 	<xsl:attribute name="class">
-		<xsl:if test="position() = last()"> last </xsl:if>
+		<xsl:if test="$is_last = true()"> last </xsl:if>
 		<xsl:choose>
 			<xsl:when test="@state = 'open'"> open </xsl:when>
 			<xsl:when test="$children or @hasChildren"> closed </xsl:when>
@@ -79,6 +81,12 @@
 					<xsl:with-param name="node" select="." />
 					<xsl:with-param name="theme_path" select="$theme_path" />
 					<xsl:with-param name="theme_name" select="$theme_name" />
+					<xsl:with-param name="is_last" select="number(position() = last())" />
+					<!--
+					<xsl:choose>
+						<xsl:when test="position() = last()"><xsl:with-param name="is_last" select="true()" /></xsl:when>
+						<xsl:otherwise><xsl:with-param name="is_last" select="false()" /></xsl:otherwise>
+					</xsl:choose>-->
 				</xsl:call-template>
 			</xsl:for-each>
 		</ul>
