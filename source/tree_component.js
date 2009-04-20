@@ -95,8 +95,8 @@
 			tree_component.mousedown = function(event) {
 				var tmp = $(event.target);
 				if(tree_component.drag_drop.droppable.length && tmp.is("." + tree_component.drag_drop.droppable.join(", .")) ) {
-					tree_component.drag_drop.drag_help	= $("<li id='dragged' class='dragged foreign " + event.target.className + "'><a href='#'>" + tmp.text() + "</a></li>");
-					tree_component.drag_drop.drag_node	= tree_component.drag_drop.drag_help;
+					tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='tree'><ul class='tree-default'><li class='last dragged foreign " + event.target.className + "'><a href='#'>" + tmp.text() + "</a></li></ul></div>");
+					tree_component.drag_drop.drag_node	= tree_component.drag_drop.drag_help.find("li:eq(0)");
 					tree_component.drag_drop.isdown		= true;
 					tree_component.drag_drop.foreign	= tmp;
 					tmp.blur();
@@ -159,16 +159,11 @@
 					if(tmp.open_time) clearTimeout(tmp.open_time);
 					if(!tmp.appended) {
 						if(tmp.foreign !== false) tmp.origin_tree = $.tree_focused();
-						tmp.origin_tree.container.children("ul:eq(0)").append(tmp.drag_help);
-						var temp = $(tmp.drag_help).offsetParent();
-						if(temp.is("html")) temp = $("body");
-						tmp.po = temp.offset();
-						tmp.po.top -= (temp.is("body")) ? 0 : temp.scrollTop();
-						tmp.po.left -= (temp.is("body")) ? 0 : temp.scrollLeft();
+						$("body").append(tmp.drag_help);
 						tmp.w = tmp.drag_help.width();
 						tmp.appended = true;
 					}
-					tmp.drag_help.css({ "left" : (event.pageX - tmp.po.left - (tmp.origin_tree.settings.ui.rtl ? tmp.w : -5 ) ), "top" : (event.pageY - tmp.po.top + 15) });
+					tmp.drag_help.css({ "left" : (event.pageX - (tmp.origin_tree.settings.ui.rtl ? tmp.w : -5 ) ), "top" : (event.pageY + 15) });
 
 					if(event.target.tagName == "IMG" && event.target.id == "marker") return false;
 
@@ -176,10 +171,10 @@
 					var cnt = et.is(".tree") ? et : et.parents(".tree:eq(0)");
 
 					// if not moving over a tree
-					if(cnt.size() == 0) {
+					if(cnt.size() == 0 || !tree_component.inst[cnt.attr("id")]) {
 						if(tmp.scroll_time) clearTimeout(tmp.scroll_time);
-						if(tmp.drag_help.children("IMG").size() == 0) {
-							tmp.drag_help.append("<img style='position:absolute; " + (tmp.origin_tree.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + tmp.origin_tree.settings.ui.theme_path + "remove.png' />");
+						if(tmp.drag_help.find("IMG").size() == 0) {
+							tmp.drag_help.find("li:eq(0)").append("<img style='position:absolute; " + (tmp.origin_tree.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + tmp.origin_tree.settings.ui.theme_path + "remove.png' />");
 						}
 						tmp.move_type	= false;
 						tmp.ref_node	= false;
@@ -192,8 +187,8 @@
 
 					// if moving over another tree and multitree is false
 					if( tmp.foreign === false && tmp.origin_tree.container.get(0) != tree2.container.get(0) && (!tmp.origin_tree.settings.rules.multitree || !tree2.settings.rules.multitree) ) {
-						if(tmp.drag_help.children("IMG").size() == 0) {
-							tmp.drag_help.append("<img style='position:absolute; " + (tmp.origin_tree.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + tmp.origin_tree.settings.ui.theme_path + "remove.png' />");
+						if(tmp.drag_help.find("IMG").size() == 0) {
+							tmp.drag_help.find("li:eq(0)").append("<img style='position:absolute; " + (tmp.origin_tree.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + tmp.origin_tree.settings.ui.theme_path + "remove.png' />");
 						}
 						tmp.move_type	= false;
 						tmp.ref_node	= false;
@@ -209,7 +204,7 @@
 
 					if(event.target.tagName == "A" ) {
 						// just in case if hover is over the draggable
-						if(et.is("#dragged")) return false;
+						if(et.is("#jstree-dragged")) return false;
 						if(tree2.get_node(event.target).hasClass("closed")) {
 							tmp.open_time = setTimeout( function () { tree2.open_branch(et); }, 500);
 						}
@@ -260,7 +255,7 @@
 							}
 							tmp.move_type	= mov;
 							tmp.ref_node	= $(event.target);
-							tmp.drag_help.children("IMG").remove();
+							tmp.drag_help.find("IMG").remove();
 							tree_component.drag_drop.marker.css({ "left" : goTo.x , "top" : goTo.y }).show();
 						}
 					}
@@ -269,13 +264,13 @@
 						var et_off = et.offset();
 						tmp.move_type	= "inside";
 						tmp.ref_node	= cnt.children("ul:eq(0)");
-						tmp.drag_help.children("IMG").remove();
+						tmp.drag_help.find("IMG").remove();
 						tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "plus.gif").width(11);
 						tree_component.drag_drop.marker.css({ "left" : et_off.left + ( cnt.hasClass("rtl") ? (cnt.width() - 10) : 10 ) , "top" : et_off.top + 15 }).show();
 					}
 					else if(event.target.tagName != "A" || !ok) {
-						if(tmp.drag_help.children("IMG").size() == 0) {
-							tmp.drag_help.append("<img style='position:absolute; " + (tmp.origin_tree.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + tmp.origin_tree.settings.ui.theme_path + "remove.png' />");
+						if(tmp.drag_help.find("IMG").size() == 0) {
+							tmp.drag_help.find("li:eq(0)").append("<img style='position:absolute; " + (tmp.origin_tree.settings.ui.rtl ? "right" : "left" ) + ":4px; top:0px; background:white; padding:2px;' src='" + tmp.origin_tree.settings.ui.theme_path + "remove.png' />");
 						}
 						tmp.move_type	= false;
 						tmp.ref_node	= false;
@@ -631,8 +626,8 @@
 				if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 					this.scrtop = this.container.get(0).scrollTop;
 					var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
-					if(this.settings.data.xml)	this.container.getTransform(this.path + xsl, this.settings.data.xml, { params : { theme_name : cls, theme_path : _this.theme }, meth : _this.settings.data.method, dat : _this.settings.data.async_data.apply(_this,[obj]) ,callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
-					else						this.container.getTransform(this.path + xsl, this.settings.data.url, { params : { theme_name : cls, theme_path : _this.theme }, meth : _this.settings.data.method, dat : _this.settings.data.async_data.apply(_this,[obj]) ,callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
+					if(this.settings.data.xml)	this.container.getTransform(this.path + xsl, this.settings.data.xml, { params : { theme_name : cls, theme_path : _this.theme, theme_add : 'true' }, meth : _this.settings.data.method, dat : _this.settings.data.async_data.apply(_this,[obj]) ,callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
+					else						this.container.getTransform(this.path + xsl, this.settings.data.url, { params : { theme_name : cls, theme_path : _this.theme, theme_add : 'true' }, meth : _this.settings.data.method, dat : _this.settings.data.async_data.apply(_this,[obj]) ,callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
 					return;
 				}
 				else if(this.settings.data.type == "json") {
@@ -1009,7 +1004,7 @@
 				var _this = this;
 
 				this.container
-					.bind("mousedown", function (event) {
+					.bind("mousedown.jstree", function (event) {
 						if(tree_component.drag_drop.isdown) {
 							tree_component.drag_drop.move_type = false;
 							event.preventDefault();
@@ -1018,10 +1013,10 @@
 							return false;
 						}
 					})
-					.bind("mouseup", function (event) {
+					.bind("mouseup.jstree", function (event) {
 						setTimeout( function() { _this.focus.apply(_this); }, 5);
 					})
-					.bind("click", function (event) { 
+					.bind("click.jstree", function (event) { 
 						//event.stopPropagation(); 
 						return true;
 					});
@@ -1175,16 +1170,17 @@
 									if(_this.check("draggable", obj))	tree_component.drag_drop.drag_node = obj;
 									else								tree_component.drag_drop.drag_node = _this.container.find("li.dragged:eq(0)");
 									tree_component.drag_drop.isdown		= true;
-									tree_component.drag_drop.drag_help	= $(tree_component.drag_drop.drag_node.get(0).cloneNode(true));
-									tree_component.drag_drop.drag_help.attr("id","dragged");
-									tree_component.drag_drop.drag_help.children("a").html("Multiple selection").end().children("ul").remove();
+									tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='" + _this.container.get(0).className + "' />").append("<ul class='" + _this.container.children("ul:eq(0)").get(0).className + "' />");
+									tree_component.drag_drop.drag_help.children("ul:eq(0)").append(tree_component.drag_drop.drag_node.get(0).cloneNode(true));
+									tree_component.drag_drop.drag_help.find("li:eq(0)").removeClass("last").addClass("last").children("a").html("Multiple selection").end().children("ul").remove();
 								}
 							}
 							else {
 								if(_this.check("draggable", obj)) {
 									tree_component.drag_drop.drag_node	= obj;
-									tree_component.drag_drop.drag_help	= $(obj.get(0).cloneNode(true));
-									tree_component.drag_drop.drag_help.attr("id","dragged");
+									tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='" + _this.container.get(0).className + "' />").append("<ul class='" + _this.container.children("ul:eq(0)").get(0).className + "' />");
+									tree_component.drag_drop.drag_help.children("ul:eq(0)").append(obj.get(0).cloneNode(true));
+									tree_component.drag_drop.drag_help.find("li:eq(0)").removeClass("last").addClass("last");
 									tree_component.drag_drop.isdown		= true;
 									tree_component.drag_drop.foreign	= false;
 									tree_component.drag_drop.origin_tree = _this;
@@ -1199,9 +1195,9 @@
 							return false;
 						});
 					$(document)
-						.bind("mousedown",	tree_component.mousedown)
-						.bind("mouseup",	tree_component.mouseup)
-						.bind("mousemove",	tree_component.mousemove);
+						.bind("mousedown.jstree",	tree_component.mousedown)
+						.bind("mouseup.jstree",		tree_component.mouseup)
+						.bind("mousemove.jstree",	tree_component.mousemove);
 				} 
 				// ENDIF OF DRAG & DROP FUNCTIONS
 				if(_this.context) $(document).bind("mousedown", function() { _this.hide_context(); });
@@ -2250,7 +2246,8 @@
 			},
 
 			destroy : function() {
-				this.container.unbind().find("li").die().find("a").die();
+				//$("#" + this.container.attr("id")).die();
+				this.container.unbind(".jstree");
 				this.container.removeClass("tree ui-widget ui-widget-content").children("ul").removeClass("tree-" + this.settings.ui.theme_name).find("li").removeClass("leaf").removeClass("open").removeClass("closed").removeClass("last").children("a").removeClass("clicked hover search ui-state-active ui-state-hover ui-state-highlight ui-state-default");
 
 				if(this.cntr == tree_component.focused) {

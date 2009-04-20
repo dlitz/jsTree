@@ -17,10 +17,11 @@
 
 <xsl:param name="theme_name" />
 <xsl:param name="theme_path" />
+<xsl:param name="theme_add" />
 
 <xsl:template match="/">
 	<ul>
-	<xsl:if test="$theme_name"><xsl:attribute name="class"><xsl:value-of select="$theme_name" /></xsl:attribute></xsl:if>
+	<xsl:if test="$theme_name and $theme_add = 'true'"><xsl:attribute name="class"><xsl:value-of select="$theme_name" /></xsl:attribute></xsl:if>
 	<xsl:for-each select="//item[not(@parent_id) or @parent_id=0]">
 		<xsl:call-template name="nodes">
 			<xsl:with-param name="node" select="." />

@@ -32,7 +32,7 @@
 .rtl .tree-apple li.closed {
 	background-image:url("plus_rtl.gif");
 }
-.rtl .tree-apple #dragged li.open {
+#jstree-dragged li li.open {
 	background-image:url("plus_rtl.gif");
 }
 /*
@@ -74,6 +74,6 @@
 	margin-right:0;
 	padding-right:16px;
 }
-.rtl .tree-apple #dragged li.open {
+#jstree-dragged.rtl li li.open {
 	background-position: right 5px;
 }

@@ -27,9 +27,7 @@
 	background-image:url("lastli_rtl.gif");
 	background-position:right top;
 }
-.rtl .tree-default #dragged li.open {
-	background-position: right 5px;
-}
+
 /* NO DOTS */
 .no_dots .tree-default ul {
 	background:transparent;
@@ -52,7 +50,7 @@
 	background:url("fplus.gif") 5px 5px no-repeat;
 }
 
-.tree .tree-default #dragged li.open {
+#jstree-dragged .tree-default li li.open {
 	background:url("fplus.gif") 5px 5px no-repeat;
 }
 
@@ -73,9 +71,6 @@
 	background:url("fplus_rtl.gif") right 4px no-repeat;
 	margin-right:0;
 	padding-right:16px;
-}
-.rtl .tree-default #dragged li.open {
-	background-position: right 5px;
 }
 
 /* DEFAULT ICON */

@@ -81,22 +81,14 @@
 }
 
 /* FOR DRAGGING */
-.tree #dragged {
-	padding:0 3px;
-	margin:0;
-	background:white;
-	opacity: .85;
-	filter: alpha(opacity=85);
-
+#jstree-dragged {
 	position:absolute;
 	top:-10px;
 	left:-10px;
+	margin:0;
+	padding:0;
 }
-.tree #dragged.last,
-.tree #dragged:last-child {
-	background:white;
-}
-.tree #dragged ul ul {
+#jstree-dragged ul ul ul {
 	display:none;
 }
 

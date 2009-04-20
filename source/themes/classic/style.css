@@ -4,7 +4,7 @@
 	background-repeat: no-repeat;
 }
 .tree .tree-classic li.closed,
-.tree .tree-classic #dragged li.open {
+#jstree-dragged li li.open {
 	background-image:url("plus.gif");
 	background-position:2px 5px;
 	background-repeat: no-repeat;
@@ -50,6 +50,6 @@
 	margin-right:-3px;
 	padding-right:19px;
 }
-.rtl .tree-classic #dragged li.open {
+#jstree-dragged.rtl li li.open {
 	background-position: right 5px;
 }
