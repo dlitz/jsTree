@@ -8,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2009-04-15
+ * Date: 2009-05-15
  *
  */
 
@@ -95,7 +95,7 @@
 			tree_component.mousedown = function(event) {
 				var tmp = $(event.target);
 				if(tree_component.drag_drop.droppable.length && tmp.is("." + tree_component.drag_drop.droppable.join(", .")) ) {
-					tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='tree'><ul class='tree-default'><li class='last dragged foreign " + event.target.className + "'><a href='#'>" + tmp.text() + "</a></li></ul></div>");
+					tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='tree tree-default'><ul><li class='last dragged foreign " + event.target.className + "'><a href='#'>" + tmp.text() + "</a></li></ul></div>");
 					tree_component.drag_drop.drag_node	= tree_component.drag_drop.drag_help.find("li:eq(0)");
 					tree_component.drag_drop.isdown		= true;
 					tree_component.drag_drop.foreign	= tmp;
@@ -215,7 +215,7 @@
 							y : (event.pageY - et_off.top)
 						};
 
-						if(cnt.hasClass("rtl")) goTo.x += et.width() - 8;
+						if(cnt.children("ul:eq(0)").hasClass("rtl")) goTo.x += et.width() - 8;
 						var arr = [];
 
 						if(goTo.y < tree2.li_height/3 + 1 )			arr = ["before","inside","after"];
@@ -236,17 +236,17 @@
 							switch(mov) {
 								case "before":
 									goTo.y = et_off.top - 2;
-									if(cnt.hasClass("rtl"))	{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker_rtl.gif").width(40); }
-									else					{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker.gif").width(40); }
+									if(cnt.children("ul:eq(0)").hasClass("rtl"))	{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker_rtl.gif").width(40); }
+									else											{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker.gif").width(40); }
 									break;
 								case "after":
 									goTo.y = et_off.top - 2 + tree2.li_height;
-									if(cnt.hasClass("rtl"))	{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker_rtl.gif").width(40); }
-									else					{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker.gif").width(40); }
+									if(cnt.children("ul:eq(0)").hasClass("rtl"))	{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker_rtl.gif").width(40); }
+									else											{ tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "marker.gif").width(40); }
 									break;
 								case "inside":
 									goTo.x -= 2;
-									if(cnt.hasClass("rtl")) {
+									if(cnt.children("ul:eq(0)").hasClass("rtl")) {
 										goTo.x += 36;
 									}
 									goTo.y = et_off.top - 2 + tree2.li_height/2;
@@ -266,7 +266,7 @@
 						tmp.ref_node	= cnt.children("ul:eq(0)");
 						tmp.drag_help.find("IMG").remove();
 						tree_component.drag_drop.marker.attr("src", tree2.settings.ui.theme_path + "plus.gif").width(11);
-						tree_component.drag_drop.marker.css({ "left" : et_off.left + ( cnt.hasClass("rtl") ? (cnt.width() - 10) : 10 ) , "top" : et_off.top + 15 }).show();
+						tree_component.drag_drop.marker.css({ "left" : et_off.left + ( cnt.children("ul:eq(0)").hasClass("rtl") ? (cnt.width() - 10) : 10 ) , "top" : et_off.top + 15 }).show();
 					}
 					else if(event.target.tagName != "A" || !ok) {
 						if(tmp.drag_help.find("IMG").size() == 0) {
@@ -290,7 +290,7 @@
 					type	: "predefined",	// ENUM [json, xml_flat, xml_nested, predefined]
 					method	: "GET",		// HOW TO REQUEST FILES
 					async	: false,		// BOOL - async loading onopen
-					async_data : function (NODE) { return { id : $(NODE).attr("id") || 0 } }, // PARAMETERS PASSED TO SERVER
+					async_data : function (NODE, TREE_OBJ) { return { id : $(NODE).attr("id") || 0 } }, // PARAMETERS PASSED TO SERVER
 					url		: false,		// FALSE or STRING - url to document to be used (async or not)
 					json	: false,		// FALSE or OBJECT if type is JSON and async is false - the tree dump as json
 					xml		: false			// FALSE or STRING if type is XML_FLAT or XML_NESTED and async is false - a string to generate the tree from
@@ -314,7 +314,7 @@
 							label	: "Create", 
 							icon	: "create.png",
 							visible	: function (NODE, TREE_OBJ) { if(NODE.length != 1) return false; return TREE_OBJ.check("creatable", NODE); }, 
-							action	: function (NODE, TREE_OBJ) { TREE_OBJ.create(false, TREE_OBJ.get_node(NODE)); } 
+							action	: function (NODE, TREE_OBJ) { TREE_OBJ.create(false, TREE_OBJ.get_node(NODE[0])); } 
 						},
 						"separator",
 						{ 
@@ -474,16 +474,14 @@
 					this.theme += _this.settings.ui.theme_name + "/";
 					if(_this.settings.ui.theme_name != "themeroller" && !tree_component.def_style) { add_sheet(_this.settings.ui.theme_path + "default/style.css"); tree_component.def_style = true; }
 					add_sheet(_this.theme + "style.css");
-					// if(this.settings.ui.theme_name && this.settings.ui.theme_name != "default") add_sheet(_this.theme + "style.css");
 				}
 
 				this.container.addClass("tree");
+				if(_this.settings.ui.theme_name != "themeroller") this.container.addClass("tree-default");
+				if(this.settings.ui.theme_name && this.settings.ui.theme_name != "default") this.container.addClass("tree-" + _this.settings.ui.theme_name);
 				if(this.settings.ui.theme_name == "themeroller") this.container.addClass("ui-widget ui-widget-content");
-				if(this.settings.ui.rtl) this.container.addClass("rtl");
 				if(this.settings.rules.multiple) this.selected_arr = [];
 				this.offset = false;
-
-				if(this.settings.ui.dots == false) this.container.addClass("no_dots");
 
 				// CONTEXT MENU
 				this.context_menu();
@@ -534,7 +532,7 @@
 			context_menu : function () {
 				this.context = false;
 				if(this.settings.ui.context != false) {
-					var str = '<div class="tree-default-context tree-' + this.settings.ui.theme_name + '-context">';
+					var str = '<div class="tree-context tree-default-context tree-' + this.settings.ui.theme_name + '-context">';
 					for(var i in this.settings.ui.context) {
 						if(typeof this.settings.ui.context[i] == "function") continue;
 						if(this.settings.ui.context[i] == "separator") {
@@ -556,36 +554,46 @@
 				if(this.locked) return this.error("LOCKED");
 				var _this = this;
 
+				this.is_partial_refresh = obj ? true : false;
+
 				// SAVE OPENED
 				this.opened = Array();
 				if(this.settings.cookies && $.cookie(this.settings.cookies.prefix + '_open')) {
 					var str = $.cookie(this.settings.cookies.prefix + '_open');
 					var tmp = str.split(",");
 					$.each(tmp, function () {
-						_this.opened.push("#" + this.replace(/^#/,""));
+						if(this.replace(/^#/,"").length > 0) { _this.opened.push("#" + this.replace(/^#/,"")); }
 					});
 					this.settings.opened = false;
 				}
 				else if(this.settings.opened != false) {
 					$.each(this.settings.opened, function (i, item) {
-						_this.opened.push("#" + this.replace(/^#/,""));
+						if(this.replace(/^#/,"").length > 0) { _this.opened.push("#" + this.replace(/^#/,"")); }
 					});
 					this.settings.opened = false;
 				}
 				else {
-					this.container.find("li.open").each(function (i) { _this.opened.push("#" + this.id); });
+					this.container.find("li.open").each(function (i) { if(this.id) { _this.opened.push("#" + this.id); } });
 				}
 
 				// SAVE SELECTED
 				if(this.selected) {
 					this.settings.selected = Array();
-					if(this.selected_arr) {
-						$.each(this.selected_arr, function () {
-							if(this.attr("id")) _this.settings.selected.push("#" + this.attr("id"));
+					if(obj) {
+						$(obj).find("li:has(a.clicked)").each(function () {
+							$this = $(this);
+							if($this.attr("id")) _this.settings.selected.push("#" + $this.attr("id"));
 						});
 					}
 					else {
-						if(this.selected.attr("id")) this.settings.selected.push("#" + this.selected.attr("id"));
+						if(this.selected_arr) {
+							$.each(this.selected_arr, function () {
+								if(this.attr("id")) _this.settings.selected.push("#" + this.attr("id"));
+							});
+						}
+						else {
+							if(this.selected.attr("id")) this.settings.selected.push("#" + this.selected.attr("id"));
+						}
 					}
 				}
 				else if(this.settings.cookies && $.cookie(this.settings.cookies.prefix + '_selected')) {
@@ -593,7 +601,7 @@
 					var str = $.cookie(this.settings.cookies.prefix + '_selected');
 					var tmp = str.split(",");
 					$.each(tmp, function () {
-						_this.settings.selected.push("#" + this.replace(/^#/,""));
+						if(this.replace(/^#/,"").length > 0) { _this.settings.selected.push("#" + this.replace(/^#/,"")); }
 					});
 				}
 				else if(this.settings.selected !== false) {
@@ -613,21 +621,17 @@
 					this.opened = Array();
 					obj = this.get_node(obj);
 					obj.find("li.open").each(function (i) { _this.opened.push("#" + this.id); });
-					if(obj.hasClass("open")) this.close_branch(obj, true);
+					if(obj.hasClass("open")) obj.removeClass("open").addClass("closed");
 					if(obj.hasClass("leaf")) obj.removeClass("leaf");
 					obj.children("ul:eq(0)").html("");
 					return this.open_branch(obj, true, function () { _this.reselect.apply(_this); });
 				}
 
-				var cls = "tree-default";
-				if(this.settings.ui.theme_name != "default") cls += " tree-" + _this.settings.ui.theme_name;
-				if(this.settings.ui.theme_name == "themeroller") cls = "tree-themeroller";
-
 				if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 					this.scrtop = this.container.get(0).scrollTop;
 					var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
-					if(this.settings.data.xml)	this.container.getTransform(this.path + xsl, this.settings.data.xml, { params : { theme_name : cls, theme_path : _this.theme, theme_add : 'true' }, meth : _this.settings.data.method, dat : _this.settings.data.async_data.apply(_this,[obj]) ,callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
-					else						this.container.getTransform(this.path + xsl, this.settings.data.url, { params : { theme_name : cls, theme_path : _this.theme, theme_add : 'true' }, meth : _this.settings.data.method, dat : _this.settings.data.async_data.apply(_this,[obj]) ,callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
+					if(this.settings.data.xml)	this.container.getTransform(this.path + xsl, this.settings.data.xml, { params : { theme_name : _this.settings.ui.theme_name, theme_path : _this.theme }, meth : _this.settings.data.method, dat : _this.settings.data.async_data.apply(_this,[obj, _this]), callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
+					else						this.container.getTransform(this.path + xsl, this.settings.data.url, { params : { theme_name : _this.settings.ui.theme_name, theme_path : _this.theme }, meth : _this.settings.data.method, dat : _this.settings.data.async_data.apply(_this,[obj, _this]), callback: function () { _this.context_menu.apply(_this); _this.reselect.apply(_this); } });
 					return;
 				}
 				else if(this.settings.data.type == "json") {
@@ -638,7 +642,7 @@
 								str += this.parseJSON(this.settings.data.json[i]);
 							}
 						} else str = this.parseJSON(this.settings.data.json);
-						this.container.html("<ul class='" + cls + "'>" + str + "</ul>");
+						this.container.html("<ul>" + str + "</ul>");
 						this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
 						this.container.find("li").not(".open").not(".closed").addClass("leaf");
 						this.context_menu();
@@ -649,7 +653,7 @@
 						$.ajax({
 							type		: this.settings.data.method,
 							url			: this.settings.data.url, 
-							data		: this.settings.data.async_data(false), 
+							data		: this.settings.data.async_data(false, this), 
 							dataType	: "json",
 							success		: function (data) {
 								data = _this.settings.callback.onJSONdata.call(null, data, _this);
@@ -659,7 +663,7 @@
 										str += _this.parseJSON(data[i]);
 									}
 								} else str = _this.parseJSON(data);
-								_this.container.html("<ul class='" + cls + "'>" + str + "</ul>");
+								_this.container.html("<ul>" + str + "</ul>");
 								_this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
 								_this.container.find("li").not(".open").not(".closed").addClass("leaf");
 								_this.context_menu.apply(_this);
@@ -670,7 +674,7 @@
 					}
 				}
 				else {
-					this.container.children("ul:eq(0)").attr("class", cls);
+					this.container.children("ul:eq(0)");
 					this.container.find("li:last-child").addClass("last").end().find("li:has(ul)").not(".open").addClass("closed");
 					this.container.find("li").not(".open").not(".closed").addClass("leaf");
 					this.reselect();
@@ -995,7 +999,7 @@
 				this.context.css({ "left" : (tmp.left), "top" : (tmp.top + parseInt(obj.children("a:visible").height()) + 2) });
 			},
 			hide_context : function () {
-				if(this.context.remove && this.context.apply_to) this.context.apply_to.children("a").removeClass("clicked");
+				if(this.context.to_remove && this.context.apply_to) this.context.apply_to.children("a").removeClass("clicked");
 				this.context.apply_to = false;
 				this.context.hide();
 			},
@@ -1030,7 +1034,7 @@
 						return false;
 					});
 				$("#" + this.container.attr("id") + " li a")
-					.live("click", function (event) { // WHEN CLICK IS ON THE TEXT OR ICON
+					.live("click.jstree", function (event) { // WHEN CLICK IS ON THE TEXT OR ICON
 						if(event.which && event.which == 3) return true;
 						if(_this.locked) {
 							event.preventDefault(); 
@@ -1043,7 +1047,7 @@
 						event.target.blur();
 						return false;
 					})
-					.live("dblclick", function (event) { // WHEN DOUBLECLICK ON TEXT OR ICON
+					.live("dblclick.jstree", function (event) { // WHEN DOUBLECLICK ON TEXT OR ICON
 						if(_this.locked) {
 							event.preventDefault(); 
 							event.stopPropagation();
@@ -1055,7 +1059,7 @@
 						event.stopPropagation();
 						event.target.blur();
 					})
-					.live("contextmenu", function (event) {
+					.live("contextmenu.jstree", function (event) {
 						if(_this.locked) {
 							event.target.blur();
 							return _this.error("LOCKED");
@@ -1101,11 +1105,14 @@
 								if(!obj.children("a:eq(0)").hasClass("clicked")) {
 									// _this.select_branch.apply(_this, [event.target, event.ctrlKey || _this.settings.rules.multiple == "on"]);
 									_this.context.apply_to = obj;
-									_this.context.remove = true;
+									_this.context.to_remove = true;
 									_this.context.apply_to.children("a").addClass("clicked");
 									event.target.blur();
 								}
-								else { _this.context.remove = false; _this.context.apply_to = _this.selected_arr || _this.selected; }
+								else { 
+									_this.context.to_remove = false; 
+									_this.context.apply_to = (_this.selected_arr && _this.selected_arr.length > 1) ? _this.selected_arr : _this.selected;
+								}
 
 								_this.context.children("a").removeClass("disabled").show();
 								var go = false;
@@ -1125,7 +1132,7 @@
 						}
 						return val;
 					})
-					.live("mouseover", function (event) {
+					.live("mouseover.jstree", function (event) {
 						if(_this.locked) {
 							event.preventDefault();
 							event.stopPropagation();
@@ -1148,7 +1155,7 @@
 				// ATTACH DRAG & DROP ONLY IF NEEDED
 				if(this.settings.rules.draggable != "none") {
 					$("#" + this.container.attr("id") + " li a")
-						.live("mousedown", function (event) {
+						.live("mousedown.jstree", function (event) {
 							if(_this.settings.rules.drag_button == "left" && event.which && event.which != 1)	return true;
 							if(_this.settings.rules.drag_button == "right" && event.which && event.which != 3)	return true;
 							_this.focus.apply(_this);
@@ -1170,16 +1177,20 @@
 									if(_this.check("draggable", obj))	tree_component.drag_drop.drag_node = obj;
 									else								tree_component.drag_drop.drag_node = _this.container.find("li.dragged:eq(0)");
 									tree_component.drag_drop.isdown		= true;
-									tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='" + _this.container.get(0).className + "' />").append("<ul class='" + _this.container.children("ul:eq(0)").get(0).className + "' />");
-									tree_component.drag_drop.drag_help.children("ul:eq(0)").append(tree_component.drag_drop.drag_node.get(0).cloneNode(true));
+									tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='tree " + (_this.container.hasClass("tree-default") ? " tree-default" : "" ) + (_this.settings.ui.theme_name && _this.settings.ui.theme_name != "default" ? " tree-" + _this.settings.ui.theme_name : "" ) + "' />").append("<ul class='" + _this.container.children("ul:eq(0)").get(0).className + "' />");
+									var tmp = $(tree_component.drag_drop.drag_node.get(0).cloneNode(true));
+									if(_this.settings.languages.length > 0) tmp.find("a").not("." + _this.current_lang).hide();
+									tree_component.drag_drop.drag_help.children("ul:eq(0)").append(tmp);
 									tree_component.drag_drop.drag_help.find("li:eq(0)").removeClass("last").addClass("last").children("a").html("Multiple selection").end().children("ul").remove();
 								}
 							}
 							else {
 								if(_this.check("draggable", obj)) {
 									tree_component.drag_drop.drag_node	= obj;
-									tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='" + _this.container.get(0).className + "' />").append("<ul class='" + _this.container.children("ul:eq(0)").get(0).className + "' />");
-									tree_component.drag_drop.drag_help.children("ul:eq(0)").append(obj.get(0).cloneNode(true));
+									tree_component.drag_drop.drag_help	= $("<div id='jstree-dragged' class='tree " + (_this.container.hasClass("tree-default") ? " tree-default" : "" ) + (_this.settings.ui.theme_name && _this.settings.ui.theme_name != "default" ? " tree-" + _this.settings.ui.theme_name : "" ) + "' />").append("<ul class='" + _this.container.children("ul:eq(0)").get(0).className + "' />");
+									var tmp = $(obj.get(0).cloneNode(true));
+									if(_this.settings.languages.length > 0) tmp.find("a").not("." + _this.current_lang).hide();
+									tree_component.drag_drop.drag_help.children("ul:eq(0)").append(tmp);
 									tree_component.drag_drop.drag_help.find("li:eq(0)").removeClass("last").addClass("last");
 									tree_component.drag_drop.isdown		= true;
 									tree_component.drag_drop.foreign	= false;
@@ -1298,18 +1309,22 @@
 				return true;
 			},
 			// USED AFTER REFRESH
-			reselect : function () {
+			reselect : function (is_callback) {
 				var _this = this;
+
+				if(!is_callback)	this.cl_count = 0;
+				else				this.cl_count --;
 				// REOPEN BRANCHES
 				if(this.opened && this.opened.length) {
 					var opn = false;
-					for(var j = 0; j < this.opened.length; j++) {
+					for(var j = 0; this.opened && j < this.opened.length; j++) {
 						if(this.settings.data.async) {
 							if(this.get_node(this.opened[j]).size() > 0) {
 								opn = true;
 								var tmp = this.opened[j];
 								delete this.opened[j];
-								this.open_branch(tmp, true, function () { _this.reselect.apply(_this); } )
+								this.open_branch(tmp, true, function () { _this.reselect.apply(_this, [true]); } );
+								this.cl_count ++;
 							}
 						}
 						else this.open_branch(this.opened[j], true);
@@ -1317,6 +1332,13 @@
 					if(this.settings.data.async && opn) return;
 					delete this.opened;
 				}
+				if(this.cl_count > 0) return;
+
+				// DOTS and RIGHT TO LEFT
+				if(this.settings.ui.rtl)			this.container.css("direction","rtl").children("ul:eq(0)").addClass("rtl");
+				else								this.container.css("direction","ltr").children("ul:eq(0)").addClass("ltr");
+				if(this.settings.ui.dots == false)	this.container.children("ul:eq(0)").addClass("no_dots");
+
 				// REPOSITION SCROLL
 				if(this.scrtop) {
 					this.container.scrollTop(_this.scrtop);
@@ -1325,7 +1347,8 @@
 				// RESELECT PREVIOUSLY SELECTED
 				if(this.settings.selected !== false) {
 					$.each(this.settings.selected, function (i) {
-						_this.select_branch($(_this.settings.selected[i], _this.container), (_this.settings.rules.multiple !== false && i > 0) );
+						if(_this.is_partial_refresh)	_this.select_branch($(_this.settings.selected[i], _this.container), (_this.settings.rules.multiple !== false) );
+						else							_this.select_branch($(_this.settings.selected[i], _this.container), (_this.settings.rules.multiple !== false && i > 0) );
 					});
 					this.settings.selected = false;
 				}
@@ -1527,7 +1550,8 @@
 					obj.removeClass("closed").addClass("open");
 					if(this.settings.data.type == "xml_flat" || this.settings.data.type == "xml_nested") {
 						var xsl = (this.settings.data.type == "xml_flat") ? "flat.xsl" : "nested.xsl";
-						obj.children("ul:eq(0)").getTransform(this.path + xsl, this.settings.data.url, { params : { theme_path : _this.theme }, meth : this.settings.data.method, dat : this.settings.data.async_data(obj), repl : true, callback: function (str, json) { 
+						obj.children("ul:eq(0)").getTransform(this.path + xsl, this.settings.data.url, { params : { theme_path : _this.theme }, meth : this.settings.data.method, dat : this.settings.data.async_data(obj, this), repl : true, 
+							callback: function (str, json) { 
 								if(str.length < 15) {
 									obj.removeClass("closed").removeClass("open").addClass("leaf").children("ul").remove();
 									if(callback) callback.call();
@@ -1535,14 +1559,15 @@
 								}
 								_this.open_branch.apply(_this, [obj]); 
 								if(callback) callback.call();
-							} 
+							},
+							error : function () { obj.removeClass("open").addClass("closed").children("ul:eq(0)").remove(); }
 						});
 					}
 					else {
 						$.ajax({
 							type		: this.settings.data.method,
 							url			: this.settings.data.url, 
-							data		: this.settings.data.async_data(obj), 
+							data		: this.settings.data.async_data(obj, this), 
 							dataType	: "json",
 							success		: function (data, textStatus) {
 								data = _this.settings.callback.onJSONdata.call(null, data, _this);
@@ -1566,7 +1591,8 @@
 								}
 								else obj.removeClass("closed").removeClass("open").addClass("leaf").children("ul").remove();
 								if(callback) callback.call();
-							}
+							},
+							error : function (xhttp, textStatus, errorThrown) { obj.removeClass("open").addClass("closed").children("ul:eq(0)").remove(); _this.error(errorThrown + " " + textStatus); }
 						});
 					}
 					return true;
@@ -1927,7 +1953,24 @@
 				}
 			},
 			toggleDots : function () {
-				this.container.toggleClass("no_dots");
+				if(this.settings.ui.dots) {
+					this.settings.ui.dots = false;
+					this.container.children("ul:eq(0)").addClass("no_dots");
+				}
+				else {
+					this.settings.ui.dots = true;
+					this.container.children("ul:eq(0)").removeClass("no_dots");
+				}
+			},
+			toggleRTL : function () {
+				if(this.settings.ui.rtl) {
+					this.settings.ui.rtl = false;
+					this.container.css("direction","ltr").children("ul:eq(0)").removeClass("rtl").addClass("ltr");
+				}
+				else {
+					this.settings.ui.rtl = true;
+					this.container.css("direction","rtl").children("ul:eq(0)").removeClass("ltr").addClass("rtl");
+				}
 			},
 			set_cookie : function (type) {
 				if(this.settings.cookies === false) return false;
@@ -1937,7 +1980,7 @@
 						if(this.settings.rules.multiple != false && this.selected_arr.length > 1) {
 							var val = Array();
 							$.each(this.selected_arr, function () {
-								val.push(this.attr("id"));
+								if(this.attr("id")) { val.push(this.attr("id")); }
 							});
 							val = val.join(",");
 						}
@@ -1946,16 +1989,16 @@
 						break;
 					case "open":
 						var str = "";
-						this.container.find("li.open").each(function (i) { str += this.id + ","; });
+						this.container.find("li.open").each(function (i) { if(this.id) { str += this.id + ","; } });
 						$.cookie(this.settings.cookies.prefix + '_open',str.replace(/,$/ig,""),this.settings.cookies.opts);
 						break;
 				}
 			},
 			get_rollback : function () {
 				var rb = {};
-				if(this.context.remove && this.context.apply_to) this.context.apply_to.children("a").removeClass("clicked");
+				if(this.context.to_remove && this.context.apply_to) this.context.apply_to.children("a").removeClass("clicked");
 				rb.html = this.container.html();
-				if(this.context.remove && this.context.apply_to) this.context.apply_to.children("a").addClass("clicked");
+				if(this.context.to_remove && this.context.apply_to) this.context.apply_to.children("a").addClass("clicked");
 				rb.selected = this.selected ? this.selected.attr("id") : false;
 				return rb;
 			},
@@ -2094,8 +2137,8 @@
 			},
 			lock : function (state) {
 				this.locked = state;
-				if(this.locked)	this.container.addClass("locked");
-				else			this.container.removeClass("locked");
+				if(this.locked)	this.container.children("ul:eq(0)").addClass("locked");
+				else			this.container.children("ul:eq(0)").removeClass("locked");
 			},
 			cut : function (obj) {
 				if(this.locked) return this.error("LOCKED");
@@ -2140,12 +2183,13 @@
 
 				if(this.copy_nodes && this.copy_nodes.size()) {
 					var ok = true;
-					obj.parents().andSelf().each(function () {
-						if(_this.copy_nodes.index(this) != -1) {
-							ok = false;
-							return false;
-						}
-					});
+					// This is copy - why forbid this?
+					//obj.parents().andSelf().each(function () {
+					//	if(_this.copy_nodes.index(this) != -1) {
+					//		ok = false;
+					//		return false;
+					//	}
+					//});
 					if(!ok) return this.error("Invalid paste");
 					if(!root && !this.checkMove(this.copy_nodes, obj.children("a:eq(0)"), "inside")) return false;
 
@@ -2200,7 +2244,7 @@
 				if(!str) return;
 				if(this.settings.data.async) {
 					if(!this.srch_opn) {
-						var dd = $.extend( { "search" : str } , this.settings.data.async_data(false) );
+						var dd = $.extend( { "search" : str } , this.settings.data.async_data(false, this) );
 						$.ajax({
 							type		: this.settings.data.method,
 							url			: this.settings.data.url, 
@@ -2246,9 +2290,10 @@
 			},
 
 			destroy : function() {
-				//$("#" + this.container.attr("id")).die();
+				this.hide_context();
 				this.container.unbind(".jstree");
-				this.container.removeClass("tree ui-widget ui-widget-content").children("ul").removeClass("tree-" + this.settings.ui.theme_name).find("li").removeClass("leaf").removeClass("open").removeClass("closed").removeClass("last").children("a").removeClass("clicked hover search ui-state-active ui-state-hover ui-state-highlight ui-state-default");
+				$("#" + this.container.attr("id")).die("click.jstree").die("dblclick.jstree").die("contextmenu.jstree").die("mouseover.jstree").die("mouseout.jstree").die("mousedown.jstree");
+				this.container.removeClass("tree ui-widget ui-widget-content tree-default tree-" + this.settings.ui.theme_name).children("ul").removeClass("no_dots rtl ltr locked").find("li").removeClass("leaf").removeClass("open").removeClass("closed").removeClass("last").children("a").removeClass("clicked hover search ui-state-active ui-state-hover ui-state-highlight ui-state-default");
 
 				if(this.cntr == tree_component.focused) {
 					for(var i in tree_component.inst) {
@@ -2258,6 +2303,9 @@
 						}
 					}
 				}
+
+				tree_component.inst[this.cntr] = false;
+				tree_component.inst[this.container.attr("id")] = false;
 				delete tree_component.inst[this.cntr];
 				delete tree_component.inst[this.container.attr("id")];
 				tree_component.cntr --;

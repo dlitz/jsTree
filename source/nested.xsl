@@ -17,14 +17,12 @@
 
 <xsl:param name="theme_name" />
 <xsl:param name="theme_path" />
-<xsl:param name="theme_add" />
 
 <xsl:template match="/">
 	<xsl:call-template name="nodes">
 		<xsl:with-param name="node" select="/root" />
 		<xsl:with-param name="theme_name" select="$theme_name" />
 		<xsl:with-param name="theme_path" select="$theme_path" />
-		<xsl:with-param name="theme_add" select="$theme_add" />
 	</xsl:call-template>
 </xsl:template>
 
@@ -32,10 +30,8 @@
 	<xsl:param name="node" />
 	<xsl:param name="theme_name" />
 	<xsl:param name="theme_path" />
-	<xsl:param name="theme_add" />
 
 	<ul>
-	<xsl:if test="$theme_name and $theme_add = 'true'"><xsl:attribute name="class"><xsl:value-of select="$theme_name" /></xsl:attribute></xsl:if>
 	<xsl:for-each select="$node/item">
 		<xsl:variable name="children" select="count(./item) &gt; 0" />
 		<li>
@@ -58,14 +54,14 @@
 			<xsl:attribute name="class"><xsl:value-of select="@lang" /> <xsl:value-of select="@class" /></xsl:attribute>
 			<xsl:attribute name="style">
 				<xsl:value-of select="@style" />
-				<xsl:if test="string-length(attribute::icon) > 0 and $theme_name != 'tree-themeroller'">background-image:url(<xsl:if test="not(contains(@icon,'/'))"><xsl:value-of select="$theme_path" /></xsl:if><xsl:value-of select="@icon" />);</xsl:if>
+				<xsl:if test="string-length(attribute::icon) > 0 and $theme_name != 'themeroller'">background-image:url(<xsl:if test="not(contains(@icon,'/'))"><xsl:value-of select="$theme_path" /></xsl:if><xsl:value-of select="@icon" />);</xsl:if>
 			</xsl:attribute>
 			<xsl:for-each select="@*">
 				<xsl:if test="name() != 'style' and name() != 'class'">
 					<xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>
 				</xsl:if>
 			</xsl:for-each>
-			<xsl:if test="$theme_name = 'tree-themeroller' and string-length(attribute::icon) > 0">
+			<xsl:if test="$theme_name = 'themeroller' and string-length(attribute::icon) > 0">
 				<ins>
 				<xsl:attribute name="class">ui-icon <xsl:value-of select="@icon" /></xsl:attribute>
 				</ins>
@@ -78,7 +74,6 @@
 				<xsl:with-param name="node" select="current()" />
 				<xsl:with-param name="theme_path" select="$theme_path" />
 				<xsl:with-param name="theme_name" select="$theme_name" />
-				<xsl:with-param name="theme_add" select="false" />
 			</xsl:call-template>
 		</xsl:if>
 		</li>
