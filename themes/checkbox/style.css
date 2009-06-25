@@ -1,0 +1,56 @@
+/* LOCKED */
+.tree-checkbox .locked li a { color:gray; }
+/* DOTS */
+.tree-checkbox ul { background-position:6px 1px; background-repeat:repeat-y; background-image:url("dot.gif"); }
+.tree-checkbox li { background-position:5px top; background-repeat:no-repeat; background-image:url("lastli.gif"); }
+/* DOTS - RIGHT TO LEFT */
+.tree-checkbox .rtl, .tree-checkbox .rtl ul { background-position:right 1px; }
+.tree-checkbox .rtl li { background-position:right top; background-image:url("lastli_rtl.gif"); }
+/* NO DOTS */
+.tree-checkbox .no_dots, .tree-checkbox .no_dots ul { background:transparent; }
+.tree-checkbox .no_dots li.leaf { background-image:none; background-color:transparent; }
+/* OPEN or CLOSED */
+.tree-checkbox li.open { background:url("fminus.gif") 4px 6px no-repeat; }
+.tree-checkbox li.closed, #jstree-dragged.tree-checkbox li li.open { background:url("fplus.gif") 5px 5px no-repeat; }
+/* RIGHT TO LEFT */
+.tree-checkbox .rtl li { margin-right:0px; }
+.tree-checkbox .rtl li.last { margin-right:0; padding-right:10px; }
+.tree-checkbox .rtl li.open { background:url("fminus_rtl.gif") right 6px no-repeat; margin-right:0; padding-right:10px; }
+.tree-checkbox .rtl li.closed, #jstree-dragged.tree-checkbox .rtl li li.open { background:url("fplus_rtl.gif") right 4px no-repeat; margin-right:0; padding-right:10px; }
+#jstree-marker { background-image:url("marker.gif"); }
+/* DEFAULT, HOVER, CLICKED, LOADING STATES */
+.tree-checkbox li a, .tree-checkbox li span { border-radius:3px; -moz-border-radius:3px; -webkit-border-radius:3px; }
+.tree-checkbox li a:hover, .tree-checkbox li a.hover, .tree-checkbox li span { background: #e7f4f9; border:1px solid #d8f0fa; padding:0px 3px 0px 3px; }
+/* .tree-checkbox li a.clicked, .tree-checkbox li a.clicked:hover, .tree-checkbox li span.clicked { background: #beebff; border:1px solid #99defd; padding:0px 3px 0px 3px; } */
+/* DEFAULT, HOVER, CLICKED, LOADING STATES - RIGHT TO LEFT */
+.tree-checkbox .rtl li a, .tree-checkbox .rtl li span { padding:1px 4px 1px 4px; margin-right:0px; }
+.tree-checkbox .rtl li a:hover, .tree-checkbox .rtl li a.hover { padding:0px 3px 0px 3px; margin-right:0px; }
+/* .tree-checkbox .rtl li a.clicked, .tree-checkbox .rtl li a.clicked:hover, .tree-checkbox .rtl li span.clicked { padding:0px 3px 0px 3px; margin-right:0px; } */
+.tree-checkbox .rtl li span.clicked { padding:0px 21px 0px 0px; }
+/* ICONS */
+.tree-checkbox ins { background-image:url("icons.png"); background-position:-32px 0; background-repeat:no-repeat; }
+.tree-checkbox a:hover ins { background-position:-48px 0; }
+.tree-checkbox .locked a ins, .tree-checkbox .locked a:hover ins { background-position:-64px 0; }
+.tree-checkbox a.unchecked ins { background-position:-32px 0; }
+.tree-checkbox a.unchecked:hover ins { background-position:-48px 0; }
+.tree-checkbox .locked a.unchecked ins, .tree-checkbox .locked a.unchecked:hover ins { background-position:-64px 0; }
+.tree-checkbox a.undetermined ins { background-position:-32px -16px; }
+.tree-checkbox a.undetermined:hover ins { background-position:-48px -16px; }
+.tree-checkbox .locked a.undetermined ins, .tree-checkbox .locked a.undetermined:hover ins { background-position:-64px -16px; }
+.tree-checkbox a.checked ins { background-position:-32px -32px; }
+.tree-checkbox a.checked:hover ins { background-position:-48px -32px; }
+.tree-checkbox .locked a.checked ins, .tree-checkbox .locked a.checked:hover ins { background-position:-64px -32px; }
+.tree-checkbox ul li a.loading ins { background-image:url("throbber.gif"); } /* UL is added to make selector stronger */
+.tree-checkbox li a ins.forbidden { background-position:-16px -16px; }
+#jstree-dragged.tree-checkbox ins { background:url("icons.png") -16px -32px no-repeat; }
+#jstree-dragged.tree-checkbox ins.forbidden { background:url("icons.png") -16px -16px no-repeat; }
+/* CONTEXT MENU */
+.tree-checkbox-context { width:160px; background:#F0F0F0 url("context.gif") 22px 0 repeat-y; border:1px solid silver; position:absolute; }
+.tree-checkbox-context a, .tree-checkbox-context a.disabled:hover { display:block; text-decoration:none; color:black; line-height:20px; background-repeat: no-repeat; background-position:2px center; padding:1px 0 1px 0px; background-color:transparent; border:1px solid #f0f0f0; border-width:0 1px; margin:0; }
+.tree-checkbox-context a ins { float:left; width:16px; height:16px; margin:2px 7px 0 2px; display:inline; background-image:url("icons.png"); background-position:0 0; background-repeat:no-repeat; }
+.tree-checkbox-context a ins.create { background-position:-32px 0px; }
+.tree-checkbox-context a ins.rename { background-position:-16px 0px; }
+.tree-checkbox-context a ins.remove { background-position:-16px -16px; }
+.tree-checkbox-context a:hover { background-color:#e7f4f9; border:1px solid #d8f0fa; padding:0 0 0 0px; margin:0; }
+.tree-checkbox-context a.disabled, .tree-checkbox-context a.disabled:hover { color:silver; opacity:0.5; -ms-filter:'alpha(opacity=50)'; filter:alpha(opacity=50); zoom:1; }
+.tree-checkbox-context .separator { background:#FFFFFF;border-top:1px solid #E0E0E0;font-size:1px;height:1px;line-height:1px;margin:0 2px 0 24px;min-height:1px;display:block; }
