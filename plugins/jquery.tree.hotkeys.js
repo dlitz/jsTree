@@ -34,9 +34,8 @@
 				var obj = this.hovered || this.selected;
 				return opts.hover_mode ? this.hover_branch(this.prev(obj)) : this.select_branch(this.prev(obj));
 			},
-			get_left : function(rtl) {
+			get_left : function() {
 				var opts = $.extend(true, {}, $.tree.plugins.hotkeys.defaults, this.settings.plugins.hotkeys);
-				if(this.settings.ui.rtl && !rtl) return $.tree.plugins.hotkeys.get_right.apply(this, [true]);
 				var obj = this.hovered || this.selected;
 				if(obj) {
 					if(obj.hasClass("open"))	this.close_branch(obj);
@@ -45,9 +44,8 @@
 					}
 				}
 			},
-			get_right : function(rtl) {
+			get_right : function() {
 				var opts = $.extend(true, {}, $.tree.plugins.hotkeys.defaults, this.settings.plugins.hotkeys);
-				if(this.settings.ui.rtl && !rtl) return $.tree.plugins.hotkeys.get_left.apply(this, [true]);
 				var obj = this.hovered || this.selected;
 				if(obj) {
 					if(obj.hasClass("closed"))	this.open_branch(obj);

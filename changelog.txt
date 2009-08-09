@@ -1,4 +1,155 @@
+STABILIZE PROCEDURE:
+1) $.tree functions
+   - create (+ test plugin mode - element.tree(...))
+   - focused
+   - reference
+   - rollback
+   - drop_mode
+2) instance functions
+   - refresh
+   - select / deselect (+ multiselect - on, ctrl)
+   - open / close / toggle / open_all / close_all (+ async)
+   - set_lang / get_lang
+   - get_text
+   - create / rename / remove
+   - get_rollback
+   - cut / copy / paste
+   - lock
+   - drag'n'drop (this would also test get_type, check & check_move)
+   - search (+ async mode)
+   - destroy
+3) data stores
+   - html (+static, +async)
+   - json (+static, +async)
+   - xml_flat (+static, +async)
+   - xml_nested (+static, +async)
+4) plugins
+   - contextmenu
+   - cookie
+   - metadata
+5) themes 
+   - checkbox
+   - themeroller
+   - apple
+   - classic
+
+PUBLISH PROCEDURE: 
+1) test examples in Firefox, IE6, IE7, IE8, Opera, Chrome, Safari
+2) Download docs & examples
+ * mention dump.sql in the install.txt
+3) remove passwords from full PHP example, remove TNX, remove Google Ads & Analytics
+4) Update changelog.txt
+5) Create minified file using packer, test one page
+6) commit
+7) create zip file (source, reference, changelog) + _lib folder & upload to GoogleCode
+8) update jstree.com sidebar download banner
+9) blog post + changelog page
+
+TODO:
+   B: only one root node, no horizontal scroll in Opera
+   E: sprites in all themes - default, classic
+   E: checkbox plugin CSS
+   !TEST
+   !UPDATE DOCS
+   !NEW DEMOS (CSS bigger icons, ondata/beforedata/onparse/callbacks, datastores/static-async switch)
+   !UPGRADE MANUAL
+
+   ************ FOR LATER OR NO WAY TO FIX/TEST *****************
+   E: multiple move callback to fire only once (or set a parameter if it is final)
+   E: finish RTL plugin
+   B: max_depth check - how about async
+   B: no rtl in IE 6/7
+   B: on dump check for loading nodes and skip them
+   B: initial drag'n'drop does not work on OS X
+   B: Opera issues: no scrollbar in RTL, dots problems in LTR
+   E: preloading content (open_all)
+   E: native undo using rollback (maybe plugin)
+   E: whole row selection & columns
+
 CHANGELOG:
+ WORKING COPY
+   delete function correctly resets selected variable
+   fixed refresh on a node, when async is not used
+   added a get function that expects data format and an object
+   fixed ctrl+click in IE7/IE8Compatibility
+   fixed context menu positioning if near edge
+   create stylesheet improvement
+   ondestroy callback
+   context menu css cleanup
+   onparentclose option
+   json get method fixed if tree is empty
+   reference function upgraded
+   fixed async reopening with cookies bug
+   fixed bug with moved function opening/closing nodes
+   search function now accepts a second optional argument (defaults to contains) so if you extend jQuery[:] with any case insensitive method - quote it there
+   onsearch callback
+   ondata and onparse - data is chained through all plugins
+   ondata and onparse - now called in create method
+   fixed datastores "get" functions (toString() on val)
+   fixed default theme using inline image and sprites (IE6 will no longer look nice - UPGRADE)
+   themeroller theme and plugin
+   checkbox theme & plugin
+   no more multiple inclusions of the same theme
+   can cut, copy, paste from one tree to another
+   better multitree - all, none or [ids] to accept from
+   multiple drag now max_children is correctly checked
+   drop just before loading -> node disappears bug FIXED
+   added get_text method
+   context menu as plugin
+   added onhover callback
+   keyboard navigation plugin (lost all the get_* functions and hover_mode setting)
+   metadata as plugin
+   beginning of a plugin system
+   oninit callback (mainly for plugins)
+   cookie is now plugin
+   fixed cookies with / in them (jQuery selector escaping issue)
+   added check move callback
+   restrict move to same parent - demo with function
+   added drop_mode function (jqueryUI connecting point?)
+   cookies changed
+   types rework - type_attr - meta_attr - meta_data - boolean
+   onrename LANG param removed (added tree.get_lang())
+   removed cycle_lang, improved show_lang
+   added CSS inside tree itself
+   plugin compatible (changed names)
+   no need to include stylesheet - will include itself (if you change the path - include it yourself and pass the $.tree.path)
+   flat & nested XSLs - merged into datasource itself
+   removed path setting in favour of global $.tree.path
+   no longer dependant on CSS.js and jquery.xslt.js
+   enabled datastore plugins + 4 data stores - JSON, HTML, XML_FLAT, XML_NESTED - all support async + fixed
+   defaults moved to $.tree - you can now modify all future tree's defaults
+   create, focused, rollback - become children of $.tree (no more polluting the jQuery object)
+   rename method accepts a string
+   onJSONdata becomes ondata callback - you get what the server returned before jsTree displays it
+   async_data becomes beforedata callback
+
+ SVN
+
+ v.0.9.8
+   fixed context menu icon wobble in IE
+   better error handling (no more infinite loading icon - now marks the node as closed again)
+   added TREE_OBJ as parameter to async_data
+   can now copy a node inside itself
+   when called on a node refresh() no longer reselects all selected nodes
+   onload was called multiple times in some occasions
+   CSS fixes, container can once more correctly autosize if overflow:hidden and zoom:1;
+   RTL improvements (Chrome nightly is OK, in RTL dots in IE7 will brake, still no horizontal scrollbar in Opera in RTL)
+   fixed Opera horizontal scrollbar (right-to-left mode still has problems)
+   themes redesign
+   destroy method die() part had to be rewritten
+   container can once more have position:relative
+   nested xml theme fix (was set on every ul)
+   fixed create function not to selected the newly created node if it will not be renamed
+   fixed create function to be able to pass children too
+   fixed create function not to modify the object passed to it
+   implemented next/prev/parent/children methods
+   can drag nodes onto an empty tree
+   can now paste root nodes
+   Opera xml_flat XSL bug workaround
+   jsTree should now be "immune" to object & array extending (prototype problem)
+   minor changes in create & paste functions (when before or after passed as position)
+   onJSONdata added (so that you can process any JSON to the required structure of jsTree)
+
  v.0.9.7
    can now create root nodes with 'create' function
    create & paste functions rewritten
@@ -23,6 +174,7 @@ CHANGELOG:
    Chrome clear float
    Fixed scrollbars (issue remains in ff - multiple root elements are not connected with dots)
    small bug fixes in classic theme & apple theme
+
  v.0.9.6
    smarter drop location calculation (now if hovering a node where the before & after drops are not allowed, the whole node becomes a "inside" drop target)
    open_all callback
