@@ -1,65 +1,15 @@
-STABILIZE PROCEDURE:
-1) $.tree functions
-   - create (+ test plugin mode - element.tree(...))
-   - focused
-   - reference
-   - rollback
-   - drop_mode
-2) instance functions
-   - refresh
-   - select / deselect (+ multiselect - on, ctrl)
-   - open / close / toggle / open_all / close_all (+ async)
-   - set_lang / get_lang
-   - get_text
-   - create / rename / remove
-   - get_rollback
-   - cut / copy / paste
-   - lock
-   - drag'n'drop (this would also test get_type, check & check_move)
-   - search (+ async mode)
-   - destroy
-3) data stores
-   - html (+static, +async)
-   - json (+static, +async)
-   - xml_flat (+static, +async)
-   - xml_nested (+static, +async)
-4) plugins
-   - contextmenu
-   - cookie
-   - metadata
-5) themes 
-   - checkbox
-   - themeroller
-   - apple
-   - classic
-
-PUBLISH PROCEDURE: 
-1) test examples in Firefox, IE6, IE7, IE8, Opera, Chrome, Safari
-2) Download docs & examples
- * mention dump.sql in the install.txt
-3) remove passwords from full PHP example, remove TNX, remove Google Ads & Analytics
-4) Update changelog.txt
-5) Create minified file using packer, test one page
-6) commit
-7) create zip file (source, reference, changelog) + _lib folder & upload to GoogleCode
-8) update jstree.com sidebar download banner
-9) blog post + changelog page
-
-TODO:
-   B: only one root node, no horizontal scroll in Opera
-   E: sprites in all themes - default, classic
-   E: checkbox plugin CSS
-   !TEST
-   !UPDATE DOCS
-   !NEW DEMOS (CSS bigger icons, ondata/beforedata/onparse/callbacks, datastores/static-async switch)
-   !UPGRADE MANUAL
+BUGS/FEATURES:
+   B: max_depth error message
+   E: scroll_spd enhancement - accelerate/deccelerate
 
    ************ FOR LATER OR NO WAY TO FIX/TEST *****************
+   B: horizontal scroll in Opera may be a bit too short
+   E: refresh X levels deep
    E: multiple move callback to fire only once (or set a parameter if it is final)
    E: finish RTL plugin
-   B: max_depth check - how about async
-   B: no rtl in IE 6/7
+   B: max_depth check - how about async?
    B: on dump check for loading nodes and skip them
+   E: option to show loading as an icon - not below the node
    B: initial drag'n'drop does not work on OS X
    B: Opera issues: no scrollbar in RTL, dots problems in LTR
    E: preloading content (open_all)
@@ -67,7 +17,14 @@ TODO:
    E: whole row selection & columns
 
 CHANGELOG:
- WORKING COPY
+ v.0.9.9
+   drag_start, drag, drag_end callbacks
+   can now specify icons (even if using a sprite) for each node type
+   added tree_component.drag_drop.dragged variable to speed things up and to solve misterious bug :)
+   switched from DOM cloneNode to jQuery clone for drag_help (may cause slowdown) but is data() safe
+   sprites in all themes
+   themeroller theme + plugin BETA!
+   checkbox theme + plugin
    delete function correctly resets selected variable
    fixed refresh on a node, when async is not used
    added a get function that expects data format and an object
@@ -122,8 +79,6 @@ CHANGELOG:
    rename method accepts a string
    onJSONdata becomes ondata callback - you get what the server returned before jsTree displays it
    async_data becomes beforedata callback
-
- SVN
 
  v.0.9.8
    fixed context menu icon wobble in IE

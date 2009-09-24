@@ -15,7 +15,7 @@
 .tree-classic li a.clicked, .tree-classic li a.clicked:hover, .tree-classic li span.clicked { background: navy; border:1px solid navy; color:white; padding:0px 3px 0px 3px; }
 /* ICONS */
 .tree-classic ins { background-image:url("icons.png"); background-position:0 0; background-repeat:no-repeat; }
-.tree-classic li.open a ins { background-position:0 -16px; } /* UL is added to make selector stronger */
+.tree-classic ul li a.loading ins { background-image:url("throbber.gif") !important; background-position:0 0 !important; } /* UL is added to make selector stronger */
 .tree-classic li.closed a ins, .tree-classic li.leaf a ins { background-position:0 0px; } /* UL is added to make selector stronger */
 .tree-classic ul li a.loading ins { background-image:url("throbber.gif"); background-position:0 0; } /* UL is added to make selector stronger */
 .tree-classic li a ins.forbidden { background-position:-16px -16px; }

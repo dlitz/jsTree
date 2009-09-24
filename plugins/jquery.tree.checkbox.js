@@ -2,9 +2,21 @@
 	$.extend($.tree.plugins, {
 		"checkbox" : {
 			defaults : {
-				three_state : true,
-				remove_clicked : true
+				three_state : true
 			},
+			get_checked : function (t) {
+				if(!t) t = $.tree.focused();
+				return t.container.find("a.checked").parent();
+			},
+			get_undeterminded : function (t) { 
+				if(!t) t = $.tree.focused();
+				return t.container.find("a.undetermined").parent();
+			},
+			get_unchecked : function (t) {
+				if(!t) t = $.tree.focused();
+				return t.container.find("a:not(.checked, .undetermined)").parent();
+			},
+			
 			callbacks : {
 				// for three-state
 				onchange : function(n, t) {
@@ -20,9 +32,10 @@
 							$this.find("li").andSelf().children("a").removeClass("unchecked undetermined").addClass("checked");
 							var state = 1;
 						}
+
 						$this.parents("li").each(function () { 
 							if(state == 1) {
-								if($(this).children("ul").find("a.unchecked, a.undetermined").size() > 0) {
+								if($(this).children("ul").find("a:not(.checked):eq(0)").size() > 0) {
 									$(this).parents("li").andSelf().children("a").removeClass("unchecked checked").addClass("undetermined");
 									return false;
 								}
@@ -37,13 +50,11 @@
 							}
 						});
 					}
-				},
+				}, 
 
 				// for two-state only
 				onselect : function(n, t) {
 					var opts = $.extend(true, {}, $.tree.plugins.checkbox.defaults, this.settings.plugins.checkbox);
-					
-					if(opts.remove_clicked) $(n).children("a").removeClass("clicked");
 					if(!opts.three_state) $(n).children("a").removeClass("unchecked").addClass("checked");
 				},
 				ondeselect : function(n, t) {
