@@ -18,6 +18,8 @@ BUGS/FEATURES:
    E: whole row selection & columns
 
 CHANGELOG:
+ v.0.9.9a
+   fixed bug with creating root nodes
  v.0.9.9
    added use_max_children and use_max_depth settings
    fixed small bug in get methods in all datastores (now classes like "my-last" are returned correctly)

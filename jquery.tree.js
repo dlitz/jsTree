@@ -1,5 +1,5 @@
 /*
- * jsTree 0.9.9
+ * jsTree 0.9.9a
  * http://jstree.com/
  *
  * Copyright (c) 2009 Ivan Bozhanov (vakata.com)
@@ -947,9 +947,9 @@
 				$li.find("li").not(".open").not(".closed").addClass("leaf");
 
 				var r = {
-					max_depth : this.settings.rules.use_max_depth ? this.check("max_depth", ref_node) : -1,
-					max_children : this.settings.rules.use_max_children ? this.check("max_children", ref_node) : -1,
-					valid_children : this.check("valid_children", ref_node)
+					max_depth : this.settings.rules.use_max_depth ? this.check("max_depth", (root ? -1 : ref_node) ) : -1,
+					max_children : this.settings.rules.use_max_children ? this.check("max_children", (root ? -1 : ref_node) ) : -1,
+					valid_children : this.check("valid_children", (root ? -1 : ref_node) )
 				};
 				var nod_type = this.get_type($li);
 				if(typeof r.valid_children != "undefined" && (r.valid_children == "none" || ($.isArray(r.valid_children) && $.inArray(nod_type, r.valid_children) == -1))) return this.error("CREATE: NODE NOT A VALID CHILD");
@@ -964,7 +964,8 @@
 					var mx = (r.max_depth > 0) ? r.max_depth : false;
 					var i = 0;
 					var t = ref_node;
-					while(t !== -1) {
+
+					while(t !== -1 && !root) {
 						t = this.parent(t);
 						i ++;
 						var m = this.check("max_depth",t);

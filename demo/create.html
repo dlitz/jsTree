@@ -61,6 +61,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 		<input type="button" onclick='var t = $.tree.focused(); if(t.selected) t.create(); else alert("Select a node first");' value="Simple Create" />
 		<input type="button" onclick='$.tree.focused().create(false,"#phtml_2");' value="Create in a parent" />
 		<input type="button" onclick='$.tree.focused().create({ data : "Child node 3" }, "#phtml_1", 2);' value="Create with data at a point" />
+		<input type="button" onclick='$.tree.focused().create({ data : "Root node 3" }, -1);' value="Create a root node" />
 	</p>
 	<div class="demo" id="demo_1">
 		<ul>
