@@ -30,8 +30,8 @@
 					str += '<item ';
 					str += ' parent_id="' + (obj.parents("li:eq(0)").size() ? obj.parents("li:eq(0)").attr("id") : 0) + '" ';
 					for(var i in opts.outer_attrib) {
-						if(typeof opts.outer_attrib[i] == "function") continue;
-						var val = (opts.outer_attrib[i] == "class") ? obj.attr(opts.outer_attrib[i]).replace("last","").replace("leaf","").replace("closed","").replace("open","") : obj.attr(opts.outer_attrib[i]);
+						if(!opts.outer_attrib.hasOwnProperty(i)) continue;
+						var val = (opts.outer_attrib[i] == "class") ? obj.attr(opts.outer_attrib[i]).toString().replace(/(^| )last( |$)/ig," ").replace(/(^| )(leaf|closed|open)( |$)/ig," ") : obj.attr(opts.outer_attrib[i]);
 						if(typeof val != "undefined" && val.toString().replace(" ","").length > 0) str += ' ' + opts.outer_attrib[i] + '="' + val.toString() + '" ';
 						delete val;
 					}
@@ -40,7 +40,7 @@
 					str += '<content>';
 					if(t.settings.languages.length) {
 						for(var i in t.settings.languages) {
-							if(typeof t.settings.languages[i] == "function") continue;
+							if(!t.settings.languages.hasOwnProperty(i)) continue;
 							str += this.process_inner(obj.children("a." + t.settings.languages[i]), t, opts, t.settings.languages[i]);
 						}
 					}
@@ -52,10 +52,11 @@
 
 					if(obj.children("ul").size() > 0) {
 						var _this = this;
+						opts.callback = true;
 						obj.children("ul").children("li").each(function () {
-							opts.callback = true;
 							str += _this.get(this, t, opts);
 						});
+						opts.callback = false;
 					}
 					if(!opts.callback) str += '</root>';
 					return str;
@@ -63,31 +64,23 @@
 				process_inner : function(obj, t, opts, lang) {
 					var str = '<name ';
 					if(lang) str += ' lang="' + lang + '" ';
-					if(opts.inner_attrib.length || obj.get(0).style.backgroundImage.toString().length || t.settings.ui.theme_name == "themeroller") {
-						if(obj.get(0).style.backgroundImage.length) {
-							str += ' icon="' + obj.get(0).style.backgroundImage.replace("url(","").replace(")","") + '" ';
+					if(opts.inner_attrib.length || obj.children("ins").get(0).style.backgroundImage.toString().length || obj.children("ins").get(0).className.length) {
+						if(obj.children("ins").get(0).style.className.length) {
+							str += ' icon="' + obj.children("ins").get(0).style.className + '" ';
 						}
-						if(t.settings.ui.theme_name == "themeroller" && a.children("ins").size()) {
-							var tmp = obj.children("ins").attr("class");
-							var cls = false;
-							$.each(tmp.split(" "), function (i, val) {
-								if(val.indexOf("ui-icon-") == 0) {
-									cls = val;
-									return false;
-								}
-							});
-							if(cls) str += ' icon="' + cls + '" ';
+						if(obj.children("ins").get(0).style.backgroundImage.length) {
+							str += ' icon="' + obj.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","") + '" ';
 						}
 						if(opts.inner_attrib.length) {
 							for(var j in opts.inner_attrib) {
-								if(typeof opts.inner_attrib[j] == "function") continue;
+								if(!opts.inner_attrib.hasOwnProperty(j)) continue;
 								var val = obj.attr(opts.inner_attrib[j]);
 								if(typeof val != "undefined" && val.toString().replace(" ","").length > 0) str += ' ' + opts.inner_attrib[j] + '="' + val.toString() + '" ';
 								delete val;
 							}
 						}
 					}
-					str += '><![CDATA[' + tree.get_text(obj,lang) + ']]></name>';
+					str += '><![CDATA[' + t.get_text(obj,lang) + ']]></name>';
 					return str;
 				},
 
@@ -126,5 +119,5 @@
 			}
 		}
 	});
-	$.tree.datastores.xml_flat.xsl = (new DOMParser()).parseFromString('<?xml version="1.0" encoding="utf-8" ?><xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" ><xsl:output method="html" encoding="utf-8" omit-xml-declaration="yes" standalone="no" indent="no" media-type="text/xml" /><xsl:template match="/"><ul><xsl:for-each select="//item[not(@parent_id) or @parent_id=0]"><xsl:call-template name="nodes"><xsl:with-param name="node" select="." /><xsl:with-param name="is_last" select="number(position() = last())" /></xsl:call-template></xsl:for-each></ul></xsl:template><xsl:template name="nodes"><xsl:param name="node" /><xsl:param name="theme_path" /><xsl:param name="theme_name" /><xsl:param name="is_last" /><xsl:variable name="children" select="count(//item[@parent_id=$node/attribute::id]) &gt; 0" /><li><xsl:attribute name="class"><xsl:if test="$is_last = true()"> last </xsl:if><xsl:choose><xsl:when test="@state = \'open\'"> open </xsl:when><xsl:when test="$children or @hasChildren"> closed </xsl:when><xsl:otherwise> leaf </xsl:otherwise></xsl:choose><xsl:value-of select="@class" /></xsl:attribute><xsl:for-each select="@*"><xsl:if test="name() != \'parent_id\' and name() != \'hasChildren\' and name() != \'class\' and name() != \'state\'"><xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute></xsl:if></xsl:for-each><xsl:for-each select="content/name"><a href="#"><xsl:attribute name="class"><xsl:value-of select="@lang" /><xsl:value-of select="@class" /></xsl:attribute><xsl:attribute name="style"><xsl:value-of select="@style" /></xsl:attribute><xsl:for-each select="@*"><xsl:if test="name() != \'style\' and name() != \'class\'"><xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute></xsl:if></xsl:for-each><ins><xsl:if test="string-length(attribute::icon) > 0"><xsl:choose><xsl:when test="not(contains(@icon,\'/\'))"><xsl:attribute name="class"><xsl:value-of select="@icon" /></xsl:attribute></xsl:when><xsl:otherwise><xsl:attribute name="style">background-image:url(<xsl:value-of select="@icon" />);</xsl:attribute></xsl:otherwise></xsl:choose><xsl:text>&#xa0;</xsl:text></xsl:if></ins><xsl:value-of select="." /></a></xsl:for-each><xsl:if test="$children or @hasChildren"><ul><xsl:for-each select="//item[@parent_id=$node/attribute::id]"><xsl:call-template name="nodes"><xsl:with-param name="node" select="." /><xsl:with-param name="is_last" select="number(position() = last())" /></xsl:call-template></xsl:for-each></ul></xsl:if></li></xsl:template></xsl:stylesheet>','text/xml');
+	$.tree.datastores.xml_flat.xsl = (new DOMParser()).parseFromString('<?xml version="1.0" encoding="utf-8" ?><xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" ><xsl:output method="html" encoding="utf-8" omit-xml-declaration="yes" standalone="no" indent="no" media-type="text/xml" /><xsl:template match="/"><ul><xsl:for-each select="//item[not(@parent_id) or @parent_id=0]"><xsl:call-template name="nodes"><xsl:with-param name="node" select="." /><xsl:with-param name="is_last" select="number(position() = last())" /></xsl:call-template></xsl:for-each></ul></xsl:template><xsl:template name="nodes"><xsl:param name="node" /><xsl:param name="theme_path" /><xsl:param name="theme_name" /><xsl:param name="is_last" /><xsl:variable name="children" select="count(//item[@parent_id=$node/attribute::id]) &gt; 0" /><li><xsl:attribute name="class"><xsl:if test="$is_last = true()"> last </xsl:if><xsl:choose><xsl:when test="@state = \'open\'"> open </xsl:when><xsl:when test="$children or @hasChildren or @state = \'closed\'"> closed </xsl:when><xsl:otherwise> leaf </xsl:otherwise></xsl:choose><xsl:value-of select="@class" /></xsl:attribute><xsl:for-each select="@*"><xsl:if test="name() != \'parent_id\' and name() != \'hasChildren\' and name() != \'class\' and name() != \'state\'"><xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute></xsl:if></xsl:for-each><xsl:for-each select="content/name"><a href="#"><xsl:attribute name="class"><xsl:value-of select="@lang" /><xsl:value-of select="@class" /></xsl:attribute><xsl:attribute name="style"><xsl:value-of select="@style" /></xsl:attribute><xsl:for-each select="@*"><xsl:if test="name() != \'style\' and name() != \'class\'"><xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute></xsl:if></xsl:for-each><ins><xsl:if test="string-length(attribute::icon) > 0"><xsl:choose><xsl:when test="not(contains(@icon,\'/\'))"><xsl:attribute name="class"><xsl:value-of select="@icon" /></xsl:attribute></xsl:when><xsl:otherwise><xsl:attribute name="style">background-image:url(<xsl:value-of select="@icon" />);</xsl:attribute></xsl:otherwise></xsl:choose></xsl:if><xsl:text>&#xa0;</xsl:text></ins><xsl:value-of select="." /></a></xsl:for-each><xsl:if test="$children or @hasChildren"><ul><xsl:for-each select="//item[@parent_id=$node/attribute::id]"><xsl:call-template name="nodes"><xsl:with-param name="node" select="." /><xsl:with-param name="is_last" select="number(position() = last())" /></xsl:call-template></xsl:for-each></ul></xsl:if></li></xsl:template></xsl:stylesheet>','text/xml');
 })(jQuery);

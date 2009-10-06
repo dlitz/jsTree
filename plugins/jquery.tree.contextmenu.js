@@ -39,6 +39,8 @@
 				var str = "";
 				var cnt = 0;
 				for(var i in opts.items) {
+					if(!opts.items.hasOwnProperty(i)) continue;
+					if(opts.items[i] === false) continue;
 					var r = 1;
 					if(typeof opts.items[i].visible == "function") r = opts.items[i].visible.call(null, $.tree.plugins.contextmenu.data.a, t);
 					if(r == -1) continue;

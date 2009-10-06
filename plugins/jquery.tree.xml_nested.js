@@ -29,8 +29,8 @@
 
 					str += '<item ';
 					for(var i in opts.outer_attrib) {
-						if(typeof opts.outer_attrib[i] == "function") continue;
-						var val = (opts.outer_attrib[i] == "class") ? obj.attr(opts.outer_attrib[i]).replace("last","").replace("leaf","").replace("closed","").replace("open","") : obj.attr(opts.outer_attrib[i]);
+						if(!opts.outer_attrib.hasOwnProperty(i)) continue;
+						var val = (opts.outer_attrib[i] == "class") ? obj.attr(opts.outer_attrib[i]).replace(/(^| )last( |$)/ig," ").replace(/(^| )(leaf|closed|open)( |$)/ig," ") : obj.attr(opts.outer_attrib[i]);
 						if(typeof val != "undefined" && val.toString().replace(" ","").length > 0) str += ' ' + opts.outer_attrib[i] + '="' + val.toString() + '" ';
 						delete val;
 					}
@@ -39,7 +39,7 @@
 					str += '<content>';
 					if(tree.settings.languages.length) {
 						for(var i in tree.settings.languages) {
-							if(typeof tree.settings.languages[i] == "function") continue;
+							if(!tree.settings.languages.hasOwnProperty(i)) continue;
 							str += this.process_inner(obj.children("a." + tree.settings.languages[i]), tree, opts, tree.settings.languages[i]);
 						}
 					}
@@ -50,10 +50,11 @@
 
 					if(obj.children("ul").size() > 0) {
 						var _this = this;
+						opts.callback = true;
 						obj.children("ul").children("li").each(function () {
-							opts.callback = true;
 							str += _this.get(this, tree, opts);
 						});
+						opts.callback = false;
 					}
 					str += '</item>';
 
@@ -63,24 +64,16 @@
 				process_inner : function(obj, tree, opts, lang) {
 					var str = '<name ';
 					if(lang) str += ' lang="' + lang + '" ';
-					if(opts.inner_attrib.length || obj.get(0).style.backgroundImage.toString().length || tree.settings.ui.theme_name == "themeroller") {
-						if(obj.get(0).style.backgroundImage.length) {
-							str += ' icon="' + obj.get(0).style.backgroundImage.replace("url(","").replace(")","") + '" ';
+					if(opts.inner_attrib.length || obj.children("ins").get(0).style.backgroundImage.toString().length || obj.children("ins").get(0).className.length) {
+						if(obj.children("ins").get(0).style.className.length) {
+							str += ' icon="' + obj.children("ins").get(0).style.className + '" ';
 						}
-						if(tree.settings.ui.theme_name == "themeroller" && a.children("ins").size()) {
-							var tmp = obj.children("ins").attr("class");
-							var cls = false;
-							$.each(tmp.split(" "), function (i, val) {
-								if(val.indexOf("ui-icon-") == 0) {
-									cls = val;
-									return false;
-								}
-							});
-							if(cls) str += ' icon="' + cls + '" ';
+						if(obj.children("ins").get(0).style.backgroundImage.length) {
+							str += ' icon="' + obj.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","") + '" ';
 						}
 						if(opts.inner_attrib.length) {
 							for(var j in opts.inner_attrib) {
-								if(typeof opts.inner_attrib[j] == "function") continue;
+								if(!opts.inner_attrib.hasOwnProperty(j)) continue;
 								var val = obj.attr(opts.inner_attrib[j]);
 								if(typeof val != "undefined" && val.toString().replace(" ","").length > 0) str += ' ' + opts.inner_attrib[j] + '="' + val.toString() + '" ';
 								delete val;

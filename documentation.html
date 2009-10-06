@@ -159,19 +159,26 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			<p class="description">The duration in milliseconds of the open/close animation.</p>
 			<p class="description">Default is <code class="fp">0</code> (meaning no animation).</p>
 
-			<h2 id="ui.onparentclose">
-				<span>ui.onparentclose</span>
-				<em><code class="type">mixed</code></em>
-			</h2>
-			<p class="description">This option specifies the behavior of the tree when a parent of a selected node is closed. The options are <code class="fp">"select_parent"</code> - which deselects the selected node and selects the closed one (similar to windows explorer), <code class="fp">"deselect"</code> - only deselects the selected node or <code class="fp">false</code> - does nothing.</p>
-			<p class="description">Default is <code class="fp">"select_parent"</code>.</p>
-
 			<h2 id="ui.scroll_spd">
 				<span>ui.scroll_spd</span>
 				<em><code class="type">Integer</code></em>
 			</h2>
 			<p class="description">When dragging near the edge of the tree container it scrolls if neccessary. This setting controls the speed of the scroll.</p>
 			<p class="description">Default is <code class="fp">4</code>.</p>
+
+			<h2 id="ui.selected_parent_close">
+				<span>ui.selected_parent_close</span>
+				<em><code class="type">mixed</code></em>
+			</h2>
+			<p class="description">This option specifies the behavior of the tree when a parent of a selected node is closed. The options are <code class="fp">"select_parent"</code> - which deselects the selected node and selects the closed one (similar to windows explorer), <code class="fp">"deselect"</code> - only deselects the selected node or <code class="fp">false</code> - does nothing.</p>
+			<p class="description">Default is <code class="fp">"select_parent"</code>.</p>
+
+			<h2 id="ui.selected_delete">
+				<span>ui.selected_delete</span>
+				<em><code class="type">mixed</code></em>
+			</h2>
+			<p class="description">This option specifies the behavior of the tree when a selected node is deleted. The options are <code class="fp">"select_previous"</code> - which selects the previous node (similar to windows explorer) or <code class="fp">false</code> - does nothing.</p>
+			<p class="description">Default is <code class="fp">"select_previous"</code>.</p>
 
 			<h2 id="ui.theme_path">
 				<span>ui.theme_path</span>
@@ -302,7 +309,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				<span>rules.createat</span>
 				<em><code class="type">String</code></em>
 			</h2>
-			<p class="description">Specifies the default location to insert new nodes at - at the top amongst the parent node's children or at the bottom. Should be either <code class="fp">"top"</code> or <code class="fp">"bottom"</code>.</p>
+			<p class="description">Specifies the default location to insert new nodes at - at the top amongst the parent node's children or at the bottom. Also controls what happens if a node is dropped onto another node. Should be either <code class="fp">"top"</code> or <code class="fp">"bottom"</code>.</p>
 			<p class="description">Default is: <code class="fp">"bottom"</code></p>
 
 			<h2 id="rules.drag_copy">
@@ -318,6 +325,20 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			</h2>
 			<p class="description">This controls which button initiates a drag. Can be either <code class="fp">"left"</code>, <code class="fp">"right"</code> or <code class="fp">"both"</code>.</p>
 			<p class="description">Default is: <code class="fp">"left"</code></p>
+
+			<h2 id="rules.use_max_children">
+				<span>rules.use_max_children</span>
+				<em><code class="type">Boolean</code></em>
+			</h2>
+			<p class="description">Should max_children rules be checked when moving/copying nodes.</p>
+			<p class="description">Default is: <code class="fp">true</code></p>
+
+			<h2 id="rules.use_max_depth">
+				<span>rules.use_max_depth</span>
+				<em><code class="type">Boolean</code></em>
+			</h2>
+			<p class="description">Should max_depth rules be checked when moving/copying nodes.</p>
+			<p class="description">Default is: <code class="fp">true</code></p>
 
 			<h2 id="rules.max_children">
 				<span>type.max_children</span>
@@ -473,7 +494,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			<h2 id="callback.onmove">
 				<span>callback.onmove</span>
 			</h2>
-			<p class="description">Triggered when a node is renamed. Receives five parameters - the node that was moved, the reference node in the move, the new position relative to the reference node (one of <code class="fp">"before"</code>, <code class="fp">"after"</code> or <code class="fp">"inside"</code>), a reference to the tree instance and a rollback object that you can use with <code class="fp">jQuery.tree.rollback</code>.</p>
+			<p class="description">Triggered when a node is moved. Receives five parameters - the node that was moved, the reference node in the move, the new position relative to the reference node (one of <code class="fp">"before"</code>, <code class="fp">"after"</code> or <code class="fp">"inside"</code>), a reference to the tree instance and a rollback object that you can use with <code class="fp">jQuery.tree.rollback</code>.</p>
 			<p class="description">Default is: <code class="fp">function(NODE, REF_NODE, TYPE, TREE_OBJ, RB) { }</code></p>
 
 			<h2 id="callback.oncopy">
@@ -612,7 +633,7 @@ plugins : {
 		<p class="description">Default is: <code class="fp">{ }</code></p>
 		</div>
 
-		<h1 id="datastores" id="datastores">Datastores</h1>
+		<h1 id="datastores">Datastores</h1>
 		<div class="content">
 			<p>In this section you will find the data format description of the two bundled datasources.</p>
 			<h2 id="html">HTML</h2>
@@ -639,7 +660,7 @@ plugins : {
 	&lt;a href=&quot;#&quot; class=&quot;bg&quot;&gt;&lt;ins&gt;&amp;nbsp;&lt;/ins&gt;Title in Bulgarian&lt;/a&gt;
 &lt;/li&gt;
 </pre>
-			<h2>JSON</h2>
+			<h2 id="json">JSON</h2>
 			<p>The JSON data format is definitely the most widely used amongst jsTree users. Each node has the following structure:</p>
 <pre class="fp">
 { 
@@ -1291,6 +1312,4 @@ data: {
 		</h2>
 		<p class="description">A few other variables may emerge at runtime, but they are only used internally, such as: <code class="fp">srch</code> , <code class="fp">srch_opn</code> , <code class="fp">hovered</code> , <code class="fp">offset</code> , <code class="fp">is_partial_refresh</code> , <code class="fp">opened</code> , <code class="fp">cl_count</code> , <code class="fp">li_height</code> , <code class="fp">inp</code>.</p>
 	</div>
-	</div>
-</body>
-</html>
+</div></body></html>

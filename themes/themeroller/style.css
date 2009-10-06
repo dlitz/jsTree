@@ -11,6 +11,9 @@
 .tree-themeroller li.closed, #jstree-dragged.tree-themeroller li li.open { background:url("icons.png") -48px -32px no-repeat; }
 #jstree-marker { background-image:url("icons.png"); }
 
+.tree-themeroller li, .tree-themeroller li a, .tree-themeroller li a ins { line-height:16px !important; }
+.tree-themeroller li a .ui-icon { overflow:visible; }
+
 /* DEFAULT, HOVER, CLICKED, LOADING STATES 
 .tree-themeroller li a, .tree-themeroller li span { border-radius:3px; -moz-border-radius:3px; -webkit-border-radius:3px; }
 .tree-themeroller li a:hover, .tree-themeroller li a.hover, .tree-themeroller li span { background: #e7f4f9; border:1px solid #d8f0fa; padding:0px 3px 0px 3px; }

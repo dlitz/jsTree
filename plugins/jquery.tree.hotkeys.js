@@ -4,6 +4,7 @@
 	$.extend($.tree.plugins, {
 		"hotkeys" : {
 			bound : [],
+			disabled : false,
 			defaults : {
 				hover_mode : false,
 				functions : {
@@ -19,6 +20,8 @@
 				}
 			},
 			exec : function(key) {
+				if($.tree.plugins.hotkeys.disabled) return false;
+
 				var t = $.tree.focused();
 				if(typeof t.settings.plugins.hotkeys == "undefined") return;
 				var opts = $.extend(true, {}, $.tree.plugins.hotkeys.defaults, t.settings.plugins.hotkeys);

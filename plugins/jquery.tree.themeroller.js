@@ -15,7 +15,7 @@
 				onparse : function (s, t) {
 					if(this.settings.ui.theme_name != "themeroller") return;
 					var opts = $.extend(true, {}, $.tree.plugins.themeroller.defaults, this.settings.plugins.themeroller);
-					return $(s).find("a").not(".ui-state-default").addClass("ui-state-default").end().end();
+					return $(s).find("a").not(".ui-state-default").addClass("ui-state-default").children("ins").addClass("ui-icon").end().end().end();
 				},
 				onselect : function(n, t) {
 					if(this.settings.ui.theme_name != "themeroller") return;

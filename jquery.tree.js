@@ -8,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2009-09-23
+ * Date: 2009-10-06
  *
  */
 
@@ -29,10 +29,11 @@
 			ui		: {
 				dots		: true,		// BOOL - dots or no dots
 				animation	: 0,		// INT - duration of open/close animations in miliseconds
-				onparentclose : "select_parent", // false, "deselect", "select_parent"
 				scroll_spd	: 4,
 				theme_path	: false,	// Path to the theme CSS file - if set to false and theme_name is not false - will lookup jstree-path-here/themes/theme-name-here/style.css
-				theme_name	: "default" // if set to false no theme will be loaded
+				theme_name	: "default",// if set to false no theme will be loaded
+				selected_parent_close	: "select_parent", // false, "deselect", "select_parent"
+				selected_delete			: "select_previous" // false, "select_previous"
 			},
 			types	: {
 				"default" : {
@@ -57,6 +58,9 @@
 				createat	: "bottom",	// STRING (top or bottom) new nodes get inserted at top or bottom
 				drag_copy	: "ctrl",	// FALSE | CTRL | ON - drag to copy off/ with or without holding Ctrl
 				drag_button	: "left",	// left, right or both
+				use_max_children	: true,
+				use_max_depth		: true,
+
 				max_children: -1,
 				max_depth	: -1,
 				valid_children : "all"
@@ -594,8 +598,8 @@
 					obj = !obj ? this.selected : this.get_node(obj);
 					if(!obj) return;
 					var t = this.get_type(obj);
-					if(typeof this.settings.types[t] != "undefined" && this.settings.types[t][rule] != "undefined") v = this.settings.types[t][rule];
-					else if(typeof this.settings.types["default"] != "undefined" && this.settings.types["default"][rule] != "undefined") v = this.settings.types["default"][rule];
+					if(typeof this.settings.types[t] != "undefined" && typeof this.settings.types[t][rule] != "undefined") v = this.settings.types[t][rule];
+					else if(typeof this.settings.types["default"] != "undefined" && typeof this.settings.types["default"][rule] != "undefined") v = this.settings.types["default"][rule];
 				}
 				if(typeof v == "function") v = v.call(null, obj, this);
 				v = this.callback("check", [rule, obj, v, this]);
@@ -617,47 +621,51 @@
 				nod = this.get_node(nod);
 				if(p == false) return false;
 				var r = {
-					max_depth : this.check("max_depth", p),
-					max_children : this.check("max_children", p),
+					max_depth : this.settings.rules.use_max_depth ? this.check("max_depth", p) : -1,
+					max_children : this.settings.rules.use_max_children ? this.check("max_children", p) : -1,
 					valid_children : this.check("valid_children", p)
-				}
+				};
 				var nod_type = (typeof nod == "string") ? nod : this.get_type(nod);
-				if(typeof r.valid_children != "undefined" && (r.valid_children == "none" || ($.isArray(r.valid_children) && $.inArray(nod_type, r.valid_children) == -1))) return false;
+				if(typeof r.valid_children != "undefined" && (r.valid_children == "none" || (typeof r.valid_children == "object" && $.inArray(nod_type, $.makeArray(r.valid_children)) == -1))) return false;
 				
-				if(typeof r.max_children != "undefined" && r.max_children != -1) {
-					if(r.max_children == 0) return false;
-					var c_count = 1;
-					if(tree_component.drag_drop.moving == true && tree_component.drag_drop.foreign == false) {
-						c_count = tree_component.drag_drop.dragged.size();
-						c_count = c_count - p.find('> ul > li.dragged').size();
+				if(this.settings.rules.use_max_children) {
+					if(typeof r.max_children != "undefined" && r.max_children != -1) {
+						if(r.max_children == 0) return false;
+						var c_count = 1;
+						if(tree_component.drag_drop.moving == true && tree_component.drag_drop.foreign == false) {
+							c_count = tree_component.drag_drop.dragged.size();
+							c_count = c_count - p.find('> ul > li.dragged').size();
+						}
+						if(r.max_children < p.find('> ul > li').size() + c_count) return false;
 					}
-					if(r.max_children < p.find('> ul > li').size() + c_count) return false;
 				}
 
-				if(typeof r.max_depth != "undefined" && r.max_depth === 0) return false;
-				// check for max_depth up the chain
-				var mx = (r.max_depth > 0) ? r.max_depth : false;
-				var i = 0;
-				var t = p;
-				while(t !== -1) {
-					t = this.parent(t);
-					i ++;
-					var m = this.check("max_depth",t);
-					if(m >= 0) {
-						mx = (mx === false) ? (m - i) : Math.min(mx, m - i);
+				if(this.settings.rules.use_max_depth) {
+					if(typeof r.max_depth != "undefined" && r.max_depth === 0) return this.error("MOVE: MAX-DEPTH REACHED");
+					// check for max_depth up the chain
+					var mx = (r.max_depth > 0) ? r.max_depth : false;
+					var i = 0;
+					var t = p;
+					while(t !== -1) {
+						t = this.parent(t);
+						i ++;
+						var m = this.check("max_depth",t);
+						if(m >= 0) {
+							mx = (mx === false) ? (m - i) : Math.min(mx, m - i);
+						}
+						if(mx !== false && mx <= 0) return this.error("MOVE: MAX-DEPTH REACHED");
 					}
-					if(mx !== false && mx <= 0) return false;
-				}
-				if(mx !== false && mx <= 0) return false;
-				if(mx !== false) { 
-					var incr = 1;
-					if(typeof nod != "string") {
-						var t = nod;
-						// possible async problem - when nodes are not all loaded down the chain
-						while(t.size() > 0) {
-							if(mx - incr < 0) return false;
-							t = t.children("ul").children("li");
-							incr ++;
+					if(mx !== false && mx <= 0) return this.error("MOVE: MAX-DEPTH REACHED");
+					if(mx !== false) { 
+						var incr = 1;
+						if(typeof nod != "string") {
+							var t = nod;
+							// possible async problem - when nodes are not all loaded down the chain
+							while(t.size() > 0) {
+								if(mx - incr < 0) return this.error("MOVE: MAX-DEPTH REACHED");
+								t = t.children("ul").children("li");
+								incr ++;
+							}
 						}
 					}
 				}
@@ -732,6 +740,8 @@
 				if(this.locked) return this.error("LOCKED");
 				var _this = this;
 				var obj = this.get_node(obj);
+				if(obj.children("a.clicked").size() == 0) return this.error("DESELECT: NODE NOT SELECTED");
+
 				obj.children("a").removeClass("clicked");
 				this.callback("ondeselect", [obj.get(0), _this]);
 				if(this.settings.rules.multiple != false && this.selected_arr.length > 1) {
@@ -823,24 +833,25 @@
 				else {
 					if(obj.hasClass("open")) obj.removeClass("open").addClass("closed");
 				}
-				if(this.selected && this.settings.ui.onparentclose !== false && obj.children("ul:eq(0)").find("a.clicked").size() > 0) {
+				if(this.selected && this.settings.ui.selected_parent_close !== false && obj.children("ul:eq(0)").find("a.clicked").size() > 0) {
 					obj.find("li:has(a.clicked)").each(function() {
 						_this.deselect_branch(this);
 					});
-					if(this.settings.ui.onparentclose == "select_parent" && obj.children("a.clicked").size() == 0) this.select_branch(obj, (this.settings.rules.multiple != false && this.selected_arr.length > 0) );
+					if(this.settings.ui.selected_parent_close == "select_parent" && obj.children("a.clicked").size() == 0) this.select_branch(obj, (this.settings.rules.multiple != false && this.selected_arr.length > 0) );
 				}
 				this.callback("onclose", [obj.get(0), this]);
 			},
 			open_all : function (obj, callback) {
 				if(this.locked) return this.error("LOCKED");
 				var _this = this;
-				obj = obj ? this.get_node(obj).parent() : this.container;
+				obj = obj ? this.get_node(obj) : this.container;
 
 				var s = obj.find("li.closed").size();
 				if(!callback)	this.cl_count = 0;
 				else			this.cl_count --;
 				if(s > 0) {
 					this.cl_count += s;
+					// maybe add .andSelf()
 					obj.find("li.closed").each( function () { var __this = this; _this.open_branch.apply(_this, [this, true, function() { _this.open_all.apply(_this, [__this, true]); } ]); });
 				}
 				else if(this.cl_count == 0) this.callback("onopen_all",[this]);
@@ -848,7 +859,8 @@
 			close_all : function (obj) {
 				if(this.locked) return this.error("LOCKED");
 				var _this = this;
-				obj = obj ? this.get_node(obj).parent() : this.container;
+				obj = obj ? this.get_node(obj) : this.container;
+				// maybe add .andSelf()
 				obj.find("li.open").each( function () { _this.close_branch(this, true); });
 				this.callback("onclose_all",[this]);
 			},
@@ -935,36 +947,41 @@
 				$li.find("li").not(".open").not(".closed").addClass("leaf");
 
 				var r = {
-					max_depth : this.check("max_depth", ref_node),
-					max_children : this.check("max_children", ref_node),
+					max_depth : this.settings.rules.use_max_depth ? this.check("max_depth", ref_node) : -1,
+					max_children : this.settings.rules.use_max_children ? this.check("max_children", ref_node) : -1,
 					valid_children : this.check("valid_children", ref_node)
-				}
+				};
 				var nod_type = this.get_type($li);
 				if(typeof r.valid_children != "undefined" && (r.valid_children == "none" || ($.isArray(r.valid_children) && $.inArray(nod_type, r.valid_children) == -1))) return this.error("CREATE: NODE NOT A VALID CHILD");
-				if(typeof r.max_children != "undefined" && r.max_children != -1 && r.max_children >= this.children(ref_node).size()) return this.error("CREATE: MAX_CHILDREN REACHED");
 
-				if(typeof r.max_depth != "undefined" && r.max_depth === 0) return false;
-				// check for max_depth up the chain
-				var mx = (r.max_depth > 0) ? r.max_depth : false;
-				var i = 0;
-				var t = ref_node;
-				while(t !== -1) {
-					t = this.parent(t);
-					i ++;
-					var m = this.check("max_depth",t);
-					if(m >= 0) {
-						mx = (mx === false) ? (m - i) : Math.min(mx, m - i);
-					}
-					if(mx !== false && mx <= 0) return false;
+				if(this.settings.rules.use_max_children) {
+					if(typeof r.max_children != "undefined" && r.max_children != -1 && r.max_children >= this.children(ref_node).size()) return this.error("CREATE: MAX_CHILDREN REACHED");
 				}
-				if(mx !== false && mx <= 0) return false;
-				if(mx !== false) { 
-					var incr = 1;
-					var t = $li;
-					while(t.size() > 0) {
-						if(mx - incr < 0) return false;
-						t = t.children("ul").children("li");
-						incr ++;
+
+				if(this.settings.rules.use_max_depth) {
+					if(typeof r.max_depth != "undefined" && r.max_depth === 0) return this.error("CREATE: MAX-DEPTH REACHED");
+					// check for max_depth up the chain
+					var mx = (r.max_depth > 0) ? r.max_depth : false;
+					var i = 0;
+					var t = ref_node;
+					while(t !== -1) {
+						t = this.parent(t);
+						i ++;
+						var m = this.check("max_depth",t);
+						if(m >= 0) {
+							mx = (mx === false) ? (m - i) : Math.min(mx, m - i);
+						}
+						if(mx !== false && mx <= 0) return this.error("CREATE: MAX-DEPTH REACHED");
+					}
+					if(mx !== false && mx <= 0) return this.error("CREATE: MAX-DEPTH REACHED");
+					if(mx !== false) { 
+						var incr = 1;
+						var t = $li;
+						while(t.size() > 0) {
+							if(mx - incr < 0) return this.error("CREATE: MAX-DEPTH REACHED");
+							t = t.children("ul").children("li");
+							incr ++;
+						}
 					}
 				}
 
@@ -1084,7 +1101,7 @@
 					var obj = this.selected;
 					if(this.settings.rules.multiple == false || this.selected_arr.length == 1) {
 						var stop = true;
-						var tmp = (this.selected.prev("li:eq(0)").size()) ? this.selected.prev("li:eq(0)") : this.selected.parents("li:eq(0)");
+						var tmp = this.settings.ui.selected_delete == "select_previous" ? this.prev(this.selected) : false;
 					}
 					obj = obj.remove();
 					$parent.children("li:last").addClass("last");
@@ -1092,10 +1109,7 @@
 						$li = $parent.parents("li:eq(0)");
 						$li.removeClass("open").removeClass("closed").addClass("leaf").children("ul").remove();
 					}
-					//this.selected = false;
-					this.callback("ondelete", [obj.get(0), this, rb]);
-					if(stop && tmp) this.select_branch(tmp);
-					if(this.settings.rules.multiple != false && !stop) {
+					if(!stop && this.settings.rules.multiple != false) {
 						var _this = this;
 						this.selected_arr = [];
 						this.container.find("a.clicked").filter(":first-child").parent().each(function () {
@@ -1106,6 +1120,8 @@
 							this.remove();
 						}
 					}
+					if(stop && tmp) this.select_branch(tmp); 
+					this.callback("ondelete", [obj.get(0), this, rb]);
 				}
 				else return this.error("DELETE: NO NODE SELECTED");
 			},
@@ -1281,8 +1297,26 @@
 						break;
 					case "inside":
 						if($where.parent().children("ul:first").size()) {
-							if(this.settings.rules.createat == "top")	$where.parent().children("ul:first").prepend(what.removeClass("last")).children("li:last").addClass("last");
-							else										$where.parent().children("ul:first").children(".last").removeClass("last").end().append(what.removeClass("last")).children("li:last").addClass("last");
+							if(this.settings.rules.createat == "top") {
+								$where.parent().children("ul:first").prepend(what.removeClass("last")).children("li:last").addClass("last");
+
+								// restored this section
+								var tmp_node = $where.parent().children("ul:first").children("li:first");
+								if(tmp_node.size()) {
+									how = "before";
+									where = tmp_node;
+								}
+							}
+							else {
+								// restored this section
+								var tmp_node = $where.parent().children("ul:first").children(".last");
+								if(tmp_node.size()) {
+									how = "after";
+									where = tmp_node;
+								}
+
+								$where.parent().children("ul:first").children(".last").removeClass("last").end().append(what.removeClass("last")).children("li:last").addClass("last");
+							}
 						}
 						else {
 							what.addClass("last");
@@ -1529,7 +1563,7 @@
 		if(tmp.open_time)	clearTimeout(tmp.open_time);
 		if(tmp.scroll_time)	clearTimeout(tmp.scroll_time);
 
-		if($.tree.drag_end !== false) $.tree.drag_end.call(null, event, tmp);
+		if(tmp.moving && $.tree.drag_end !== false) $.tree.drag_end.call(null, event, tmp);
 
 		if(tmp.foreign === false && tmp.drag_node && tmp.drag_node.size()) {
 			tmp.drag_help.remove();
@@ -1581,8 +1615,10 @@
 				return false;
 			}
 			else {
-				tree_component.drag_drop.moving = true;
-				is_start = true;
+				if(!tmp.moving) {
+					tree_component.drag_drop.moving = true;
+					is_start = true;
+				}
 			}
 
 			if(tmp.open_time) clearTimeout(tmp.open_time);
@@ -1609,7 +1645,7 @@
 			// if not moving over a tree
 			if(cnt.size() == 0 || !tree_component.inst[cnt.attr("id")]) {
 				if(tmp.scroll_time) clearTimeout(tmp.scroll_time);
-				if(tmp.drag_help !== false) tmp.drag_help.find("li:eq(0) > a > ins").addClass("forbidden");
+				if(tmp.drag_help !== false) tmp.drag_help.find("li:eq(0) ins").addClass("forbidden");
 				tmp.move_type	= false;
 				tmp.ref_node	= false;
 				tree_component.drag_drop.marker.hide();
@@ -1686,7 +1722,7 @@
 				tree_component.drag_drop.marker.css({ "left" : (et_off.left + 10) , "top" : et_off.top + 15 }).show();
 			}
 			else if( (event.target.tagName != "A" && event.target.tagName != "INS") || !ok) {
-				if(tmp.drag_help !== false) tmp.drag_help.find("li:eq(0) > a > ins").addClass("forbidden");
+				if(tmp.drag_help !== false) tmp.drag_help.find("li:eq(0) ins").addClass("forbidden");
 				tmp.move_type	= false;
 				tmp.ref_node	= false;
 				tree_component.drag_drop.marker.hide();
@@ -1706,7 +1742,7 @@
 	tree_component.cut_copy = { 
 		copy_nodes : false,
 		cut_nodes : false
-	}
+	};
 
 	// css stuff
 	tree_component.css = false;
@@ -1837,7 +1873,7 @@
 
 					for(var i in opts.outer_attrib) {
 						if(!opts.outer_attrib.hasOwnProperty(i)) continue;
-						var val = (opts.outer_attrib[i] == "class") ? obj.attr(opts.outer_attrib[i]).replace("last","").replace("leaf","").replace("closed","").replace("open","") : obj.attr(opts.outer_attrib[i]);
+						var val = (opts.outer_attrib[i] == "class") ? obj.attr(opts.outer_attrib[i]).replace(/(^| )last( |$)/ig," ").replace(/(^| )(leaf|closed|open)( |$)/ig," ") : obj.attr(opts.outer_attrib[i]);
 						if(typeof val != "undefined" && val.toString().replace(" ","").length > 0) json.attributes[opts.outer_attrib[i]] = val;
 						delete val;
 					}
