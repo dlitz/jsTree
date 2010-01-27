@@ -10,10 +10,9 @@ FEATURES:
 	localization - the loading text, maybe default title (maybe per type - override in types plugin)
 	metadata plugin - do what??? maybe just provide support by every plugin?
 	create_node (when creating in async - make sure contents are loaded first) /plugin?
-	delete_node /plugin?
 	maybe use a class on the A nodes (to be able to style other links and not capture the event)
 	add sorting plugin - attach to open/move
-	the onload callback?
+	$.ajax - use $.proxy
 
 PLUGINS & THEMES:
 	* contextmenu 
@@ -94,7 +93,7 @@ EXAMPLES & DOCS!
 
 					// TEMPORARY FIX
 					var s = $.extend(true, {}, $.jstree.defaults, settings);
-					if(settings.plugins) s.plugins = settings.plugins;
+					if(settings.plugins) { s.plugins = settings.plugins; }
 
 					// push the new object to the instances array (at the same time set the default classes to the container) and init
 					instances[instance_id] = new $.jstree._instance(instance_id, $(this).addClass("jstree jstree-" + instance_id), s); 
@@ -132,7 +131,7 @@ EXAMPLES & DOCS!
 	$.jstree._instance	= function (index, container, settings) { 
 		// for plugins to store data in
 		this.data = { core : {} };
-		this.get_settings	= function () { return settings; };
+		this.get_settings	= function () { return $.extend(true, {}, settings); };
 		this.get_index		= function () { return index; };
 		this.get_container	= function () { return container; };
 		this._set_settings	= function (s) { 
@@ -323,6 +322,12 @@ EXAMPLES & DOCS!
 			obj.not(".jstree-open, .jstree-closed").addClass("jstree-leaf");
 		},
 
+		// rollback
+		get_rollback : function() { 
+			this.get_rollback.supress_callback = true;
+			return { i : this.get_index(), h : this.get_container().children("ul").clone(true), d : this.data }; 
+		},
+
 		// Dummy functions to be overwritten by any datastore plugin included
 		load_node	: function (obj, s_call, e_call) { },
 		is_loaded	: function (obj) { return true; }
@@ -353,16 +358,31 @@ EXAMPLES & DOCS!
 		$.jstree.defaults[pname] = pdata.defaults;
 	};
 
+	var rollback = ["open_node","close_node"];
+	$.jstree.rollback = function (rb) {
+		if(rb) {
+			if(!$.isArray(rb)) { rb = [ rb ]; }
+			$.each(rb, function (i, val) {
+				instances[val.i].get_container().empty().append(val.h);
+				instances[val.i].data = val.d;
+			});
+		}
+	};
+	$.jstree.register_rollback = function (i) {
+		i = i.split(" ");
+		$.each(i, function(j,v) { rollback.push(v); });
+	};
+
 	// wrap functions (for plugins and events)
 	$(function () {
 		$.each($.jstree._fn, function (i, val) {
 			if(!$.isFunction(val)) { return true; }
-			var of = val;
+			var of = val, 
+				rb = false;
 			$.jstree._fn[i] = function () {
 
 				var is_callable = false,
 					ret;
-
 				do {
 					if(!val.plugin || (val.plugin && $.inArray(val.plugin, this.get_settings().plugins) != -1)) {
 						is_callable = true;
@@ -371,12 +391,18 @@ EXAMPLES & DOCS!
 					val = val.old;
 				} while(val);
 				if(!is_callable) { return; }
-				ret = val.apply(this, arguments);
+
 				if(!this[i].supress_callback && i.substring(0, 1) != '_') {
+					if($.inArray(i, rollback) !== -1) { rb = this.get_rollback(); }
+					ret = val.apply(this, arguments);
 					this.get_container().triggerHandler('jstree.' + i, {
 						'arg'	: Array.prototype.slice.call(arguments),
-						'ret'	: ret
+						'ret'	: ret,
+						'rb'	: rb
 					});
+				}
+				else {
+					ret = val.apply(this, arguments);
 				}
 				val = of;
 				return ret;
@@ -509,7 +535,7 @@ EXAMPLES & DOCS!
 						}
 						if(s_call) { s_call.call(); }
 						break;
-					case (!!s.data && !s.ajax):
+					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
 						if(!obj || obj == -1) {
 							d = $(s.data);
 							if(!d.is("ul")) { d = $("<ul>").append(d); }
@@ -520,16 +546,20 @@ EXAMPLES & DOCS!
 						}
 						if(s_call) { s_call.call(); }
 						break;
-					case (!s.data && !!s.ajax):
+					case (!s.data && !!s.ajax) || (!!s.data && !!s.ajax && obj && obj !== -1):
 						obj = this._get_node(obj);
-						error_func = function () {
+						error_func = function (x, t, e) {
+							var ef = this.get_settings().html_data.ajax.error; 
+							if(ef) { ef.call(this, x, t, e); }
 							if(obj != -1 && obj.length) {
 								obj.children(".jstree-loading").removeClass("jstree-loading");
 								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
 							}
 							if(e_call) { e_call.call(); }
 						};
-						success_func = function (d) {
+						success_func = function (d, t, x) {
+							var sf = this.get_settings().html_data.ajax.success; 
+							if(sf) { d = sf.call(this,d,t,x) || d; }
 							d = $(d);
 							if(!d.is("ul")) { d = $("<ul>").append(d); }
 							if(obj == -1) { this.get_container().html(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='icon'>&nbsp;</ins>"); }
@@ -537,44 +567,11 @@ EXAMPLES & DOCS!
 							this.clean_node(obj);
 							if(s_call) { s_call.call(); }
 						};
-						s.ajax.error = s.ajax.error ? function (x,t,e) { s.ajax.error.call(this,x,t,e); error_func.call(); } : error_func;
-						s.ajax.success = s.ajax.success ? function (d,t,x) { d = s.ajax.success.call(this,d,t,x) || d; success_func.call(this,d); } : success_func;
+						s.ajax.context = this;
+						s.ajax.error = error_func;
+						s.ajax.success = success_func;
 						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(null, obj); }
 						$.ajax(s.ajax);
-						break;
-					case (!!s.data && !!s.ajax):
-						if(!obj || obj == -1) {
-							d = $(s.data);
-							if(!d.is("ul")) { d = $("<ul>").append(d); }
-							this.get_container()
-								.append(d)
-								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='icon'>&nbsp;</ins>");
-							this.clean_node();
-							if(s_call) { s_call.call(); }
-						}
-						else {
-							obj = this._get_node(obj);
-							error_func = function () {
-								if(obj.length) {
-									obj.children(".jstree-loading").removeClass("jstree-loading");
-									if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
-								}
-								if(e_call) { e_call.call(); }
-							};
-							success_func = function (d) {
-								if(obj.length) {
-									d = $(d);
-									if(!d.is("ul")) { d = $("<ul>").append(d); }
-									obj.children(".jstree-loading").removeClass("jstree-loading").append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins>&nbsp;</ins>");
-									this.clean_node(obj);
-								}
-								if(s_call) { s_call.call(); }
-							};
-							s.ajax.error = s.ajax.error ? function (x,t,e) { s.ajax.error.call(null,x,t,e); error_func.call(); } : error_func;
-							s.ajax.success = s.ajax.success ? function (d,t,x) { s.ajax.success.call(null,d,t,x); success_func.call(this,d); } : success_func;
-							if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(null, obj); }
-							$.ajax(s.ajax);
-						}
 						break;
 				}
 			}
@@ -775,7 +772,7 @@ EXAMPLES & DOCS!
 				s.move.check_move = function (m, is_copy) { 
 					if(this.data.types.enabled && this._check_type_move(m, is_copy) === false) { return false; } 
 					return of.call(this, m, is_copy);
-				}
+				};
 				this._set_settings(s);
 			}
 		},
@@ -847,11 +844,11 @@ EXAMPLES & DOCS!
 			},
 			_check_type_move : function(m, is_copy) {
 				if(!m.r_t.data.types) { return true; }
-				var s  = m.r_t.get_settings().types;
+				var s  = m.r_t.get_settings().types,
 					mc = m.r_t._check("max_children", m.cr),
 					md = m.r_t._check("max_depth", m.cr),
 					vc = m.r_t._check("valid_chidren", m.cr),
-					ch = 0, d = 1;
+					ch = 0, d = 1, t;
 				if(vc === "none") { return false; } 
 				if($.isArray(vc) && m.o_t.get_type) {
 					m.o.each(function () {
@@ -864,9 +861,9 @@ EXAMPLES & DOCS!
 					if(ch + m.o.length > mc) { return false; }
 				}
 				if(s.max_depth !== -2 && md !== -1) {
-					var undefined, t, d = 0;
+					d = 0;
 					if(md === 0) { return false; }
-					if(m.o.d === undefined) {
+					if(typeof m.o.d === "undefined") {
 						// TODO: deal with progressive rendering and async when checking max_depth (how to know the depth of the moved node)
 						t = m.o;
 						while(t.length > 0) {
@@ -888,10 +885,6 @@ EXAMPLES & DOCS!
  * jsTree ui plugin 1.0
  * Adds all the neccesary events and functions for user interaction with the tree
  */
-// TODO: bind with move plugin `if(this.data.move)` - drag'n'drop - check the drag plugin
-// TODO: the global events - drag_start/drag/drag_end + some global variable - is there a drag + a function to start/stop the drag_mode? 
-// TODO: drag handles? + SCROLLING WHEN NEAR EDGE (look at jQuery UI)
-// TODO: maybe set_drag function, so that checkbox and select may use it (so that all selected or all checked nodes are dragged).
 // TODO: create function, rename function (uses set_text at end) 
 // TODO: selected_parent_delete - watch for event and handle - like close_node
 (function ($) {
@@ -1021,6 +1014,15 @@ EXAMPLES & DOCS!
 				sel.each(function () { _this.data.ui.to_select.push("#" + this.id.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/')); });
 				this.load_node(obj, function () { _this._restore(); });
 			},
+			delete_node : function (obj) {
+				obj = this._get_node(obj);
+				if(!obj.length) { return false; }
+				if(this.is_selected(obj)) { this.deselect_node(obj); }
+				var p = this._get_parent(obj);
+				obj = obj.remove();
+				this.clean_node(p);
+				return obj;
+			},
 
 			_restore : function (is_callback) {
 				var _this = this,
@@ -1050,6 +1052,7 @@ EXAMPLES & DOCS!
 		}
 	});
 	$.jstree.defaults.plugins.push("ui");
+	$.jstree.register_rollback("select_node deselect_node");
 })(jQuery);
 //*/
 
@@ -1272,6 +1275,9 @@ EXAMPLES & DOCS!
 					}, this))
 				.bind("jstree.loaded", $.proxy(function (event) {
 						this._prepare_checkboxes();
+					}, this))
+				.bind("jstree.clean_node", $.proxy(function (event, data) {
+						this._repair_state(data.arg[0]);
 					}, this));
 			if(this.get_settings().checkbox.override_select) {
 				this.hover_node = this.dehover_node = this.select_node = this.deselect_node = this.deselect_all = $.noop;
@@ -1348,6 +1354,10 @@ EXAMPLES & DOCS!
 				});
 			},
 
+			is_checked : function(obj) {
+				obj = this._get_node(obj);
+				return obj.length ? obj.is(".jstree-checked") : false;
+			},
 			get_checked : function (obj) {
 				obj = !obj || obj === -1 ? this.get_container() : this._get_node(obj);
 				return obj.find("> ul > .jstree-checked, .jstree-undetermined > ul > .jstree-checked");
@@ -1358,7 +1368,22 @@ EXAMPLES & DOCS!
 			},
 
 			show_checkboxes : function () { this.get_container().children("ul").removeClass("jstree-no-checkboxes"); },
-			hide_checkboxes : function () { this.get_container().children("ul").addClass("jstree-no-checkboxes"); }
+			hide_checkboxes : function () { this.get_container().children("ul").addClass("jstree-no-checkboxes"); },
+
+			_repair_state : function (obj) {
+				obj = this._get_node(obj);
+				if(!obj.length) { return; }
+				var a = obj.find("> ul > .jstree-checked").length,
+					b = obj.find("> ul > li").length;
+				if(b === 0) {
+					if(obj.hasClass("jstree-undetermined")) { this.check_node(obj); }
+				}
+				else if(a === 0) { this.uncheck_node(obj); }
+				else if(a === b) { this.check_node(obj); }
+				else { 
+					obj.parentsUntil(this.get_container(),"li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
+				}
+			}
 		}
 	});
 	$.jstree.defaults.plugins.push("checkbox");
@@ -1369,7 +1394,10 @@ EXAMPLES & DOCS!
  * jsTree move plugin 1.0
  * Adds support for moving, copying and pasting nodes in a tree (or across trees)
  */
+// TODO: lang cleanup
 // TODO: default drop-out and drop-in
+// TODO: drag handles? + SCROLLING WHEN NEAR EDGE (look at jQuery UI)
+// TODO: maybe set_drag function, so that checkbox and select may use it (so that all selected or all checked nodes are dragged).
 (function ($) {
 	$.jstree._move = { 
 		data : {},
@@ -1403,12 +1431,12 @@ EXAMPLES & DOCS!
 
 			try { 
 				if($.jstree._move.data.state === 1 && e.target.id !== "jstree-marker" && $.jstree._move.data.r && !$.contains($.jstree._move.data.r.get(0), e.target)) { $.jstree._move.data.state = 0; }
-			} catch(err) { };
+			} catch(err) { }
 			$(document).triggerHandler("jstree.drag", { 'move' : $.jstree._move.data, 'event' : e });
 
 			$.jstree._move.data.hlp.css({ left : (e.pageX + 5) + "px", top : (e.pageY + 10) + "px" }).attr("class", function () {
-				if($.jstree._move.data.state === 1) return "jstree-ok";
-				if($.jstree._move.data.state === 0) return "jstree-invalid";
+				if($.jstree._move.data.state === 1) { return "jstree-ok"; }
+				if($.jstree._move.data.state === 0) { return "jstree-invalid"; }
 			});
 		},
 		stop_drag : function (skip_move) {
@@ -1434,18 +1462,18 @@ EXAMPLES & DOCS!
 					.live("mousedown", $.proxy(function (e) { 
 						try {
 							e.currentTarget.unselectable = "on";
-							e.currentTarget.onselectstart = function() { return false; }
+							e.currentTarget.onselectstart = function() { return false; };
 							if(e.currentTarget.style) { e.currentTarget.style.MozUserSelect = "none"; }
-						} catch(err) { };
-						var o = this._get_node(e.currentTarget)
+						} catch(err) { }
+						var o = this._get_node(e.currentTarget);
 						$.jstree._move.prepare_drag(o, this, this.get_text(o), e);
 						return false;
 					}, this))
 					.live("mousemove", $.proxy(function (e) { 
-						if(!$.jstree._move.is_drag) return;
+						if(!$.jstree._move.is_drag) { return; }
 						this._check_move(this._prepare_move(false, e.currentTarget, "inside"));
 						// TODO: calculate position & stuff
-					}, this))
+					}, this));
 			}
 		},
 		defaults : {
@@ -1464,7 +1492,7 @@ EXAMPLES & DOCS!
 				if(m === false) { return false; }
 				if(m === -1) { $.jstree._move.data.state = -1; return -1; }
 				// TODO: replace with jQuery contains?
-				if(m.r.get(0) === m.o.get(0) || (m.r.parentsUntil(m.r_t.get_container(), "li").andSelf().index(m.o) !== -1)) { $.jstree._move.data.state = 0; return false; }
+				if(m.r.get(0) === m.o.get(0) || (m.r_t && m.r_t !== 1 && m.o.index(m.r.parentsUntil(m.r_t.get_container(), "li").andSelf())) !== -1) { $.jstree._move.data.state = 0; return false; }
 				
 				if(m.o_t !== m.r_t && m.o_t !== -1) {
 					os = m.o_t.get_settings().move;
@@ -1588,7 +1616,7 @@ EXAMPLES & DOCS!
 			},
 
 			cut : function (obj) { $.jstree._move.data.o = obj; $.jstree._move.data.t = "cut";  },
-			copy : function (obj) { this.cut(obj, t); $.jstree._move.data.t = "copy"; },
+			copy : function (obj) { this.cut(obj); $.jstree._move.data.t = "copy"; },
 			paste : function (obj, position) { this.move($.jstree._move.data.o, obj, position, ($.jstree._move.data.t === "copy") ); }
 		}
 	});
@@ -1601,6 +1629,7 @@ EXAMPLES & DOCS!
 		$.jstree._css.add_sheet({ str : css_string });
 	});
 	$.jstree.defaults.plugins.push("move");
+	$.jstree.register_rollback("move");
 })(jQuery);
 //*/
 
@@ -1634,59 +1663,37 @@ EXAMPLES & DOCS!
 					success_func = function () {};
 				switch(true) {
 					case (!s.data && !s.ajax): throw "Neither data nor ajax settings supplied.";
-					case (!!s.data && !s.ajax):
+					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
 						if(!obj || obj == -1) {
 							this.get_container().empty().append(this.parse_json(s.data));
 							this.clean_node();
 						}
 						if(s_call) { s_call.call(); }
 						break;
-					case (!s.data && !!s.ajax):
+					case (!s.data && !!s.ajax) || (!!s.data && !!s.ajax && obj && obj !== -1):
 						obj = this._get_node(obj);
-						error_func = function () {
+						error_func = function (x, t, e) {
+							var ef = this.get_settings().json_data.ajax.error; 
+							if(ef) { ef.call(this, x, t, e); }
 							if(obj != -1 && obj.length) {
 								obj.children(".jstree-loading").removeClass("jstree-loading");
 								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
 							}
 							if(e_call) { e_call.call(); }
 						};
-						success_func = function (d) {
-							if(obj == -1) { this.get_container().html(this.parse_json(d)); }
-							else { obj.children(".jstree-loading").removeClass("jstree-loading").append(this.parse_json(d)); }
+						success_func = function (d, t, x) {
+							var sf = this.get_settings().json_data.ajax.success; 
+							if(sf) { d = sf.call(this,d,t,x) || d; }
+							if(obj == -1) { this.get_container().empty().append(this.parse_json(d)); }
+							else { obj.children(".jstree-loading").removeClass("jstree-loading").parent().append(this.parse_json(d)); }
 							this.clean_node(obj);
 							if(s_call) { s_call.call(); }
 						};
-						s.ajax.error = s.ajax.error ? function (x,t,e) { s.ajax.error.call(this,x,t,e); error_func.call(); } : error_func;
-						s.ajax.success = s.ajax.success ? function (d,t,x) { d = s.ajax.success.call(this,d,t,x) || d; success_func.call(this,d); } : success_func;
+						s.ajax.context = this;
+						s.ajax.error = error_func;
+						s.ajax.success = success_func;
 						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(null, obj); }
 						$.ajax(s.ajax);
-						break;
-					case (!!s.data && !!s.ajax):
-						if(!obj || obj == -1) {
-							this.get_container().html(this.parse_json(s.data));
-							this.clean_node();
-							if(s_call) { s_call.call(); }
-						}
-						else {
-							obj = this._get_node(obj);
-							error_func = function () {
-								if(obj != -1 && obj.length) {
-									obj.children(".jstree-loading").removeClass("jstree-loading");
-									if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
-								}
-								if(e_call) { e_call.call(); }
-							};
-							success_func = function (d) {
-								if(obj == -1) { this.get_container().html(this.parse_json(d)); }
-								else { obj.children(".jstree-loading").removeClass("jstree-loading").append(this.parse_json(d)); }
-								this.clean_node(obj);
-								if(s_call) { s_call.call(); }
-							};
-							s.ajax.error = s.ajax.error ? function (x,t,e) { s.ajax.error.call(this,x,t,e); error_func.call(); } : error_func;
-							s.ajax.success = s.ajax.success ? function (d,t,x) { d = s.ajax.success.call(this,d,t,x) || d; success_func.call(this,d); } : success_func;
-							if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(null, obj); }
-							$.ajax(s.ajax);
-						}
 						break;
 				}
 			},
