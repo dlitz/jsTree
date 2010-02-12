@@ -5,9 +5,9 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>jsTree Testing</title>
-	<script type="text/javascript" src="../_lib/jquery.js"></script>
-	<script type="text/javascript" src="../_lib/jquery.cookie.js"></script>
-	<script type="text/javascript" src="../_lib/jquery.hotkeys.js"></script>
+	<script type="text/javascript" src="../lib/jquery-1.4.1.js"></script>
+	<script type="text/javascript" src="../lib/jquery.cookie.js"></script>
+	<script type="text/javascript" src="../lib/jquery.hotkeys.js"></script>
 	<script type="text/javascript" src="jquery.jstree.js?asdf"></script>
 	<script type="text/javascript">
 	$(function ( ) {
@@ -29,7 +29,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 					},
 					"default" : {
 						valid_children : [ "default" ],
-						icon : { image : "themes/default/icons.png" },
+						icon : { image : "themes/default/icons.png" }
 					}
 				}
 			},
@@ -47,6 +47,9 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			setTimeout(
 				(function (d) { return function () { $.jstree.rollback(d.rb); } })(data),
 				1000);
+		})
+		.bind("jstree.loaded", function () {
+			//alert("Loaded");
 		});
 
 		$("#asdf2").jstree({
@@ -70,12 +73,12 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 					url : "./data.json",
 					dataType : "json",
 					data : function (n) { return { "id" : n == -1 ? 0 : n.id }; },
-					success : function () { alert("SUCCESS"); }
+					success : function () { /*alert("SUCCESS");*/ }
 				}
 			},
 			themes : { theme: "default", dots : true },
 			plugins : [ "json_data", "themes", "ui" ]
-		});
+		})
 
 		$(".jstree-foreign").bind("mousedown", function (event) {
 			$.jstree._move.prepare_drag($(this), -1, "Фаниииии тоя ГЪЗ", event);

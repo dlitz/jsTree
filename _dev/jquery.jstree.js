@@ -13,13 +13,16 @@ FEATURES:
 	maybe use a class on the A nodes (to be able to style other links and not capture the event)
 	add sorting plugin - attach to open/move
 	$.ajax - use $.proxy
+	reload method
+	think of dynamically changing ajax settings?
+	checkbox - restore (after reload, or initially - maybe merge with UI?
 
 PLUGINS & THEMES:
 	* contextmenu 
 	  - do not open if no valid items, 
 	  - maybe option to select node prior to clicking, 
 	  - localization, 
-	  - type based entries? 
+	  - type based entries? LET LABEL BE A FUNCTION !!!
 	  - maybe use external plugin? 
 	* themeroller, 
 	* xml_flat, 
@@ -111,7 +114,7 @@ EXAMPLES & DOCS!
 	// object to store exposed functions and objects
 	$.jstree			= {};
 	// defaults are exposed, so that the developer can change defaults for all future instances
-	$.jstree.defaults	= { animation : 500 };
+	$.jstree.defaults	= { animation : 500, before : function (func, arg) { return arg; } };
 
 	// "private" exposed functions - use with caution
 	// gets the currently focused instance (used internally)
@@ -131,7 +134,7 @@ EXAMPLES & DOCS!
 	$.jstree._instance	= function (index, container, settings) { 
 		// for plugins to store data in
 		this.data = { core : {} };
-		this.get_settings	= function () { return $.extend(true, {}, settings); };
+		this.get_settings	= function () { this.get_settings.supress_callback = true; return $.extend(true, {}, settings); };
 		this.get_index		= function () { return index; };
 		this.get_container	= function () { return container; };
 		this._set_settings	= function (s) { 
@@ -145,7 +148,7 @@ EXAMPLES & DOCS!
 		init	: function () { 
 			var _this = this;
 			this.set_focus(); 
-			this.get_container().html("<ul><li class='jstree-last jstree-leaf'><ins>&nbsp;</ins><a class='jstree-loading' href='#'><ins class='icon'>&nbsp;</ins>Loading ...</a></li></ul>");
+			this.get_container().html("<ul><li class='jstree-last jstree-leaf'><ins>&nbsp;</ins><a class='jstree-loading' href='#'><ins class='jstree-icon'>&nbsp;</ins>Loading ...</a></li></ul>");
 			this.data.core.li_height = this.get_container().find("ul li.jstree-closed, ul li.jstree-leaf").eq(0).height() || 18;
 			this.load_node(-1, function () { _this.loaded(); });
 		},
@@ -262,7 +265,7 @@ EXAMPLES & DOCS!
 		open_node	: function (obj, callback) {
 			obj = this._get_node(obj);
 			if(!obj.length) { return false; }
-			if(!this.is_loaded(obj)) {
+			if(!this._is_loaded(obj)) {
 				var _this = this;
 				obj.children("a").addClass("jstree-loading");
 				this.load_node(obj, function () { _this.open_node(obj, callback); }, callback);
@@ -330,7 +333,7 @@ EXAMPLES & DOCS!
 
 		// Dummy functions to be overwritten by any datastore plugin included
 		load_node	: function (obj, s_call, e_call) { },
-		is_loaded	: function (obj) { return true; }
+		_is_loaded	: function (obj) { return true; }
 	};
 
 	// plugin functionality
@@ -377,14 +380,15 @@ EXAMPLES & DOCS!
 	$(function () {
 		$.each($.jstree._fn, function (i, val) {
 			if(!$.isFunction(val)) { return true; }
-			var of = val, 
-				rb = false;
+			var of = val;
 			$.jstree._fn[i] = function () {
-
 				var is_callable = false,
-					ret;
+					ret = false, 
+					rb = false,
+					s = this.get_settings(),
+					arg = Array.prototype.slice.call(arguments);
 				do {
-					if(!val.plugin || (val.plugin && $.inArray(val.plugin, this.get_settings().plugins) != -1)) {
+					if(!val.plugin || (val.plugin && $.inArray(val.plugin, s.plugins) != -1)) {
 						is_callable = true;
 						break;
 					}
@@ -392,17 +396,20 @@ EXAMPLES & DOCS!
 				} while(val);
 				if(!is_callable) { return; }
 
-				if(!this[i].supress_callback && i.substring(0, 1) != '_') {
-					if($.inArray(i, rollback) !== -1) { rb = this.get_rollback(); }
-					ret = val.apply(this, arguments);
-					this.get_container().triggerHandler('jstree.' + i, {
-						'arg'	: Array.prototype.slice.call(arguments),
-						'ret'	: ret,
-						'rb'	: rb
-					});
-				}
-				else {
-					ret = val.apply(this, arguments);
+				arg = s.before.call(this, i, arg);
+				if(arg !== false) {
+					if(!this[i].supress_callback && i.substring(0, 1) != '_') {
+						if($.inArray(i, rollback) !== -1) { rb = this.get_rollback(); }
+						ret = val.apply(this, arg);
+						this.get_container().triggerHandler('jstree.' + i, {
+							'arg'	: arg,
+							'ret'	: ret,
+							'rb'	: rb
+						});
+					}
+					else {
+						ret = val.apply(this, arg);
+					}
 				}
 				val = of;
 				return ret;
@@ -482,7 +489,7 @@ EXAMPLES & DOCS!
 				'.jstree a { display:inline-block; line-height:16px; height:16px; color:black; white-space:nowrap; text-decoration:none; padding:1px 2px; margin:0; } ' + 
 				'.jstree a:focus { outline: none; } ' + 
 				'.jstree a > ins { height:16px; width:16px; } ' + 
-				'.jstree a > .icon { margin-right:3px; } ' + 
+				'.jstree a > .jstree-icon { margin-right:3px; } ' + 
 				'li.jstree-open > ul { display:block; } ' + 
 				'li.jstree-closed > ul { display:none; } ';
 		// Correct IE 6 (does not support the > CSS selector
@@ -502,7 +509,7 @@ EXAMPLES & DOCS!
 
 /* 
  * jsTree HTML data 1.0
- * The HTML data store. Datastores are build by replacing the `load_node` and `is_loaded` functions.
+ * The HTML data store. Datastores are build by replacing the `load_node` and `_is_loaded` functions.
  */
 (function ($) {
 	$.jstree.plugin("html_data", {
@@ -516,7 +523,7 @@ EXAMPLES & DOCS!
 		},
 		_fn : {
 			load_node : function (obj, s_call, e_call) { this.load_node_html(obj, s_call, e_call); },
-			is_loaded : function (obj) { 
+			_is_loaded : function (obj) { 
 				obj = this._get_node(obj); 
 				return obj == -1 || !obj || !this.get_settings().html_data.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
 			},
@@ -530,7 +537,7 @@ EXAMPLES & DOCS!
 						if(!obj || obj == -1) {
 							this.get_container()
 								.html(this.data.html_data.original_container_html)
-								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='icon'>&nbsp;</ins>");
+								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&nbsp;</ins>");
 							this.clean_node();
 						}
 						if(s_call) { s_call.call(); }
@@ -541,7 +548,7 @@ EXAMPLES & DOCS!
 							if(!d.is("ul")) { d = $("<ul>").append(d); }
 							this.get_container()
 								.append(d)
-								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='icon'>&nbsp;</ins>");
+								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&nbsp;</ins>");
 							this.clean_node();
 						}
 						if(s_call) { s_call.call(); }
@@ -562,8 +569,8 @@ EXAMPLES & DOCS!
 							if(sf) { d = sf.call(this,d,t,x) || d; }
 							d = $(d);
 							if(!d.is("ul")) { d = $("<ul>").append(d); }
-							if(obj == -1) { this.get_container().html(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='icon'>&nbsp;</ins>"); }
-							else { obj.children(".jstree-loading").removeClass("jstree-loading").append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='icon'>&nbsp;</ins>"); }
+							if(obj == -1) { this.get_container().html(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&nbsp;</ins>"); }
+							else { obj.children(".jstree-loading").removeClass("jstree-loading").append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&nbsp;</ins>"); }
 							this.clean_node(obj);
 							if(s_call) { s_call.call(); }
 						};
@@ -740,12 +747,13 @@ EXAMPLES & DOCS!
 (function ($) {
 	$.jstree.plugin("types", {
 		__init : function () {
+			var s = this.get_settings();
 			this.get_container().bind("jstree.init", $.proxy(function (event) { 
 				var types = this.get_settings().types.types, 
 					attr  = this.get_settings().types.type_attr, 
 					icons_css = "", 
 					_this = this, 
-					attach_to = [];
+					attach_to = [], of1, of2;
 
 				$.each(types, function (i, tp) {
 					$.each(tp, function (k, v) { 
@@ -753,8 +761,8 @@ EXAMPLES & DOCS!
 					});
 					if(!tp.icon) { return true; }
 					if( tp.icon.image || tp.icon.position) {
-						if(i == "default")	{ icons_css += '.jstree-' + _this.get_index() + ' a > .icon { '; }
-						else				{ icons_css += '.jstree-' + _this.get_index() + ' li[' + attr + '=' + i + '] > a > .icon { '; }
+						if(i == "default")	{ icons_css += '.jstree-' + _this.get_index() + ' a > .jstree-icon { '; }
+						else				{ icons_css += '.jstree-' + _this.get_index() + ' li[' + attr + '=' + i + '] > a > .jstree-icon { '; }
 						if(tp.icon.image)	{ icons_css += ' background-image:url(' + tp.icon.image + '); '; }
 						if(tp.icon.position){ icons_css += ' background-position:' + tp.icon.position + '; '; }
 						else				{ icons_css += ' background-position:0 0; '; }
@@ -768,10 +776,10 @@ EXAMPLES & DOCS!
 				this.enable_rules();
 			}, this));
 			if(this.data.move) {
-				var s = this.get_settings(), of = s.move.check_move;
+				of2 = s.move.check_move;
 				s.move.check_move = function (m, is_copy) { 
 					if(this.data.types.enabled && this._check_type_move(m, is_copy) === false) { return false; } 
-					return of.call(this, m, is_copy);
+					return of2.call(this, m, is_copy);
 				};
 				this._set_settings(s);
 			}
@@ -811,7 +819,7 @@ EXAMPLES & DOCS!
 			enable_rules : function () { this.data.types.enabled = true; },
 			disable_rules : function () { this.data.types.enabled = false; },
 
-			get_type : function (obj) {
+			_get_type : function (obj) {
 				// TODO: maybe cache using data?
 				obj = this._get_node(obj);
 				return (!obj || !obj.length) ? false : obj.attr(this.get_settings().types.type_attr) || "default";
@@ -822,7 +830,7 @@ EXAMPLES & DOCS!
 			},
 			_check : function (rule, obj, opts) {
 				// TODO : deal with obj - it may not be the node (create for example)
-				var v = false, t = this.get_type(obj), d = 0, _this = this, s = this.get_settings().types;
+				var v = false, t = this._get_type(obj), d = 0, _this = this, s = this.get_settings().types;
 				
 				if(obj === -1) { 
 					if(!!s[rule]) { v = s[rule]; }
@@ -849,10 +857,11 @@ EXAMPLES & DOCS!
 					md = m.r_t._check("max_depth", m.cr),
 					vc = m.r_t._check("valid_chidren", m.cr),
 					ch = 0, d = 1, t;
+
 				if(vc === "none") { return false; } 
-				if($.isArray(vc) && m.o_t.get_type) {
+				if($.isArray(vc) && m.o_t._get_type) {
 					m.o.each(function () {
-						if(!$.inArray(m.o_t.get_type(this), vc)) { d = false; return false; }
+						if(!$.inArray(m.o_t._get_type(this), vc)) { d = false; return false; }
 					});
 					if(d === false) { return false; }
 				}
@@ -1192,6 +1201,7 @@ EXAMPLES & DOCS!
  * Enables both sync and async search on the tree
  */
 // TODO: work with progressive render?
+// TODO: test - multiple request reported (n instead of one request for search)
 (function ($) {
 	$.expr[':'].jstree_contains = function(a,i,m){
 		return (a.textContent || a.innerText || "").toLowerCase().indexOf(m[3].toLowerCase())>=0;
@@ -1215,12 +1225,15 @@ EXAMPLES & DOCS!
 				if(!skip_async && s.ajax !== false && this.get_container().find(".jstree-closed:eq(0)").length > 0) {
 					this.search.supress_callback = true;
 					error_func = function () { };
-					success_func = function (d) {
+					success_func = function (d, t, x) {
+						var sf = this.get_settings().search.ajax.success; 
+						if(sf) { d = sf.call(this,d,t,x) || d; }
 						this.data.search.to_open = d;
 						this._search_open();
 					};
-					s.ajax.error = s.ajax.error ? function (x,t,e) { s.ajax.error.call(null,x,t,e); error_func.call(); } : error_func;
-					s.ajax.success = s.ajax.success ? function (d,t,x) { d = s.ajax.success.call(null,d,t,x) || d; success_func.call(this, d); } : success_func;
+					s.ajax.context = this;
+					s.ajax.error = error_func;
+					s.ajax.success = success_func;
 					if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this); }
 					if(!s.ajax.dataType || /^json/.exec(s.ajax.dataType)) { s.ajax.dataType = "json"; }
 					$.ajax(s.ajax);
@@ -1282,14 +1295,14 @@ EXAMPLES & DOCS!
 			if(this.get_settings().checkbox.override_select) {
 				this.hover_node = this.dehover_node = this.select_node = this.deselect_node = this.deselect_all = $.noop;
 				this.get_selected = this.get_checked;
-				$("a", this.get_container())
+				$("a", this.get_container()[0])
 					.live("click", $.proxy(function (event) {
 							this.change_state(event.target);
 							event.preventDefault();
 						}, this));
 			}
 			else {
-				$(".checkbox", this.get_container())
+				$(".checkbox", this.get_container()[0])
 					.live("click", $.proxy(function (event) {
 							this.change_state(event.target);
 							event.stopImmediatePropagation();
@@ -1430,7 +1443,7 @@ EXAMPLES & DOCS!
 			}
 
 			try { 
-				if($.jstree._move.data.state === 1 && e.target.id !== "jstree-marker" && $.jstree._move.data.r && !$.contains($.jstree._move.data.r.get(0), e.target)) { $.jstree._move.data.state = 0; }
+				if($.jstree._move.data.state === 1 && e.target.id !== "jstree-marker" && $.jstree._move.data.r && !$.contains($.jstree._move.data.r.get(0), e.target)) { $.jstree._move.data.state = 0; $.jstree._move.data.cr = $(); }
 			} catch(err) { }
 			$(document).triggerHandler("jstree.drag", { 'move' : $.jstree._move.data, 'event' : e });
 
@@ -1471,8 +1484,14 @@ EXAMPLES & DOCS!
 					}, this))
 					.live("mousemove", $.proxy(function (e) { 
 						if(!$.jstree._move.is_drag) { return; }
-						this._check_move(this._prepare_move(false, e.currentTarget, "inside"));
-						// TODO: calculate position & stuff
+						var o = $.extend(true, {}, $.jstree._move.data),
+							n = this._prepare_move(false, e.currentTarget, "inside"); // TODO: calculate position & stuff
+						try {
+							if(o.cr.get(0) === n.cr.get(0) && o.cp === n.cp && o.o.get(0) === n.o.get(0)) {
+								return;
+							}
+						} catch (err) { }
+						this._check_move(n);
 					}, this));
 			}
 		},
@@ -1545,7 +1564,7 @@ EXAMPLES & DOCS!
 					}
 				}
 				else {
-					if(!/^(before|after)$/.test(m.p) && !this.is_loaded(m.r)) {
+					if(!/^(before|after)$/.test(m.p) && !this._is_loaded(m.r)) {
 						this.load_node(m.r, function () { _this.prepare_move(obj, ref, position, callback); });
 						return false;
 					}
@@ -1633,9 +1652,64 @@ EXAMPLES & DOCS!
 })(jQuery);
 //*/
 
+/*
+ * jsTree contextmenu plugin 1.0
+ */
+(function ($) {
+	var css_string = '' + 
+		'#jstree-contextmenu { display:none; position:absolulte; margin:0; padding:0; border:1px solid silver; background:#ebebeb; } ' + 
+		'#jstree-contextmenu ul { min-width:180px; } ' + 
+		'#jstree-contextmenu ul, #jstree-contextmenu li { margin:0; padding:0; list-style-type:none; display:block; } ' + 
+		'#jstree-contextmenu li { line-height:20px; min-height:20px; background:red; position:relative; } ' + 
+		'#jstree-contextmenu li ul { display:none; position:absolute; top:0; left:100%; } ' + 
+		'';
+	$.jstree.contextmenu = {};
+	$.jstree.contextmenu.html = $("<div id='jstree-contextmenu'>").css({ "display" : "none", "position" : "absolute" });
+	$.jstree.contextmenu.parse = function (s) {
+		$.jstree.contextmenu.html.html("<ul><li id='11'>Contextmenu here<ul><li>SUB contextmenu here<ul><li>SUB contextmenu here</li><li>Contextmenu here</li><li>Contextmenu here</li></ul></li><li>Contextmenu here<ul><li>SUB contextmenu here</li><li>Contextmenu here</li><li>Contextmenu here</li></ul></li><li>Contextmenu here</li></ul></li><li>Contextmenu here</li></ul>");
+	};
+	$.jstree.contextmenu.show = function (s, x, y) {
+		//if(s) { $.jstree.contextmenu.parse(s); }
+		$.jstree.contextmenu.html.html("<ul><li id='11'>Contextmenu here<ul><li>SUB contextmenu here</li><li>Contextmenu here<ul><li>SUB contextmenu here</li><li>Contextmenu here</li><li>Contextmenu here</li></ul></li><li>Contextmenu here</li></ul></li><li>Contextmenu here</li></ul>");
+		$.jstree.contextmenu.html.css({ "left" : x + "px", "top" : y + "px" }).fadeIn("fast");
+	};
+	$(function () {
+		$.jstree.contextmenu.html.appendTo("body");
+		$("li", $.jstree.contextmenu.html[0])
+			.live("hover", function (event) { 
+				if(event.type === "mouseenter") {
+					$(event.currentTarget).children("ul")[event.type === "mouseenter" ? "show" : "hide"](); 
+				}
+				else {
+					console.log(event);
+				}
+			});
+		$.jstree._css.add_sheet({ str : css_string });
+
+		$("body").bind("contextmenu", function (event) { $.jstree.contextmenu.show(false, event.pageX, event.pageY); event.preventDefault(); });
+	});
+
+	$.jstree.plugin("contextmenu", {
+		__init : function () {
+			$("a", this.get_container()[0])
+				.live("contextmenu", $.proxy(function (event) {
+					var s = this.get_settings().contextmenu;
+					if($.isFunction(s)) { s = s.call(this, this._get_node(event.currentTarget)); }
+					$.jstree.contextmenu.show(s, event.pageX, event.pageY);
+					event.preventDefault();
+				}, this));
+		},
+		defaults : function (obj) { return {}; },
+		_fn : {
+		}
+	});
+	$.jstree.defaults.plugins.push("contextmenu");
+})(jQuery);
+//*/
+
 /* 
  * jsTree JSON 1.0
- * The JSON data store. Datastores are build by overriding the `load_node` and `is_loaded` functions.
+ * The JSON data store. Datastores are build by overriding the `load_node` and `_is_loaded` functions.
  */
 // TODO: create get_json method
 (function ($) {
@@ -1648,7 +1722,7 @@ EXAMPLES & DOCS!
 		},
 		_fn : {
 			load_node : function (obj, s_call, e_call) { this.load_node_json(obj, s_call, e_call); },
-			is_loaded : function (obj) { 
+			_is_loaded : function (obj) { 
 				var s = this.get_settings().json_data;
 				obj = this._get_node(obj); 
 				if(obj && obj !== -1 && s.progressive_render) {
@@ -1724,15 +1798,15 @@ EXAMPLES & DOCS!
 							if(!m.attr.href) { m.attr.href = '#'; }
 							tmp.attr(m.attr).text(m.title);
 							if(m.language) { tmp.addClass(m.language); }
-							if(m.icon) { 
-								if(m.icon.indexOf("/") === -1) { tmp.addClass(m.icon); }
-								else { tmp.children("ins").css("background","url('" + m.icon + "') center center no-repeat;"); }
-							}
 						}
-						tmp.prepend("<ins class='icon'>&nbsp;</ins>");
+						tmp.prepend("<ins class='jstree-icon'>&nbsp;</ins>");
+						if(m.icon) { 
+							if(m.icon.indexOf("/") === -1) { tmp.children("ins").addClass(m.icon); }
+							else { tmp.children("ins").css("background","url('" + m.icon + "') center center no-repeat;"); }
+						}
 						d.append(tmp);
 					});
-					d.prepend("<ins class='icon'>&nbsp;</ins>");
+					d.prepend("<ins class='jstree-icon'>&nbsp;</ins>");
 					if(js.children) { 
 						if(s.progressive_render && js.state !== "open") {
 							d.data("jstree-children", js.children);
@@ -1763,5 +1837,219 @@ EXAMPLES & DOCS!
 		}
 	});
 	// $.jstree.defaults.plugins.push("json_data");
+})(jQuery);
+//*/
+
+/* 
+ * jsTree XML 1.0
+ * The XML data store. Datastores are build by overriding the `load_node` and `_is_loaded` functions.
+ */
+(function ($) {
+	var xsl = {
+		'nest' : '<?xml version="1.0" encoding="utf-8" ?>' + 
+			'<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >' + 
+			'<xsl:output method="html" encoding="utf-8" omit-xml-declaration="yes" standalone="no" indent="no" media-type="text/html" />' + 
+			'<xsl:template match="/">' + 
+			'	<xsl:call-template name="nodes">' + 
+			'		<xsl:with-param name="node" select="/root" />' + 
+			'	</xsl:call-template>' + 
+			'</xsl:template>' + 
+			'<xsl:template name="nodes">' + 
+			'	<xsl:param name="node" />' + 
+			'	<ul>' + 
+			'	<xsl:for-each select="$node/item">' + 
+			'		<xsl:variable name="children" select="count(./item) &gt; 0" />' + 
+			'		<li>' + 
+			'			<xsl:attribute name="class">' + 
+			'				<xsl:if test="position() = last()">jstree-last </xsl:if>' + 
+			'				<xsl:choose>' + 
+			'					<xsl:when test="@state = \'open\'">jstree-open </xsl:when>' + 
+			'					<xsl:when test="$children or @hasChildren or @state = \'closed\'">jstree-closed </xsl:when>' + 
+			'					<xsl:otherwise>jstree-leaf </xsl:otherwise>' + 
+			'				</xsl:choose>' + 
+			'				<xsl:value-of select="@class" />' + 
+			'			</xsl:attribute>' + 
+			'			<xsl:for-each select="@*">' + 
+			'				<xsl:if test="name() != \'class\' and name() != \'state\' and name() != \'hasChildren\'">' + 
+			'					<xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>' + 
+			'				</xsl:if>' + 
+			'			</xsl:for-each>' + 
+			'			<xsl:for-each select="content/name">' + 
+			'				<a>' + 
+			'				<xsl:attribute name="href">' + 
+			'					<xsl:choose>' + 
+			'					<xsl:when test="@href"><xsl:value-of select="@href" /></xsl:when>' + 
+			'					<xsl:otherwise>#</xsl:otherwise>' + 
+			'					</xsl:choose>' + 
+			'				</xsl:attribute>' + 
+			'				<xsl:attribute name="class"><xsl:value-of select="@lang" /> <xsl:value-of select="@class" /></xsl:attribute>' + 
+			'				<xsl:attribute name="style"><xsl:value-of select="@style" /></xsl:attribute>' + 
+			'				<xsl:for-each select="@*">' + 
+			'					<xsl:if test="name() != \'style\' and name() != \'class\' and name() != \'href\'">' + 
+			'						<xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>' + 
+			'					</xsl:if>' + 
+			'				</xsl:for-each>' + 
+			'					<ins>' + 
+			'						<xsl:attribute name="class">jstree-icon ' + 
+			'							<xsl:if test="string-length(attribute::icon) > 0 and not(contains(@icon,\'/\'))"><xsl:value-of select="@icon" /></xsl:if>' + 
+			'						</xsl:attribute>' + 
+			'						<xsl:if test="string-length(attribute::icon) > 0 and contains(@icon,\'/\')"><xsl:attribute name="style">background:url(<xsl:value-of select="@icon" />) center center no-repeat;</xsl:attribute></xsl:if>' + 
+			'						<xsl:text>&#xa0;</xsl:text>' + 
+			'					</ins>' + 
+			'					<xsl:value-of select="current()" />' + 
+			'				</a>' + 
+			'			</xsl:for-each>' + 
+			'			<xsl:if test="$children or @hasChildren"><xsl:call-template name="nodes"><xsl:with-param name="node" select="current()" /></xsl:call-template></xsl:if>' + 
+			'		</li>' + 
+			'	</xsl:for-each>' + 
+			'	</ul>' + 
+			'</xsl:template>' + 
+			'</xsl:stylesheet>',
+
+		'flat' : '<?xml version="1.0" encoding="utf-8" ?>' + 
+			'<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >' + 
+			'<xsl:output method="html" encoding="utf-8" omit-xml-declaration="yes" standalone="no" indent="no" media-type="text/xml" />' + 
+			'<xsl:template match="/">' + 
+			'	<ul>' + 
+			'	<xsl:for-each select="//item[not(@parent_id) or @parent_id=0]">' + 
+			'		<xsl:call-template name="nodes">' + 
+			'			<xsl:with-param name="node" select="." />' + 
+			'			<xsl:with-param name="is_last" select="number(position() = last())" />' + 
+			'		</xsl:call-template>' + 
+			'	</xsl:for-each>' + 
+			'	</ul>' + 
+			'</xsl:template>' + 
+			'<xsl:template name="nodes">' + 
+			'	<xsl:param name="node" />' + 
+			'	<xsl:param name="is_last" />' + 
+			'	<xsl:variable name="children" select="count(//item[@parent_id=$node/attribute::id]) &gt; 0" />' + 
+			'	<li>' + 
+			'	<xsl:attribute name="class">' + 
+			'		<xsl:if test="$is_last = true()">jstree-last </xsl:if>' + 
+			'		<xsl:choose>' + 
+			'			<xsl:when test="@state = \'open\'">jstree-open </xsl:when>' + 
+			'			<xsl:when test="$children or @hasChildren or @state = \'closed\'">jstree-closed </xsl:when>' + 
+			'			<xsl:otherwise>jstree-leaf </xsl:otherwise>' + 
+			'		</xsl:choose>' + 
+			'		<xsl:value-of select="@class" />' + 
+			'	</xsl:attribute>' + 
+			'	<xsl:for-each select="@*">' + 
+			'		<xsl:if test="name() != \'parent_id\' and name() != \'hasChildren\' and name() != \'class\' and name() != \'state\'">' + 
+			'		<xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>' + 
+			'		</xsl:if>' + 
+			'	</xsl:for-each>' + 
+			'	<xsl:for-each select="content/name">' + 
+			'		<a>' + 
+			'		<xsl:attribute name="href">' + 
+			'			<xsl:choose>' + 
+			'			<xsl:when test="@href"><xsl:value-of select="@href" /></xsl:when>' + 
+			'			<xsl:otherwise>#</xsl:otherwise>' + 
+			'			</xsl:choose>' + 
+			'		</xsl:attribute>' + 
+			'		<xsl:attribute name="class"><xsl:value-of select="@lang" /> <xsl:value-of select="@class" /></xsl:attribute>' + 
+			'		<xsl:attribute name="style"><xsl:value-of select="@style" /></xsl:attribute>' + 
+			'		<xsl:for-each select="@*">' + 
+			'			<xsl:if test="name() != \'style\' and name() != \'class\' and name() != \'href\'">' + 
+			'				<xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>' + 
+			'			</xsl:if>' + 
+			'		</xsl:for-each>' + 
+			'			<ins>' + 
+			'				<xsl:attribute name="class">jstree-icon ' + 
+			'					<xsl:if test="string-length(attribute::icon) > 0 and not(contains(@icon,\'/\'))"><xsl:value-of select="@icon" /></xsl:if>' + 
+			'				</xsl:attribute>' + 
+			'				<xsl:if test="string-length(attribute::icon) > 0 and contains(@icon,\'/\')"><xsl:attribute name="style">background:url(<xsl:value-of select="@icon" />) center center no-repeat;</xsl:attribute></xsl:if>' + 
+			'				<xsl:text>&#xa0;</xsl:text>' + 
+			'			</ins>' + 
+			'			<xsl:value-of select="current()" />' + 
+			'		</a>' + 
+			'	</xsl:for-each>' + 
+			'	<xsl:if test="$children">' + 
+			'		<ul>' + 
+			'		<xsl:for-each select="//item[@parent_id=$node/attribute::id]">' + 
+			'			<xsl:call-template name="nodes">' + 
+			'				<xsl:with-param name="node" select="." />' + 
+			'				<xsl:with-param name="is_last" select="number(position() = last())" />' + 
+			'			</xsl:call-template>' + 
+			'		</xsl:for-each>' + 
+			'		</ul>' + 
+			'	</xsl:if>' + 
+			'	</li>' + 
+			'</xsl:template>' + 
+			'</xsl:stylesheet>'
+	};
+	$.jstree.plugin("xml_data", {
+		__init : function () {
+			if(typeof Sarissa == "undefined") { throw "jsTree XML data: Sarissa not included."; }
+			else {
+				if(typeof xsl.flat === "string") { xsl.flat = (new DOMParser()).parseFromString(xsl.flat,'text/xml'); }
+				if(typeof xsl.nest === "string") { xsl.nest = (new DOMParser()).parseFromString(xsl.nest,'text/xml'); }
+			}
+		},
+		defaults : { 
+			data : false,
+			ajax : false,
+			xsl : "flat",
+			clean_node : false
+		},
+		_fn : {
+			load_node : function (obj, s_call, e_call) { this.load_node_xml(obj, s_call, e_call); },
+			_is_loaded : function (obj) { 
+				var s = this.get_settings().xml_data;
+				return obj == -1 || !obj || !s.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
+			},
+			load_node_xml : function (obj, s_call, e_call) {
+				var s = this.get_settings().xml_data,
+					error_func = function () {},
+					success_func = function () {};
+				switch(true) {
+					case (!s.data && !s.ajax): throw "Neither data nor ajax settings supplied.";
+					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
+						if(!obj || obj == -1) {
+							this.get_container().empty().append(this.parse_xml(s.data));
+							if(s.clean_node) { this.clean_node(obj); }
+						}
+						if(s_call) { s_call.call(); }
+						break;
+					case (!s.data && !!s.ajax) || (!!s.data && !!s.ajax && obj && obj !== -1):
+						obj = this._get_node(obj);
+						error_func = function (x, t, e) {
+							var ef = this.get_settings().xml_data.ajax.error; 
+							if(ef) { ef.call(this, x, t, e); }
+							if(obj != -1 && obj.length) {
+								obj.children(".jstree-loading").removeClass("jstree-loading");
+								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+							}
+							if(e_call) { e_call.call(); }
+						};
+						success_func = function (d, t, x) {
+							var sf = this.get_settings().xml_data.ajax.success; 
+							if(sf) { d = sf.call(this,d,t,x) || d; }
+							if(obj == -1) { this.get_container().empty().append(this.parse_xml(d)); }
+							else { obj.children(".jstree-loading").removeClass("jstree-loading").parent().append(this.parse_xml(d)); }
+							if(s.clean_node) { this.clean_node(obj); }
+							if(s_call) { s_call.call(); }
+						};
+						s.ajax.context = this;
+						s.ajax.error = error_func;
+						s.ajax.success = success_func;
+						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(null, obj); }
+						$.ajax(s.ajax);
+						break;
+				}
+			},
+			parse_xml : function (xml) {
+				var processor = new XSLTProcessor(),
+					s = this.get_settings().xml_data,
+					result;
+				processor.importStylesheet(xsl[s.xsl]);
+
+				result = $((new XMLSerializer()).serializeToString(processor.transformToDocument(xml)).replace('<?xml version="1.0"?>',''));
+				if(result.size() > 1) { result = result.eq(1); }
+				if(!result.is("ul")) { result = result.find("ul:eq(0)"); }
+				return result;
+			}
+		}
+	});
+	// $.jstree.defaults.plugins.push("xml_data");
 })(jQuery);
 //*/
