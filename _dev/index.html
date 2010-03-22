@@ -5,18 +5,26 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>jsTree Testing</title>
-	<script type="text/javascript" src="../lib/jquery-1.4.1.js"></script>
+	<script type="text/javascript" src="/jquery.js"></script>
 	<script type="text/javascript" src="../lib/jquery.cookie.js"></script>
-	<script type="text/javascript" src="../lib/jquery.hotkeys.js"></script>
-	<script type="text/javascript" src="jquery.jstree.js?asdf"></script>
+	<script type="text/javascript" src="/js/_lib/jquery.hotkeys.js"></script>
+	<script type="text/javascript" src="jquery.jstree.js"></script>
 	<script type="text/javascript">
-	$(function ( ) {
+	$(function () {
 		$("#asdf1").jstree({
+			core : { 
+				initially_open : ["phtml_1","phtml_4"],
+				before : function (i, args) {
+					switch(i) {
+						//case "rename": return false;
+						default: return args;
+					}
+				}
+			},
 			html_data : { },
 			themes : { theme: "default", dots : true },
 			languages : [ "en", "bg" ],
 			ui : { 
-				initially_open : ["phtml_1"],
 				initially_select : ["phtml_3"]
 			},
 			types : {
@@ -25,11 +33,10 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 					"root" : {
 						icon : { image : "http://www.jstree.com/demos/drive.png" },
 						valid_children : [ "default" ],
-						max_depth : 1
+						max_depth : 2
 					},
 					"default" : {
-						valid_children : [ "default" ],
-						icon : { image : "themes/default/icons.png" }
+						valid_children : [ "default" ]
 					}
 				}
 			},
@@ -41,17 +48,27 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				options : { 
 					expires : 20
 				}
-			}
+			},
+			plugins : [ "ui", "crrm", "html_data", "themes", "languages", "hotkeys", "cookies", "sort", "dnd" /* "ui", "checkbox", "move", "types" */ ]
 		})
-		.bind("jstree.move", function (event, data) {
-			setTimeout(
-				(function (d) { return function () { $.jstree.rollback(d.rb); } })(data),
-				1000);
+		.bind("jstree.move_node", function (event, data) {
+			console.log(data);
+			//setTimeout(
+			//	(function (d) { return function () { $.jstree.rollback(d.rb); } })(data),
+			//	1000);
 		})
 		.bind("jstree.loaded", function () {
 			//alert("Loaded");
+		})
+		.bind("jstree.rename", function (event, data) {
+			//console.log(data);
+			//$.jstree.rollback(data.rlbk);
+		})
+		.bind("jstree.create", function (event, data) {
+			console.log("CREATE");
+			//$.jstree.rollback(data.rlbk);
 		});
-
+/*
 		$("#asdf2").jstree({
 			json_data : {
 				data : [
@@ -63,21 +80,24 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				move_from : "all"
 			},
 			themes : { theme: "default", dots : true },
-			plugins : [ "json_data", "themes", "ui", "move" ]
+			plugins : [ "json_data", "move" ]
 		});
 
 		$("#asdf3").jstree({
 			json_data : {
 				async : true,
 				ajax : {
-					url : "./data.json",
+					url : "./data.json.php",
 					dataType : "json",
 					data : function (n) { return { "id" : n == -1 ? 0 : n.id }; },
-					success : function () { /*alert("SUCCESS");*/ }
+					success : function () { alert("SUCCESS"); }
 				}
 			},
 			themes : { theme: "default", dots : true },
-			plugins : [ "json_data", "themes", "ui" ]
+			plugins : [ "ui", "crr", "themes", "json_data" ]
+		})
+		.bind("jstree.load_node", function (event, data) {
+			// console.log(data);
 		})
 
 		$(".jstree-foreign").bind("mousedown", function (event) {
@@ -99,18 +119,22 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				//$.jstree._move.data.state = 0;
 				//console.log("**** STOP DRAG ****");
 			})
+
+			jQuery(document).bind('keyup', 'a', function (evt) { console.log("1"); return false; });
+            jQuery(document).bind('keyup', 's', function (evt) { console.log("2"); return false; });
+*/
 	});
 	</script>
 	<style type="text/css">
 	html, body { margin:0; padding:0; }
 	body, input { font-family:Verdana; font-size:10px; }
-	#asdf1, #asdf2, #asdf3 { border:5px solid gray; margin:10px 10px 10px 10px; width:240px; overflow:hidden;  height:200px; overflow:auto; float:left; }
+	#asdf1, #asdf2, #asdf3 { border:5px solid gray; margin:10px 10px 10px 10px; width:350px; overflow:hidden;  height:350px; overflow:auto; float:left; }
 	.jstree-drop { border:5px solid green; background:lime; display:block; height:200px; width:200px; line-height:180px; float:left; margin:10px 0px; color:green; font-weight:bold; text-align:center; font-size:20px; }
 	.jstree-foreign { clear:both; border:5px solid navy; background:#8F90FF; display:block; width:200px; height:20px; line-height:20px; color:navy; margin:10px 10px 0 10px; text-align:center; font-weight:bold; }
 	</style>
 </head>
 <body>
-	<span class="jstree-foreign">You can drop this on a tree</span>
+	<!--<span class="jstree-foreign">You can drop this on a tree</span>-->
 	<div id="asdf1">
 		<ul>
 			<li id="phtml_1" rel="root">
@@ -124,13 +148,14 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 					<li id="phtml_3">
 						<a href="#" class="en">Child node 2</a>
 						<a href="#" class="bg">Под-клон 2</a>
+						<ul></ul>
 					</li>
 					<li id="phtml_4">
 						<a href="#" class="en">Some other child node with &lt; &gt; longer text</a>
 						<a href="#" class="bg">Друг под-клон с по-дълъг &lt; &gt; текст</a>
 						<ul>
 							<li id="phtml_5">
-								<a href="#" class="en">Child node 1</a>
+								<a href="#" class="en">Child node 31</a>
 								<a href="#" class="bg">Под-клон 1</a>
 							</li>
 							<li id="phtml_6">
@@ -185,10 +210,23 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				<a href="#" class="en">Root node 2</a>
 				<a href="#" class="bg">Клон корен 2</a>
 			</li>
+			<li id="phtml_156" rel="root">
+				<a href="#" class="en">A node</a>
+				<a href="#" class="bg">Клон корен 2</a>
+			</li>
 		</ul>
 	</div>
+	<!--
 	<span class="jstree-drop">DROP ZONE</span>
 	<div id="asdf2"></div>
 	<div id="asdf3"></div>
+	-->
+	<p>
+		<a href="#" onclick="$('#asdf1').jstree('rename'); return false;">Rename</a>
+		<a href="#" onclick="$('#asdf1').jstree('create'); return false;">Create</a>
+		<a href="#" onclick="$('#asdf1').jstree('remove'); return false;">Delete</a>
+		<a href="#" onclick="$('#asdf3').jstree('create'); return false;">Create</a>
+		<a href="#" onclick="$('#asdf1').jstree('move_node','#phtml_4','#phtml_2'); return false;">Move</a>
+	</p>
 </body>
 </html>
