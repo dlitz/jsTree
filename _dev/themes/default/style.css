@@ -37,7 +37,9 @@
 .jstree-default .jstree-unchecked > a > .checkbox:hover { background-position:-2px -37px; }
 .jstree-default .jstree-undetermined > a > .checkbox:hover { background-position:-20px -37px; }
 
-#vakata-dragged.jstree-ok ins { background:url("d.png") -2px -53px no-repeat !important; }
-#vakata-dragged.jstree-invalid ins { background:url("d.png") -18px -53px no-repeat !important; }
+#vakata-dragged.jstree-default .jstree-ok { background:url("d.png") -2px -53px no-repeat !important; }
+#vakata-dragged.jstree-default .jstree-invalid { background:url("d.png") -18px -53px no-repeat !important; }
+#jstree-marker.jstree-default { background:url("d.png") -41px -57px no-repeat !important; }
 
+.jstree-default .jstree-search a { color:aqua; }
 /* TODO: IE6 support - the `>` selectors */
