@@ -1,7 +1,5 @@
 // TODO: go through all callbacks and fill the data param as neccessary
 // TODO: I18N - loading text, default node title (languages too), context menu (maybe label as a function)
-// TODO: reenable move - a local and a global function (for multitree), maybe merge into CRR
-// TODO: sort plugin - attach to onopen / onmove -> also go recursuve (opened node may contain more opened nodes), a callback function for the sort?
 // TODO: contextmenu plugin - do not open when empty, option to select node on right click?, type based entries - maybe a function to return entries ... if an object - use it always, stop animation on two fast clicks
 // TODO: finish __destroy methods for all plugins so that they remove the classes/events they added
 // TODO: get methods for datasources (JSON mainly)
@@ -97,7 +95,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-03-22
+ * Date: 2010-03-23
  */
 (function ($) {
 	// private variables 
@@ -1050,12 +1048,13 @@
 						if(s && s.theme) {
 							this.data.themes.dots = s.dots; 
 							this.data.themes.icons = s.icons; 
-							this.set_theme(this.get_settings().themes.theme);
+							this.set_theme(s.theme, s.url);
 						}
 					}, this));
 		},
 		defaults : { 
 			theme : "default", 
+			url : false,
 			dots : true,
 			icons : true
 		},
@@ -1978,7 +1977,7 @@
 			uncheck_all : function () {
 				var _this = this;
 				this.get_container().children("ul").children("li").each(function () {
-					_this.check_node(this, true);
+					_this.change_state(this, true);
 				});
 			},
 
