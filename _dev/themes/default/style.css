@@ -42,4 +42,5 @@
 #jstree-marker.jstree-default { background:url("d.png") -41px -57px no-repeat !important; }
 
 .jstree-default .jstree-search a { color:aqua; }
+.jstree-default-context { }
 /* TODO: IE6 support - the `>` selectors */
