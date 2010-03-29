@@ -33,7 +33,8 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 					"root" : {
 						icon : { image : "http://www.jstree.com/demos/drive.png" },
 						valid_children : [ "default" ],
-						max_depth : 2
+						max_depth : 2,
+						"open_node" : true
 					},
 					"default" : {
 						valid_children : [ "default" ]
@@ -49,7 +50,13 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 					expires : 20
 				}
 			},
-			plugins : [ "ui", "crrm", "html_data", "themes", "languages", "hotkeys", "cookies", "dnd", "checkbox", "search", "contextmenu" ]
+			plugins : [ "ui", "crrm", "html_data", "themes", "languages", "hotkeys", "cookies", "dnd", "checkbox", "search", "contextmenu", "types" ]
+		})
+		.bind("jstree.before", function (event, data) {
+			if(data.func == "open_node") {
+				//event.stopImmediatePropagation();
+				//return false;
+			}
 		})
 		.bind("jstree.move_node", function (event, data) {
 			console.log(data);
