@@ -14,12 +14,6 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 		$("#asdf1").jstree({
 			core : { 
 				initially_open : ["phtml_1","phtml_4"],
-				before : function (i, args) {
-					switch(i) {
-						//case "rename": return false;
-						default: return args;
-					}
-				}
 			},
 			html_data : { },
 			themes : { theme: "default", dots : true },
@@ -34,7 +28,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 						icon : { image : "http://www.jstree.com/demos/drive.png" },
 						valid_children : [ "default" ],
 						max_depth : 2,
-						"open_node" : true
+						"open_node" : function () { return true; }
 					},
 					"default" : {
 						valid_children : [ "default" ]
@@ -58,6 +52,15 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				//return false;
 			}
 		})
+		.bind("jstree.change_state", function (event, data) {
+			alert("*****");
+			//$.jstree.rollback(data.rlbk);
+		})
+		.bind("jstree.open_node", function (event, data) {
+			alert(1);
+		});
+		/*
+
 		.bind("jstree.move_node", function (event, data) {
 			console.log(data);
 			//setTimeout(
@@ -65,16 +68,13 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			//	1000);
 		})
 		.bind("jstree.loaded", function () {
-			//alert("Loaded");
+			alert("Loaded");
 		})
 		.bind("jstree.rename", function (event, data) {
 			//console.log(data);
 			//$.jstree.rollback(data.rlbk);
 		})
-		.bind("jstree.create", function (event, data) {
-			console.log("CREATE");
-			//$.jstree.rollback(data.rlbk);
-		});
+*/
 /*
 		$("#asdf2").jstree({
 			json_data : {

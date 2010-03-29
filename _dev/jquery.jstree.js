@@ -15,6 +15,9 @@
 // TEST: * unit testing (using each on ._fn?)
 // TEST: multiple nodes to be initially open (async alltogether)
 // TEST: foreign drag'n'drop example
+// TEST: create a new tree on top of an old one - do events fire twice?
+// TEST: call rename onselect
+
 
 // NOTE: dependencies can be described and checked for in the init section of the plugin ( if(!this.data[`needed_plugin`]) throw ... )
 // NOTE: prepare EXAMPLES and DOCUMENTATON
@@ -229,6 +232,7 @@
 						return rlbk;
 					};
 					func.callback	= function (data) {
+						//alert(this.context.get_container().attr("id"));
 						this.context.get_container().triggerHandler('jstree.' + i, { "inst" : func.context, "args" : args, "rslt" : data, "rlbk" : rlbk });
 					};
 
@@ -301,14 +305,14 @@
 				this.data.core.li_height = this.get_container().find("ul li.jstree-closed, ul li.jstree-leaf").eq(0).height() || 18;
 
 				this.get_container()
-					.delegate("li > ins", "click", $.proxy(function (event) {
+					.delegate("li > ins", "click.jstree", $.proxy(function (event) {
 							var trgt = $(event.target);
 							if(trgt.is("ins") && event.pageY - trgt.offset().top < this.data.core.li_height) { this.toggle_node(trgt); }
 						}, this))
-					.bind("mousedown", $.proxy(function () { 
+					.bind("mousedown.jstree", $.proxy(function () { 
 							this.set_focus(); // This used to be setTimeout(set_focus,0) - why?
 						}, this))
-					.bind("dblclick", function (event) { 
+					.bind("dblclick.jstree", function (event) { 
 						var sel;
 						if(document.selection && document.selection.empty) { document.selection.empty(); }
 						else {
@@ -326,8 +330,7 @@
 			},
 			destroy	: function _self() { 
 				var i,
-					n = this.get_index(), 
-					c = this.get_container(),
+					n = this.get_index(),
 					s = this.get_settings(),
 					_this = this;
 
@@ -344,9 +347,16 @@
 						} 
 					}
 				}
-				$.removeData(c, "jstree-instance-id");
-				// remove all traces of jstree in the DOM (only the ones set by the core, plugins should clean themselves)
-				c.removeClass("jstree jstree-" + this.get_index() + " jstree-focused");
+				// if no other instance found
+				if(n === focused_instance) { focused_instance = -1; }
+				// remove all traces of jstree in the DOM (only the ones set using jstree*) and cleans all events
+				this.get_container()
+					.unbind("jstree")
+					.undelegate("jstree")
+					.removeData("jstree-instance-id")
+					.find("[class^='jstree']")
+						.andSelf()
+						.attr("class", function () { return this.className.replace(/jstree[^ ]*|$/ig,''); });
 				// remove the actual data
 				instances[n] = null;
 				delete instances[n];
@@ -763,7 +773,7 @@
 			this.data.ui.to_select = this.get_settings().ui.initially_select;
 
 			this.get_container()
-				.delegate("a", "click", $.proxy(function (event) {
+				.delegate("a", "click.jstree", $.proxy(function (event) {
 						var s = this.get_settings().ui,
 							obj = this._get_node(event.currentTarget),
 							is_multiple = (s.select_multiple_modifier == "on" || (s.select_multiple_modifier !== false && event[s.select_multiple_modifier + "Key"])),
@@ -785,10 +795,10 @@
 						}
 						event.preventDefault();
 					}, this))
-				.delegate("a", "mouseenter", $.proxy(function (event) {
+				.delegate("a", "mouseenter.jstree", $.proxy(function (event) {
 						this.hover_node(event.target);
 					}, this))
-				.delegate("a", "mouseleave", $.proxy(function (event) {
+				.delegate("a", "mouseleave.jstree", $.proxy(function (event) {
 						this.dehover_node(event.target);
 					}, this))
 				.bind("jstree.reopen", $.proxy(function () { 
@@ -1725,7 +1735,7 @@
 
 						}
 					}, this))
-				.delegate("a", "mousedown", $.proxy(function (e) { 
+				.delegate("a", "mousedown.jstree", $.proxy(function (e) { 
 						o = this._get_node(e.currentTarget);
 						if(this.data.ui && this.is_selected(o)) { o = this._get_node(null, true); }
 						$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + (o.length > 1 ? "Multiple selection" : this.get_text(o)) );
@@ -1739,7 +1749,7 @@
 						this.data.dnd.ch = parseInt(cnt.height(),10);
 						return false;
 					}, this))
-				.delegate("a", "mouseenter", $.proxy(function (e) { 
+				.delegate("a", "mouseenter.jstree", $.proxy(function (e) { 
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
 							var s = this.get_settings().dnd;
 							this.data.dnd.prepared = false;
@@ -1766,7 +1776,7 @@
 							}
 						}
 					}, this))
-				.delegate("a", "mousemove", $.proxy(function (e) { 
+				.delegate("a", "mousemove.jstree", $.proxy(function (e) { 
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
 							if(typeof this.data.dnd.off.top === "undefined") { this.data.dnd.off = $(e.target).offset(); }
 							this.data.dnd.w = (e.pageY - (this.data.dnd.off.top || 0)) % this.data.core.li_height;
@@ -1774,7 +1784,7 @@
 							this.dnd_show();
 						}
 					}, this))
-				.delegate("a", "mouseleave", $.proxy(function (e) { 
+				.delegate("a", "mouseleave.jstree", $.proxy(function (e) { 
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
 							this.data.dnd.after		= false;
 							this.data.dnd.before	= false;
@@ -1793,7 +1803,7 @@
 							}
 						}
 					}, this))
-				.delegate("a", "mouseup", $.proxy(function (e) { 
+				.delegate("a", "mouseup.jstree", $.proxy(function (e) { 
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
 							this.dnd_finish(e);
 						}
@@ -1818,6 +1828,7 @@
 		_fn : {
 			dnd_prepare : function () {
 				this.data.dnd.off = r.offset();
+				// TODO: check if foreign - do stuff
 				this.prepare_move(o, r, "before");
 				this.data.dnd.before = this.check_move();
 				this.prepare_move(o, r, "after");
@@ -1869,6 +1880,7 @@
 				this.open_node(r, $.proxy(this.dnd_prepare,this), true);
 			},
 			dnd_finish : function (e) {
+				// TODO: check if foreign - do stuff
 				this.dnd_prepare();
 				this.move_node(o, r, this.dnd_show(), e[this.get_settings().dnd.copy_modifier + "Key"]);
 				o = false;
@@ -1907,7 +1919,8 @@
 	$.jstree.plugin("checkbox", {
 		__init : function () {
 			if(!this.data.ui) { throw("jsTree checkboxes: jsTree UI plugin not included"); }
-			this.get_selected = this.select_node = this.deselect_node = this.deselect_all = $.noop;
+			this.select_node = this.deselect_node = this.deselect_all = $.noop;
+			this.get_selected = this.get_checked;
 
 			this.get_container()
 				.bind("jstree.open_node", $.proxy(function (e, data) { 
@@ -1919,7 +1932,7 @@
 				.bind("jstree.clean_node", $.proxy(function (e, data) {
 						this._repair_state(data.args[0]);
 					}, this))
-				.delegate("a", "click", $.proxy(function (e) {
+				.delegate("a", "click.jstree", $.proxy(function (e) {
 						this.change_state(e.target);
 						this.save_selected();
 						if(this.data.cookies) { this.save_cookie("select_node"); }
@@ -1932,7 +1945,7 @@
 				var c = obj.is("li") && obj.hasClass("jstree-checked") ? "jstree-checked" : "jstree-unchecked";
 				obj.find("a").not(":has(.checkbox)").prepend("<ins class='checkbox'>&#160;</ins>").parent().addClass(c);
 			},
-			change_state : function (obj, state) {
+			change_state : function _self(obj, state) {
 				obj = this._get_node(obj);
 				state = (state === false || state === true) ? state : obj.hasClass("jstree-checked");
 				if(state) { obj.find("li").andSelf().removeClass("jstree-checked jstree-undetermined").addClass("jstree-unchecked"); }
@@ -1961,6 +1974,7 @@
 					}
 				});
 				this.data.ui.selected = this.get_checked();
+				_self.callback();
 			},
 			check_node : function (obj) {
 				this.change_state(obj, false);
@@ -2457,7 +2471,7 @@
 	$.jstree.plugin("contextmenu", {
 		__init : function () {
 			this.get_container()
-				.delegate("a", "contextmenu", $.proxy(function (e) {
+				.delegate("a", "contextmenu.jstree", $.proxy(function (e) {
 						e.preventDefault();
 						var s = this.get_settings().contextmenu,
 							o = $(e.currentTarget).offset();
@@ -2540,7 +2554,9 @@
 					}, this))
 				.bind("jstree.before", $.proxy(function (e, data) { 
 						if($.inArray(data.func, this.data.types.attach_to) !== -1) {
-							if(!this._check(data.func, data.args[0])) {
+							var s = this.get_settings().types.types,
+								t = this._get_type(data.args[0]);
+							if(s[t] && typeof s[t][data.func] !== "undefined" && !this._check(data.func, data.args[0])) {
 								e.stopImmediatePropagation();
 								return false;
 							}
@@ -2598,7 +2614,7 @@
 					if(!!s.types[t] && !!s.types[t][rule]) { v = s.types[t][rule]; }
 					else if(!!s.types["default"] && !!s.types["default"][rule]) { v = s.types["default"][rule]; }
 				}
-				if($.isFunction(v)) { v = v.call(null, obj, this); }
+				if($.isFunction(v)) { v = v.call(this, obj); }
 				if(rule === "max_depth" && obj !== -1 && opts !== false && s.max_depth !== -2 && v !== 0) {
 					this._get_node(obj).parentsUntil(this.get_container(),"li").each(function (i) {
 						d = _this._check(rule, this, false);
