@@ -1,30 +1,23 @@
 // TODO: go through all callbacks and fill the data param as neccessary
 // TODO: I18N - loading text, default node title (languages too), context menu (maybe label as a function)
-// TODO: contextmenu plugin - do not open when empty, option to select node on right click?, type based entries - maybe a function to return entries ... if an object - use it always, stop animation on two fast clicks
-// TODO: finish __destroy methods for all plugins so that they remove the classes/events they added
 // TODO: get methods for datasources (JSON mainly)
 // TODO: cut/copy/paste
-
 // TODO: redo all other themes (themeroller?)
-// TODO: MVC plugin - expose the JSON object and refresh onchange
 // TODO: ??? use class on A nodes to make CSS selectors faster ??? (dom will be heavier, as well as fixing nodes onload)
 // TODO: IE6 support - single theme or plugin (hook to some events and additional classes)
-
-// TODO: demo for sort only using custom callback
+// TODO: prepare EXAMPLES and DOCUMENTATON
+// TODO: move demo for sort only using custom callback
 
 // TEST: * unit testing (using each on ._fn?)
 // TEST: multiple nodes to be initially open (async alltogether)
 // TEST: foreign drag'n'drop example
-// TEST: create a new tree on top of an old one - do events fire twice?
 // TEST: call rename onselect
 
-
 // NOTE: dependencies can be described and checked for in the init section of the plugin ( if(!this.data[`needed_plugin`]) throw ... )
-// NOTE: prepare EXAMPLES and DOCUMENTATON
 
 "use strict";
 // Common functions not related to jsTree 
-// decided to move them to a `vakata` namespace
+// decided to move them to a `vakata` "namespace"
 (function ($) {
 	$.vakata = {};
 	// CSS related functions
@@ -98,7 +91,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-03-24
+ * Date: 2010-04-06
  */
 (function ($) {
 	// private variables 
@@ -198,7 +191,7 @@
 			$.each(pdata._fn, function (i, val) {
 				val.plugin		= pname;
 				val.old			= $.jstree._fn[i];
-				$.jstree._fn[i] = function _self() {
+				$.jstree._fn[i] = function () {
 					var rslt,
 						func = val,
 						args = Array.prototype.slice.call(arguments),
@@ -299,7 +292,7 @@
 			initially_open : []
 		},
 		_fn : { 
-			init	: function _self() { 
+			init	: function () { 
 				this.set_focus(); 
 				this.get_container().html("<ul><li class='jstree-last jstree-leaf'><ins>&#160;</ins><a class='jstree-loading' href='#'><ins class='jstree-icon'>&#160;</ins>Loading ...</a></li></ul>");
 				this.data.core.li_height = this.get_container().find("ul li.jstree-closed, ul li.jstree-leaf").eq(0).height() || 18;
@@ -325,10 +318,10 @@
 							}
 						}
 					});
-				_self.callback();
+				arguments.callee.callback();
 				this.load_node(-1, function () { this.loaded(); this.reopen(); });
 			},
-			destroy	: function _self() { 
+			destroy	: function () { 
 				var i,
 					n = this.get_index(),
 					s = this.get_settings(),
@@ -337,7 +330,7 @@
 				$.each(s.plugins, function (i, val) {
 					plugins[val].__destroy.apply(_this);
 				});
-				_self.callback();
+				arguments.callee.callback();
 				// set focus to another instance if this one is focused
 				if(this.is_focused()) { 
 					for(i in instances) { 
@@ -361,16 +354,17 @@
 				instances[n] = null;
 				delete instances[n];
 			},
-			save_opened : function _self() {
+			save_opened : function () {
 				var _this = this;
 				this.data.core.to_open = [];
 				this.get_container().find(".jstree-open").each(function () { 
 					_this.data.core.to_open.push("#" + this.id.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/')); 
 				});
-				_self.callback();
+				arguments.callee.callback();
 			},
-			reopen : function _self(is_callback) {
+			reopen : function (is_callback) {
 				var _this = this,
+					_self = false,
 					done = true,
 					current = [],
 					remaining = [];
@@ -392,20 +386,22 @@
 				}
 				if(done) { 
 					// TODO: find a more elegant approach to syncronizing returning requests
+					_self = arguments.callee;
 					if(this.data.core.reopen) { clearTimeout(this.data.core.reopen); }
 					this.data.core.reopen = setTimeout(function () { _self.callback(); }, 50);
 				}
 			},
-			refresh : function _self(obj) {
+			refresh : function (obj) {
+				var _self = arguments.callee;
 				this.save_opened();
 				this.load_node(obj, function () { _self.callback(); this.reopen(); });
 			},
 			// Dummy function to fire after the first load (so that there is a jstree.loaded event)
-			loaded	: function _self() { 
-				_self.callback(); 
+			loaded	: function () { 
+				arguments.callee.callback(); 
 			},
 			// deal with focus
-			set_focus	: function _self() { 
+			set_focus	: function () { 
 				var f = $.jstree._focused();
 				if(f && f !== this) {
 					f.get_container().removeClass("jstree-focused"); 
@@ -414,7 +410,7 @@
 					this.get_container().addClass("jstree-focused"); 
 					focused_instance = this.get_index(); 
 				}
-				_self.callback();
+				arguments.callee.callback();
 			},
 			is_focused	: function () { 
 				return focused_instance == this.get_index(); 
@@ -474,7 +470,7 @@
 			},
 
 			// open/close
-			open_node	: function _self(obj, callback, skip_animation) {
+			open_node	: function (obj, callback, skip_animation) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				var s = skip_animation ? 0 : this.get_settings().core.animation,
@@ -487,25 +483,25 @@
 					if(s) { obj.children("ul").css("display","none"); }
 					obj.removeClass("jstree-closed").addClass("jstree-open").children("a").removeClass("jstree-loading");
 					if(s) { obj.children("ul").slideDown(s, function () { this.style.display = ""; }); }
-					_self.callback({ "obj" : obj });
+					arguments.callee.callback({ "obj" : obj });
 					if(callback) { callback.call(); }
 				}
 			},
-			close_node	: function _self(obj, skip_animation) {
+			close_node	: function (obj, skip_animation) {
 				obj = this._get_node(obj);
 				var s = skip_animation ? 0 : this.get_settings().core.animation;
 				if(!obj.length) { return false; }
 				if(s) { obj.children("ul").attr("style","display:block !important"); }
 				obj.removeClass("jstree-open").addClass("jstree-closed");
 				if(s) { obj.children("ul").slideUp(s, function () { this.style.display = ""; }); }
-				_self.callback();
+				arguments.callee.callback();
 			},
 			toggle_node	: function (obj) {
 				obj = this._get_node(obj);
 				if(obj.hasClass("jstree-closed")) { return this.open_node(obj); }
 				if(obj.hasClass("jstree-open")) { return this.close_node(obj); }
 			},
-			open_all	: function _self(obj, original_obj) {
+			open_all	: function (obj, original_obj) {
 				obj = obj ? this._get_node(obj) : this.get_container();
 				if(original_obj) { 
 					obj = obj.find("li.jstree-closed");
@@ -521,15 +517,15 @@
 					_this.open_node(this, function() { _this.open_all(__this, original_obj); });
 				});
 				// so that callback is fired AFTER all nodes are open
-				if(original_obj && original_obj.find('li.jstree-closed').length === 0) { _self.callback(); }
+				if(original_obj && original_obj.find('li.jstree-closed').length === 0) { arguments.callee.callback(); }
 			},
-			close_all	: function _self(obj) {
+			close_all	: function (obj) {
 				var _this = this;
 				obj = obj ? this._get_node(obj) : this.get_container();
 				obj.find("li.jstree-open").andSelf().each(function () { _this.close_node(this); });
-				_self.callback();
+				arguments.callee.callback();
 			},
-			clean_node	: function _self(obj) {
+			clean_node	: function (obj) {
 				obj = obj && obj != -1 ? $(obj) : this.get_container();
 				obj = obj.is("li") ? obj.find("li").andSelf() : obj.find("li");
 				obj.removeClass("jstree-last")
@@ -537,24 +533,24 @@
 					.filter(":has(ul)")
 						.not(".jstree-open").removeClass("jstree-leaf").addClass("jstree-closed");
 				obj.not(".jstree-open, .jstree-closed").addClass("jstree-leaf");
-				_self.callback({ "obj" : obj });
+				arguments.callee.callback({ "obj" : obj });
 			},
 			// rollback
-			get_rollback : function _self() { 
-				_self.callback();
+			get_rollback : function () { 
+				arguments.callee.callback();
 				return { i : this.get_index(), h : this.get_container().children("ul").clone(true), d : this.data }; 
 			},
-			set_rollback : function _self(html, data) {
+			set_rollback : function (html, data) {
 				this.get_container().empty().append(html);
 				this.data = data;
-				_self.callback();
+				arguments.callee.callback();
 			},
 			// Dummy functions to be overwritten by any datastore plugin included
-			load_node	: function _self(obj, s_call, e_call) { _self.callback(); },
+			load_node	: function (obj, s_call, e_call) { arguments.callee.callback(); },
 			_is_loaded	: function (obj) { return true; },
 
 			// Basic operations: create
-			create_node	: function _self(obj, position, js, callback, skip_check) {
+			create_node	: function (obj, position, js, callback, skip_check) {
 				obj = this._get_node(obj);
 				position = typeof position === "undefined" ? "last" : position;
 				var d = $("<li>"), 
@@ -563,7 +559,7 @@
 				if(!obj.length) { return false; }
 				if(!skip_check && !this._is_loaded(obj)) { this.load_node(obj, function () { this.create_node(obj, position, js, callback, true); }); return false; }
 
-				_self.rollback();
+				arguments.callee.rollback();
 
 				if(!js) { js = {}; }
 				if(js.attr) { d.attr(js.attr); }
@@ -612,8 +608,8 @@
 						break;
 				}
 				this.clean_node(tmp);
+				arguments.callee.callback({ "obj" : d, "parent" : tmp });
 				if(callback) { callback.call(this, d); }
-				_self.callback({ "obj" : d, "parent" : tmp });
 				return d;
 			},
 			// Basic operations: rename (deal with text)
@@ -624,23 +620,23 @@
 				obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
 				return obj.nodeValue;
 			},
-			set_text	: function _self(obj, val) {
+			set_text	: function (obj, val) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				obj = obj.children("a:eq(0)");
 				obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
-				_self.callback({ "obj" : this._get_node(obj) });
+				arguments.callee.callback({ "obj" : this._get_node(obj) });
 				return (obj.nodeValue = val);
 			},
-			rename_node : function _self(obj, val) {
+			rename_node : function (obj, val) {
 				obj = this._get_node(obj);
-				if(obj && obj.length && this.set_text.apply(this, Array.prototype.slice.call(arguments))) { _self.callback({ "obj" : obj }); }
+				if(obj && obj.length && this.set_text.apply(this, Array.prototype.slice.call(arguments))) { arguments.callee.callback({ "obj" : obj }); }
 			},
 			// Basic operations: deleting nodes
-			delete_node : function _self(obj) {
+			delete_node : function (obj) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
-				_self.rollback();
+				arguments.callee.rollback();
 				var p = this._get_parent(obj);
 				this.deselect_node(obj);
 				obj = obj.remove();
@@ -648,17 +644,17 @@
 					p.removeClass("jstree-open, jstree-closed").addClass("jstree-leaf");
 				}
 				this.clean_node(p);
-				_self.callback();
+				arguments.callee.callback();
 				return obj;
 			},
-			prepare_move : function _self(o, r, pos, cb, is_cb) {
+			prepare_move : function (o, r, pos, cb, is_cb) {
 				var p = {};
 				// TODO: maybe use original references (now the original node is collected using the receiving tree's get node function)
 				p.o = this._get_node(o);
 				p.r = r === - 1 ? -1 : this._get_node(r);
 				p.p = (typeof p === "undefined") ? "bottom" : pos; // TODO: move to a setting
 				if(!is_cb && prepared_move.o && prepared_move.o[0] === p.o[0] && prepared_move.r[0] === p.r[0] && prepared_move.p === p.p) {
-					_self.callback(prepared_move);
+					arguments.callee.callback(prepared_move);
 					if(cb) { cb.call(this, prepared_move); }
 					return;
 				}
@@ -714,7 +710,7 @@
 				p.or = p.np.find(" > ul > li:nth-child(" + (p.cp + 1) + ")");
 
 				prepared_move = p;
-				_self.callback(prepared_move);
+				arguments.callee.callback(prepared_move);
 				if(cb) { cb.call(this, prepared_move); }
 			},
 			check_move : function () {
@@ -722,7 +718,7 @@
 				if(obj.or[0] === obj.o[0] || obj.r.parentsUntil(".jstree").andSelf().filter("li").index(obj.o) !== -1) { return false; }
 				return true;
 			},
-			move_node : function _self(obj, ref, position, is_copy, is_prepared, skip_check) {
+			move_node : function (obj, ref, position, is_copy, is_prepared, skip_check) {
 				if(!is_prepared) { 
 					return this.prepare_move(obj, ref, position, function (p) {
 						this.move_node(p, false, false, is_copy, true, skip_check);
@@ -751,7 +747,7 @@
 						obj.op.removeClass("jstree-open jstree-closed").addClass("jstree-leaf").children("ul").remove();
 					}
 				} catch (e) { }
-				_self.callback(prepared_move);
+				arguments.callee.callback(prepared_move);
 				return prepared_move;
 			},
 			_get_move : function () { return prepared_move; }
@@ -831,35 +827,35 @@
 			input_width_limit : 200
 		},
 		_fn : { 
-			_get_node : function _self(obj, allow_multiple) {
+			_get_node : function (obj, allow_multiple) {
 				if(typeof obj === "undefined" || obj === null) { return allow_multiple ? this.data.ui.selected : this.data.ui.last_selected; }
-				return _self.call_old();
+				return arguments.callee.call_old();
 			},
-			save_selected : function _self() {
+			save_selected : function () {
 				var _this = this;
 				this.data.ui.to_select = [];
 				this.data.ui.selected.each(function () { _this.data.ui.to_select.push("#" + this.id.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/')); });
-				_self.callback();
+				arguments.callee.callback();
 			},
-			reselect : function _self() {
+			reselect : function () {
 				var _this = this,
 					s = this.data.ui.to_select;
 				s = $.map($.makeArray(s), function (n) { return "#" + n.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/'); });
 				this.deselect_all();
 				$.each(s, function (i, val) { _this.select_node(val); });
-				_self.callback();
+				arguments.callee.callback();
 			},
-			refresh : function _self(obj) {
+			refresh : function (obj) {
 				this.save_selected();
-				return _self.call_old();
+				return arguments.callee.call_old();
 			},
-			hover_node : function _self(obj) {
+			hover_node : function (obj) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				//if(this.data.ui.hovered && obj.get(0) === this.data.ui.hovered.get(0)) { return; }
 				if(!obj.hasClass("jstree-hovered")) { this.dehover_node(); }
 				this.data.ui.hovered = obj.children("a").addClass("jstree-hovered").parent();
-				_self.callback();
+				arguments.callee.callback();
 			},
 			dehover_node : function () {
 				var obj = this.data.ui.hovered, p;
@@ -867,23 +863,23 @@
 				p = obj.children("a").removeClass("jstree-hovered").parent();
 				if(this.data.ui.hovered[0] === p[0]) { this.data.ui.hovered = null; }
 			},
-			select_node : function _self(obj) {
+			select_node : function (obj) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				if(!this.is_selected(obj)) {
 					obj.children("a").addClass("jstree-clicked");
 					this.data.ui.selected = this.data.ui.selected.add(obj);
 					this.data.ui.last_selected = obj;
-					_self.callback();
+					arguments.callee.callback();
 				}
 			},
-			deselect_node : function _self(obj) {
+			deselect_node : function (obj) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				if(this.is_selected(obj)) {
 					obj.children("a").removeClass("jstree-clicked");
 					this.data.ui.selected = this.data.ui.selected.not(obj);
-					_self.callback();
+					arguments.callee.callback();
 				}
 			},
 			toggle_select : function (obj) {
@@ -896,11 +892,11 @@
 			get_selected : function (context) { 
 				return context ? $(context).find(".jstree-clicked").parent() : this.data.ui.selected; 
 			},
-			deselect_all : function _self(context) {
+			deselect_all : function (context) {
 				if(context) { $(context).find(".jstree-clicked").removeClass("jstree-clicked"); } 
 				else { this.get_container().find(".jstree-clicked").removeClass("jstree-clicked"); }
 				this.data.ui.selected = $([]);
-				_self.callback();
+				arguments.callee.callback();
 			}
 		}
 	});
@@ -989,16 +985,17 @@
 				});
 				h2.width(Math.min(h1.text("pW" + h2[0].value).width(),w))[0].select();
 			},
-			rename : function _self(obj) {
+			rename : function (obj) {
 				obj = this._get_node(obj);
-				_self.rollback();
+				arguments.callee.rollback();
 				this._show_input(obj, function (obj, new_name, old_name) { 
-					_self.callback({ "obj" : obj, "new_name" : new_name, "old_name" : old_name });
+					arguments.callee.callback({ "obj" : obj, "new_name" : new_name, "old_name" : old_name });
 				});
 			},
-			create : function _self(obj, position, js, callback, skip_rename) {
+			create : function (obj, position, js, callback, skip_rename) {
+				var _self = arguments.callee;
 				obj = this._get_node(obj);
-				_self.rollback();
+				arguments.callee.rollback();
 				var t = this.create_node(obj, position, js, function (t) {
 					var p = this._get_parent(t);
 					if(callback) { callback.call(this, t); }
@@ -1012,29 +1009,29 @@
 				});
 				return t;
 			},
-			remove : function _self(obj) {
+			remove : function (obj) {
 				obj = this._get_node(obj, true);
-				_self.rollback();
+				arguments.callee.rollback();
 				this.delete_node(obj);
-				_self.callback();
+				arguments.callee.callback();
 			},
-			check_move : function _self() {
-				if(!_self.call_old()) { return false; }
+			check_move : function () {
+				if(!arguments.callee.call_old()) { return false; }
 				var s = this.get_settings().crrm.move;
 				if(!s.check_move.call(this, this._get_move())) { return false; }
 				return true;
 			},
-			move_node : function _self(obj, ref, position, is_copy, is_prepared, skip_check) {
+			move_node : function (obj, ref, position, is_copy, is_prepared, skip_check) {
 				var s = this.get_settings().crrm.move;
 				if(!is_prepared) { 
 					if(!position) { position = s.default_position; }
-					return _self.call_old(true, obj, ref, position, is_copy, false, skip_check);
+					return arguments.callee.call_old(true, obj, ref, position, is_copy, false, skip_check);
 				}
 				// if the move is already prepared
 				if(s.always_copy === true || (s.always_copy === "multitree" && obj.rt.get_index() === obj.ot.get_index() )) {
 					is_copy = true;
 				}
-				_self.call_old(true, obj, ref, position, is_copy, true, skip_check);
+				arguments.callee.call_old(true, obj, ref, position, is_copy, true, skip_check);
 			}
 		}
 	});
@@ -1069,7 +1066,7 @@
 			icons : true
 		},
 		_fn : {
-			set_theme : function _self(theme_name, theme_url) {
+			set_theme : function (theme_name, theme_url) {
 				if(!theme_name) { return false; }
 				if(!theme_url) { theme_url = $.jstree._themes + theme_name + '/style.css'; }
 				if($.inArray(theme_url, themes_loaded) == -1) {
@@ -1086,7 +1083,7 @@
 				else { this.show_dots(); }
 				if(!this.data.themes.icons) { this.hide_icons(); }
 				else { this.show_icons(); }
-				_self.callback();
+				arguments.callee.callback();
 			},
 			get_theme	: function () { return this.data.themes.theme; },
 
@@ -1131,7 +1128,7 @@
 			correct_state : false
 		},
 		_fn : {
-			load_node : function _self(obj, s_call, e_call) { this.load_node_html(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
+			load_node : function (obj, s_call, e_call) { var _self = arguments.callee; this.load_node_html(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
 				obj = this._get_node(obj); 
 				return obj == -1 || !obj || !this.get_settings().html_data.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
@@ -1174,7 +1171,7 @@
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
-							if(d == "") {
+							if(x.responseText == "") {
 								return error_func.call(this, x, t, "");
 							}
 							var sf = this.get_settings().html_data.ajax.success; 
@@ -1182,7 +1179,7 @@
 							d = $(d);
 							if(!d.is("ul")) { d = $("<ul>").append(d); }
 							if(obj == -1) { this.get_container().children("ul").empty().append(d.children()).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
-							else { obj.children(".jstree-loading").removeClass("jstree-loading").append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
+							else { obj.children(".jstree-loading").removeClass("jstree-loading").parent().append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
 							this.clean_node(obj);
 							if(s_call) { s_call.call(this); }
 						};
@@ -1287,7 +1284,7 @@
 			progressive_render : false
 		},
 		_fn : {
-			load_node : function _self(obj, s_call, e_call) { this.load_node_json(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
+			load_node : function (obj, s_call, e_call) { var _self = arguments.callee; this.load_node_json(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
 				var s = this.get_settings().json_data;
 				obj = this._get_node(obj); 
@@ -1322,7 +1319,7 @@
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
-							if(d == "" || (!$.isArray(d) && !$.isPlainObject(d))) {
+							if(x.responseText == "" || (!$.isArray(d) && !$.isPlainObject(d))) {
 								return error_func.call(this, x, t, "");
 							}
 							var sf = this.get_settings().json_data.ajax.success; 
@@ -1419,7 +1416,7 @@
 		__init : function () { this._load_css();  },
 		defaults : [],
 		_fn : {
-			set_lang : function _self(i) { 
+			set_lang : function (i) { 
 				var langs = this.get_settings().languages,
 					st = false,
 					selector = ".jstree-" + this.get_index() + ' ul li a';
@@ -1434,7 +1431,7 @@
 				st = $.vakata.css.get_css(selector + "." + i, false, this.data.languages.language_css);
 				if(st !== false) { st.style.display = ""; }
 				this.data.languages.current_language = i;
-				_self.callback();
+				arguments.callee.callback();
 				return true;
 			},
 			get_lang : function () {
@@ -1452,7 +1449,7 @@
 				obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
 				return obj.nodeValue;
 			},
-			set_text : function _self(obj, val, lang) {
+			set_text : function (obj, val, lang) {
 				obj = this._get_node(obj) || this.data.ui.last_selected;
 				if(!obj.size()) { return false; }
 				var langs = this.get_settings().languages;
@@ -1462,7 +1459,7 @@
 				}
 				else { obj = obj.children("a:eq(0)"); }
 				obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
-				_self.callback();
+				arguments.callee.callback();
 				return (obj.nodeValue = val);
 			},
 			_load_css : function () {
@@ -1480,8 +1477,8 @@
 					this.data.language_css = $.vakata.css.add_sheet({ 'str' : str });
 				}
 			},
-			create_node : function _self(obj, position, js, callback) {
-				var t = _self.call_old(true, obj, position, js, function (t) {
+			create_node : function (obj, position, js, callback) {
+				var t = arguments.callee.call_old(true, obj, position, js, function (t) {
 					var langs = this.get_settings().languages,
 						a = t.children("a"),
 						ln;
@@ -1674,6 +1671,7 @@
 
 	$.jstree.plugin("dnd", {
 		__init : function () {
+			var s = this.get_settings().dnd;
 			this.data.dnd = {
 				after : false,
 				inside : false,
@@ -1689,7 +1687,6 @@
 				i1 : false,
 				i2 : false
 			};
-			// TODO: move when near scrollbar
 			this.get_container()
 				.bind("mouseenter", $.proxy(function () {
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree && this.data.themes) {
@@ -1809,16 +1806,17 @@
 						}
 					}, this));
 
-			$(document).bind("vakata.drag_stop", $.proxy(function () {
-				this.data.dnd.after		= false;
-				this.data.dnd.before	= false;
-				this.data.dnd.inside	= false;
-				this.data.dnd.off		= false;
-				this.data.dnd.prepared	= false;
-				this.data.dnd.w			= false;
-				this.data.dnd.to1		= false;
-				this.data.dnd.to2		= false;
-			}, this));
+			$(document)
+				.bind("vakata.drag_stop", $.proxy(function () {
+					this.data.dnd.after		= false;
+					this.data.dnd.before	= false;
+					this.data.dnd.inside	= false;
+					this.data.dnd.off		= false;
+					this.data.dnd.prepared	= false;
+					this.data.dnd.w			= false;
+					this.data.dnd.to1		= false;
+					this.data.dnd.to2		= false;
+				}, this));
 		},
 		defaults : {
 			copy_modifier : "ctrl",
@@ -1843,7 +1841,7 @@
 				this.data.dnd.prepared = true;
 				return this.dnd_show();
 			},
-			dnd_show : function _self() {
+			dnd_show : function () {
 				if(!this.data.dnd.prepared) { return; }
 				var o = ["before","inside","after"],
 					r = false;
@@ -1923,7 +1921,7 @@
 			this.get_selected = this.get_checked;
 
 			this.get_container()
-				.bind("jstree.open_node", $.proxy(function (e, data) { 
+				.bind("jstree.open_node jstree.create_node", $.proxy(function (e, data) { 
 						this._prepare_checkboxes(data.rslt.obj);
 					}, this))
 				.bind("jstree.loaded", $.proxy(function (e) {
@@ -1945,7 +1943,7 @@
 				var c = obj.is("li") && obj.hasClass("jstree-checked") ? "jstree-checked" : "jstree-unchecked";
 				obj.find("a").not(":has(.checkbox)").prepend("<ins class='checkbox'>&#160;</ins>").parent().addClass(c);
 			},
-			change_state : function _self(obj, state) {
+			change_state : function (obj, state) {
 				obj = this._get_node(obj);
 				state = (state === false || state === true) ? state : obj.hasClass("jstree-checked");
 				if(state) { obj.find("li").andSelf().removeClass("jstree-checked jstree-undetermined").addClass("jstree-unchecked"); }
@@ -1974,7 +1972,7 @@
 					}
 				});
 				this.data.ui.selected = this.get_checked();
-				_self.callback();
+				arguments.callee.callback(obj);
 			},
 			check_node : function (obj) {
 				this.change_state(obj, false);
@@ -2026,13 +2024,13 @@
 				}
 			},
 
-			reselect : function _self() {
+			reselect : function () {
 				var _this = this,
 					s = this.data.ui.to_select;
 				s = $.map($.makeArray(s), function (n) { return "#" + n.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/'); });
 				this.deselect_all();
 				$.each(s, function (i, val) { _this.check_node(val); });
-				_self.callback();
+				arguments.callee.callback();
 			}
 		}
 	});
@@ -2044,6 +2042,37 @@
  * The XML data store. Datastores are build by overriding the `load_node` and `_is_loaded` functions.
  */
 (function ($) {
+	$.vakata.xslt = function (xml, xsl) {
+		var rs = "";
+		if(document.recalc) {
+			var xm = document.createElement('xml'),
+				xs = document.createElement('xml');
+			xm.innerHTML = xml;
+			xs.innerHTML = xsl;
+			$("body").append(xm).append(xs);
+			rs = xm.transformNode(xs.XMLDocument);
+			$("body").remove(xm).remove(xs);
+			return rs;
+		}
+		if(typeof window.DOMParser !== "undefined" && typeof window.XMLHttpRequest !== "undefined" && typeof window.XSLTProcessor !== "undefined") {
+			var processor = new XSLTProcessor(),
+				support = $.isFunction(processor.transformDocument) ? (typeof window.XMLSerializer !== "undefined") : true;
+			if(!support) { return false; }
+			xml = new DOMParser().parseFromString(xml, "text/xml");
+			xsl = new DOMParser().parseFromString(xsl, "text/xml");
+			if($.isFunction(processor.transformDocument)) {
+				rs = document.implementation.createDocument("", "", null);
+				processor.transformDocument(xml, xsl, rs, null);
+				return new XMLSerializer().serializeToString(rs);
+			}
+			else {
+				processor.importStylesheet(xsl);
+				rs = processor.transformToFragment(xml, document);
+				return $("<div>").append(rs).html();
+			}
+		}
+		return false;
+	};
 	var xsl = {
 		'nest' : '<?xml version="1.0" encoding="utf-8" ?>' + 
 			'<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >' + 
@@ -2073,6 +2102,7 @@
 			'					<xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>' + 
 			'				</xsl:if>' + 
 			'			</xsl:for-each>' + 
+			'	<ins class="jstree-icon"><xsl:text>&#xa0;</xsl:text></ins>' + 
 			'			<xsl:for-each select="content/name">' + 
 			'				<a>' + 
 			'				<xsl:attribute name="href">' + 
@@ -2137,6 +2167,7 @@
 			'		<xsl:attribute name="{name()}"><xsl:value-of select="." /></xsl:attribute>' + 
 			'		</xsl:if>' + 
 			'	</xsl:for-each>' + 
+			'	<ins class="jstree-icon"><xsl:text>&#xa0;</xsl:text></ins>' + 
 			'	<xsl:for-each select="content/name">' + 
 			'		<a>' + 
 			'		<xsl:attribute name="href">' + 
@@ -2177,13 +2208,6 @@
 			'</xsl:stylesheet>'
 	};
 	$.jstree.plugin("xml_data", {
-		__init : function () {
-			if(typeof Sarissa == "undefined") { throw "jsTree XML data: Sarissa not included."; }
-			else {
-				if(typeof xsl.flat === "string") { xsl.flat = (new DOMParser()).parseFromString(xsl.flat,'text/xml'); }
-				if(typeof xsl.nest === "string") { xsl.nest = (new DOMParser()).parseFromString(xsl.nest,'text/xml'); }
-			}
-		},
 		defaults : { 
 			data : false,
 			ajax : false,
@@ -2191,7 +2215,7 @@
 			clean_node : false
 		},
 		_fn : {
-			load_node : function _self(obj, s_call, e_call) { this.load_node_xml(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
+			load_node : function (obj, s_call, e_call) { var _self = arguments.callee; this.load_node_xml(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
 				var s = this.get_settings().xml_data;
 				return obj == -1 || !obj || !s.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
@@ -2221,13 +2245,13 @@
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
-							if(d == "") {
+							if(x.responseText == "") {
 								return error_func.call(this, x, t, "");
 							}
 							var sf = this.get_settings().xml_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
-							if(obj == -1) { this.get_container().children("ul").empty().append(this.parse_xml(d).children()); }
-							else { obj.children(".jstree-loading").removeClass("jstree-loading").parent().append(this.parse_xml(d)); }
+							if(obj == -1) { this.get_container().children("ul").empty().append(this.parse_xml(x.responseText).children()); }
+							else { obj.children(".jstree-loading").removeClass("jstree-loading").parent().append(this.parse_xml(x.responseText)); }
 							if(s.clean_node) { this.clean_node(obj); }
 							if(s_call) { s_call.call(this); }
 						};
@@ -2240,14 +2264,9 @@
 				}
 			},
 			parse_xml : function (xml) {
-				var processor = new XSLTProcessor(),
-					s = this.get_settings().xml_data,
-					result;
-				processor.importStylesheet(xsl[s.xsl]);
-
-				result = $((new XMLSerializer()).serializeToString(processor.transformToDocument(xml)).replace('<?xml version="1.0"?>',''));
-				if(result.size() > 1) { result = result.eq(1); }
-				if(!result.is("ul")) { result = result.find("ul:eq(0)"); }
+				var s = this.get_settings().xml_data,
+					result = $.vakata.xslt(xml, xsl[s.xsl]);
+				if(result !== false) { result = $(result); }
 				return result;
 			}
 		}
@@ -2528,13 +2547,13 @@
 	$.jstree.plugin("types", {
 		__init : function () {
 			var s = this.get_settings().types;
+			this.data.types.attach_to = [];
 			this.get_container()
 				.bind("jstree.init", $.proxy(function () { 
 						var types = s.types, 
 							attr  = s.type_attr, 
 							icons_css = "", 
 							_this = this;
-						this.data.types.attach_to = [];
 
 						$.each(types, function (i, tp) {
 							$.each(tp, function (k, v) { 
@@ -2623,8 +2642,8 @@
 				}
 				return v;
 			},
-			check_move : function _self() {
-				if(!_self.call_old()) { return false; }
+			check_move : function () {
+				if(!arguments.callee.call_old()) { return false; }
 				var m  = this._get_move(),
 					s  = m.rt.get_settings().types,
 					mc = m.rt._check("max_children", m.cr),
@@ -2633,7 +2652,7 @@
 					ch = 0, d = 1, t;
 
 				if(vc === "none") { return false; } 
-				if($.isArray(vc) && m.ot._get_type) {
+				if($.isArray(vc) && m.ot && m.ot._get_type) {
 					m.o.each(function () {
 						if($.inArray(m.ot._get_type(this), vc) === -1) { d = false; return false; }
 					});

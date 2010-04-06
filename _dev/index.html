@@ -5,12 +5,13 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>jsTree Testing</title>
-	<script type="text/javascript" src="/jquery.js"></script>
-	<script type="text/javascript" src="../lib/jquery.cookie.js"></script>
-	<script type="text/javascript" src="/js/_lib/jquery.hotkeys.js"></script>
+	<script type="text/javascript" src="_lib/jquery.js"></script>
+	<script type="text/javascript" src="_lib/jquery.cookie.js"></script>
+	<script type="text/javascript" src="_lib/jquery.hotkeys.js"></script>
 	<script type="text/javascript" src="jquery.jstree.js"></script>
 	<script type="text/javascript">
 	$(function () {
+		
 		$("#asdf1").jstree({
 			core : { 
 				initially_open : ["phtml_1","phtml_4"],
@@ -53,14 +54,15 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			}
 		})
 		.bind("jstree.change_state", function (event, data) {
-			alert("*****");
+			//alert("*****");
 			//$.jstree.rollback(data.rlbk);
 		})
 		.bind("jstree.open_node", function (event, data) {
-			alert(1);
+			//alert(1);
 		});
-		/*
+		
 
+		/*
 		.bind("jstree.move_node", function (event, data) {
 			console.log(data);
 			//setTimeout(
@@ -75,7 +77,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			//$.jstree.rollback(data.rlbk);
 		})
 */
-/*
+
 		$("#asdf2").jstree({
 			json_data : {
 				data : [
@@ -87,21 +89,23 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				move_from : "all"
 			},
 			themes : { theme: "default", dots : true },
-			plugins : [ "json_data", "move" ]
+			plugins : [ "ui", "crrm", "themes", "json_data" ]
 		});
 
 		$("#asdf3").jstree({
-			json_data : {
-				async : true,
+			xml_data : {
+				async : false,
+				xsl : "nest",
 				ajax : {
-					url : "./data.json.php",
+					url : "/jstree/demo/basic_xml_nested_data.xml"/*
 					dataType : "json",
 					data : function (n) { return { "id" : n == -1 ? 0 : n.id }; },
-					success : function () { alert("SUCCESS"); }
+					success : function () { alert("SUCCESS"); }*/
 				}
 			},
 			themes : { theme: "default", dots : true },
-			plugins : [ "ui", "crr", "themes", "json_data" ]
+			languages : ["bg","en"],
+			plugins : [ "ui", "crr", "themes", "xml_data", "languages" ]
 		})
 		.bind("jstree.load_node", function (event, data) {
 			// console.log(data);
@@ -127,9 +131,9 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				//console.log("**** STOP DRAG ****");
 			})
 
-			jQuery(document).bind('keyup', 'a', function (evt) { console.log("1"); return false; });
-            jQuery(document).bind('keyup', 's', function (evt) { console.log("2"); return false; });
-*/
+			//jQuery(document).bind('keyup', 'a', function (evt) { console.log("1"); return false; });
+			//jQuery(document).bind('keyup', 's', function (evt) { console.log("2"); return false; });
+
 	});
 	</script>
 	<style type="text/css">
@@ -222,11 +226,10 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			</li>
 		</ul>
 	</div>
-	<!--
-	<span class="jstree-drop">DROP ZONE</span>
+	<!--<span class="jstree-drop">DROP ZONE</span>-->
 	<div id="asdf2"></div>
 	<div id="asdf3"></div>
-	-->
+	
 	<p>
 		<a href="#" onclick="$('#asdf1').jstree('search', 'Child'); return false;">Search</a>
 		<a href="#" onclick="$('#asdf1').jstree('rename'); return false;">Rename</a>
