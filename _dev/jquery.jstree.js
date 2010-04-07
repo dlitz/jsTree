@@ -7,11 +7,17 @@
 // TODO: IE6 support - single theme or plugin (hook to some events and additional classes)
 // TODO: prepare EXAMPLES and DOCUMENTATON
 // TODO: move demo for sort only using custom callback
+// TODO: search - show only matching nodes
+// TODO: drag foreign nodes, drop to foreign targets
+// TODO: context menu icons + indicate items with submenus
 
+// TEST: async events - create in two trees - one waits to load the other not ... then rollback
+// TEST: test create_node with types
 // TEST: * unit testing (using each on ._fn?)
 // TEST: multiple nodes to be initially open (async alltogether)
 // TEST: foreign drag'n'drop example
 // TEST: call rename onselect
+// TEST: search - multiple request reported (n instead of one request for search)
 
 // NOTE: dependencies can be described and checked for in the init section of the plugin ( if(!this.data[`needed_plugin`]) throw ... )
 
@@ -91,7 +97,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-04-06
+ * Date: 2010-04-07
  */
 (function ($) {
 	// private variables 
@@ -224,8 +230,8 @@
 						rlbk = this.context.get_rollback();
 						return rlbk;
 					};
-					func.callback	= function (data) {
-						//alert(this.context.get_container().attr("id"));
+					func.callback	= function (data, cnt) {
+						if(cnt) { this.context = cnt; }
 						this.context.get_container().triggerHandler('jstree.' + i, { "inst" : func.context, "args" : args, "rslt" : data, "rlbk" : rlbk });
 					};
 
@@ -388,13 +394,13 @@
 					// TODO: find a more elegant approach to syncronizing returning requests
 					_self = arguments.callee;
 					if(this.data.core.reopen) { clearTimeout(this.data.core.reopen); }
-					this.data.core.reopen = setTimeout(function () { _self.callback(); }, 50);
+					this.data.core.reopen = setTimeout(function () { _self.callback({}, _this); }, 50);
 				}
 			},
 			refresh : function (obj) {
-				var _self = arguments.callee;
+				var _self = arguments.callee, _this = this;
 				this.save_opened();
-				this.load_node(obj, function () { _self.callback(); this.reopen(); });
+				this.load_node(obj, function () { _self.callback({}, _this); this.reopen(); });
 			},
 			// Dummy function to fire after the first load (so that there is a jstree.loaded event)
 			loaded	: function () { 
@@ -550,14 +556,14 @@
 			_is_loaded	: function (obj) { return true; },
 
 			// Basic operations: create
-			create_node	: function (obj, position, js, callback, skip_check) {
+			create_node	: function (obj, position, js, callback, is_loaded) {
 				obj = this._get_node(obj);
 				position = typeof position === "undefined" ? "last" : position;
 				var d = $("<li>"), 
 					tmp;
 
 				if(!obj.length) { return false; }
-				if(!skip_check && !this._is_loaded(obj)) { this.load_node(obj, function () { this.create_node(obj, position, js, callback, true); }); return false; }
+				if(!is_loaded && !this._is_loaded(obj)) { this.load_node(obj, function () { this.create_node(obj, position, js, callback, true); }); return false; }
 
 				arguments.callee.rollback();
 
@@ -907,7 +913,7 @@
 
 /* 
  * jsTree CRRM plugin 1.0
- * Handles creating/renaming/removing nodes by user interaction.
+ * Handles creating/renaming/removing/moving nodes by user interaction.
  */
 (function ($) {
 	$.jstree.plugin("crrm", { 
@@ -993,19 +999,19 @@
 				});
 			},
 			create : function (obj, position, js, callback, skip_rename) {
-				var _self = arguments.callee;
+				var _self = arguments.callee, t, _this = this;
 				obj = this._get_node(obj);
 				arguments.callee.rollback();
-				var t = this.create_node(obj, position, js, function (t) {
+				t = this.create_node(obj, position, js, function (t) {
 					var p = this._get_parent(t);
 					if(callback) { callback.call(this, t); }
 					if(p.hasClass("jstree-closed")) { this.open_node(p, false, true); }
 					if(!skip_rename) { 
 						this._show_input(t, function (obj, new_name, old_name) { 
-							_self.callback({ "obj" : obj, "name" : new_name });
+							_self.callback({ "obj" : obj, "name" : new_name }, _this);
 						});
 					}
-					else { _self.callback({ "obj" : obj, "name" : this.get_text(t) }); }
+					else { _self.callback({ "obj" : obj, "name" : this.get_text(t) }, _this); }
 				});
 				return t;
 			},
@@ -1128,7 +1134,7 @@
 			correct_state : false
 		},
 		_fn : {
-			load_node : function (obj, s_call, e_call) { var _self = arguments.callee; this.load_node_html(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
+			load_node : function (obj, s_call, e_call) { var _self = arguments.callee, _this = this; this.load_node_html(obj, function () { _self.callback({ "obj" : obj }, _this); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
 				obj = this._get_node(obj); 
 				return obj == -1 || !obj || !this.get_settings().html_data.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
@@ -1274,7 +1280,6 @@
  * jsTree JSON 1.0
  * The JSON data store. Datastores are build by overriding the `load_node` and `_is_loaded` functions.
  */
-// TODO: create get_json method
 (function ($) {
 	$.jstree.plugin("json_data", {
 		defaults : { 
@@ -1284,7 +1289,7 @@
 			progressive_render : false
 		},
 		_fn : {
-			load_node : function (obj, s_call, e_call) { var _self = arguments.callee; this.load_node_json(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
+			load_node : function (obj, s_call, e_call) { var _self = arguments.callee, _this = this; this.load_node_json(obj, function () { _self.callback({ "obj" : obj }, _this); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
 				var s = this.get_settings().json_data;
 				obj = this._get_node(obj); 
@@ -1671,7 +1676,6 @@
 
 	$.jstree.plugin("dnd", {
 		__init : function () {
-			var s = this.get_settings().dnd;
 			this.data.dnd = {
 				after : false,
 				inside : false,
@@ -1826,7 +1830,6 @@
 		_fn : {
 			dnd_prepare : function () {
 				this.data.dnd.off = r.offset();
-				// TODO: check if foreign - do stuff
 				this.prepare_move(o, r, "before");
 				this.data.dnd.before = this.check_move();
 				this.prepare_move(o, r, "after");
@@ -1878,7 +1881,6 @@
 				this.open_node(r, $.proxy(this.dnd_prepare,this), true);
 			},
 			dnd_finish : function (e) {
-				// TODO: check if foreign - do stuff
 				this.dnd_prepare();
 				this.move_node(o, r, this.dnd_show(), e[this.get_settings().dnd.copy_modifier + "Key"]);
 				o = false;
@@ -2023,7 +2025,6 @@
 					obj.parentsUntil(this.get_container(),"li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
 				}
 			},
-
 			reselect : function () {
 				var _this = this,
 					s = this.data.ui.to_select;
@@ -2043,10 +2044,10 @@
  */
 (function ($) {
 	$.vakata.xslt = function (xml, xsl) {
-		var rs = "";
+		var rs = "", xm, xs, processor, support;
 		if(document.recalc) {
-			var xm = document.createElement('xml'),
-				xs = document.createElement('xml');
+			xm = document.createElement('xml');
+			xs = document.createElement('xml');
 			xm.innerHTML = xml;
 			xs.innerHTML = xsl;
 			$("body").append(xm).append(xs);
@@ -2055,8 +2056,8 @@
 			return rs;
 		}
 		if(typeof window.DOMParser !== "undefined" && typeof window.XMLHttpRequest !== "undefined" && typeof window.XSLTProcessor !== "undefined") {
-			var processor = new XSLTProcessor(),
-				support = $.isFunction(processor.transformDocument) ? (typeof window.XMLSerializer !== "undefined") : true;
+			processor = new XSLTProcessor();
+			support = $.isFunction(processor.transformDocument) ? (typeof window.XMLSerializer !== "undefined") : true;
 			if(!support) { return false; }
 			xml = new DOMParser().parseFromString(xml, "text/xml");
 			xsl = new DOMParser().parseFromString(xsl, "text/xml");
@@ -2215,7 +2216,7 @@
 			clean_node : false
 		},
 		_fn : {
-			load_node : function (obj, s_call, e_call) { var _self = arguments.callee; this.load_node_xml(obj, function () { _self.callback({ "obj" : obj }); s_call.call(this); }, e_call); },
+			load_node : function (obj, s_call, e_call) { var _self = arguments.callee, _this = this; this.load_node_xml(obj, function () { _self.callback({ "obj" : obj }, _this); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
 				var s = this.get_settings().xml_data;
 				return obj == -1 || !obj || !s.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
@@ -2279,8 +2280,6 @@
  * Enables both sync and async search on the tree
  * DOES NOT WORK WITH JSON PROGRESSIVE RENDER
  */
-// TODO: test - multiple request reported (n instead of one request for search)
-// TODO: config option to show only matching nodes (it will be heavy but still?)
 (function ($) {
 	$.expr[':'].jstree_contains = function(a,i,m){
 		return (a.textContent || a.innerText || "").toLowerCase().indexOf(m[3].toLowerCase())>=0;
@@ -2359,8 +2358,6 @@
 /*
  * jsTree contextmenu plugin 1.0
  */
-// TODO: indicate items with submenus
-// TODO: icons
 (function ($) {
 	$.vakata.context = {
 		cnt		: $("<div id='vakata-contextmenu'>"),
@@ -2541,8 +2538,6 @@
  * You can set an attribute on each li node, that represents its type.
  * According to the type setting the node may get custom icon/validation rules
  */
-// TODO: replace all functions listed in `attach_to`
-// TODO: inside the replaced functions check for this.data.types.enabled, check the rules, then call the original function
 (function ($) {
 	$.jstree.plugin("types", {
 		__init : function () {
@@ -2580,9 +2575,7 @@
 								return false;
 							}
 						}
-						// TODO: attach before create (max_depth, max_children, valid_children, etc) (or overwrite)
 					}, this));
-				// TODO: after create_node - set a type ... or just leave it as is - "default"
 		},
 		defaults : {
 			// defines maximum number of root nodes (-1 means unlimited, -2 means disable max_children checking)
@@ -2613,7 +2606,6 @@
 		},
 		_fn : {
 			_get_type : function (obj) {
-				// TODO: maybe cache using data?
 				obj = this._get_node(obj);
 				return (!obj || !obj.length) ? false : obj.attr(this.get_settings().types.type_attr) || "default";
 			},
@@ -2622,7 +2614,6 @@
 				return (!obj.length || !str) ? false : obj.attr(this.get_settings().types.type_attr, str);
 			},
 			_check : function (rule, obj, opts) {
-				// TODO : deal with obj - it may not be the node (create for example)
 				var v = false, t = this._get_type(obj), d = 0, _this = this, s = this.get_settings().types;
 				if(obj === -1) { 
 					if(!!s[rule]) { v = s[rule]; }
@@ -2638,6 +2629,7 @@
 					this._get_node(obj).parentsUntil(this.get_container(),"li").each(function (i) {
 						d = _this._check(rule, this, false);
 						if(d !== -1 && d - (i + 1) <= 0) { v = 0; return false; }
+						if(d >= 0 && (d - (i + 1) < v || v < 0) ) { v = d - (i + 1); }
 					});
 				}
 				return v;
@@ -2677,6 +2669,33 @@
 					if(md - m.o.d < 0) { return false; }
 				}
 				return true;
+			},
+			create_node : function (obj, position, js, callback, is_loaded, skip_check) {
+				if(!skip_check && is_loaded) {
+					var p  = (position && position.match(/^before|after$/i)) ? this._get_parent(obj) : this._get_node(obj),
+						s  = this.get_settings().types,
+						mc = this._check("max_children", p),
+						md = this._check("max_depth", p),
+						vc = this._check("valid_children", p),
+						ch;
+
+					if(vc === "none") { return false; } 
+					if($.isArray(vc)) {
+						if(!js.attr || !js.attr[s.type_attr]) { 
+							if(!js.attr) { js.attr = {}; }
+							js.attr[s.type_attr] = vc[0]; 
+						}
+						else {
+							if($.inArray(js.attr[s.type_attr], vc) === -1) { return false; }
+						}
+					}
+					if(s.max_children !== -2 && mc !== -1) {
+						ch = p === -1 ? this.get_container().children("> ul > li").length : p.children("> ul > li").length;
+						if(ch + 1 > mc) { return false; }
+					}
+					if(s.max_depth !== -2 && md !== -1 && (md - 1) <= 0) { return false; }
+				}
+				return arguments.callee.call_old(true, obj, position, js, callback, is_loaded, skip_check);
 			}
 		}
 	});
