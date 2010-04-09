@@ -9,7 +9,7 @@
 // TODO: move demo for sort only using custom callback
 // TODO: search - show only matching nodes
 // TODO: drag foreign nodes, drop to foreign targets
-// TODO: context menu icons + indicate items with submenus
+// TODO: context menu icons + indicate items with submenus + detect when near edge
 
 // TEST: async events - create in two trees - one waits to load the other not ... then rollback
 // TEST: test create_node with types
@@ -202,7 +202,7 @@
 						func = val,
 						args = Array.prototype.slice.call(arguments),
 						stgs = this.get_settings(),
-						evnt = new $.Event("jstree.before"),
+						evnt = new $.Event("before.jstree"),
 						rlbk = false;
 
 					// Check if function belongs to the included plugins of this instance
@@ -232,7 +232,7 @@
 					};
 					func.callback	= function (data, cnt) {
 						if(cnt) { this.context = cnt; }
-						this.context.get_container().triggerHandler('jstree.' + i, { "inst" : func.context, "args" : args, "rslt" : data, "rlbk" : rlbk });
+						this.context.get_container().triggerHandler( i + '.jstree', { "inst" : func.context, "args" : args, "rslt" : data, "rlbk" : rlbk });
 					};
 
 					// finally call the function
@@ -350,8 +350,8 @@
 				if(n === focused_instance) { focused_instance = -1; }
 				// remove all traces of jstree in the DOM (only the ones set using jstree*) and cleans all events
 				this.get_container()
-					.unbind("jstree")
-					.undelegate("jstree")
+					.unbind(".jstree")
+					.undelegate(".jstree")
 					.removeData("jstree-instance-id")
 					.find("[class^='jstree']")
 						.andSelf()
@@ -658,7 +658,7 @@
 				// TODO: maybe use original references (now the original node is collected using the receiving tree's get node function)
 				p.o = this._get_node(o);
 				p.r = r === - 1 ? -1 : this._get_node(r);
-				p.p = (typeof p === "undefined") ? "bottom" : pos; // TODO: move to a setting
+				p.p = (typeof p === "undefined") ? "last" : pos; // TODO: move to a setting
 				if(!is_cb && prepared_move.o && prepared_move.o[0] === p.o[0] && prepared_move.r[0] === p.r[0] && prepared_move.p === p.p) {
 					arguments.callee.callback(prepared_move);
 					if(cb) { cb.call(this, prepared_move); }
@@ -669,13 +669,13 @@
 				if(p.r === -1) {
 					p.cr = -1;
 					switch(p.p) {
-						case "top":
+						case "first":
 						case "before":
 						case "inside":
 							p.cp = 0; 
 							break;
 						case "after":
-						case "bottom":
+						case "last":
 							p.cp = p.rt.get_container().find(" > ul > li").length; 
 							break;
 						default:
@@ -697,11 +697,11 @@
 							p.cr = p.rt._get_parent(p.r);
 							break;
 						case "inside":
-						case "top":
+						case "first":
 							p.cp = 0;
 							p.cr = p.r;
 							break;
-						case "bottom":
+						case "last":
 							p.cp = p.r.find(" > ul > li").length; 
 							p.cr = p.r;
 							break;
@@ -803,17 +803,17 @@
 				.delegate("a", "mouseleave.jstree", $.proxy(function (event) {
 						this.dehover_node(event.target);
 					}, this))
-				.bind("jstree.reopen", $.proxy(function () { 
+				.bind("reopen.jstree", $.proxy(function () { 
 						this.reselect();
 					}, this))
-				.bind("jstree.get_rollback", $.proxy(function () { 
+				.bind("get_rollback.jstree", $.proxy(function () { 
 						this.dehover_node();
 						this.save_selected();
 					}, this))
-				.bind("jstree.set_rollback", $.proxy(function () { 
+				.bind("set_rollback.jstree", $.proxy(function () { 
 						this.reselect();
 					}, this))
-				.bind("jstree.close_node", $.proxy(function (event, data) { 
+				.bind("close_node.jstree", $.proxy(function (event, data) { 
 						var s = this.get_settings().ui,
 							obj = this._get_node(data.args[0]),
 							clk = (obj && obj.length) ? obj.find(".jstree-clicked") : [],
@@ -919,7 +919,7 @@
 	$.jstree.plugin("crrm", { 
 		__init : function () {
 			this.get_container()
-				.bind("jstree.move_node", $.proxy(function (e, data) {
+				.bind("move_node.jstree", $.proxy(function (e, data) {
 					if(this.get_settings().crrm.move.open_onmove) {
 						var t = this;
 						data.rslt.np.parentsUntil(".jstree").andSelf().filter(".jstree-closed").each(function () {
@@ -933,7 +933,7 @@
 			move : {
 				always_copy			: false, // false, true or "multitree"
 				open_onmove			: true,
-				default_position	: "bottom",
+				default_position	: "last",
 				check_move			: function (m) { return true; }
 			}
 		},
@@ -1056,7 +1056,7 @@
 	$.jstree.plugin("themes", {
 		__init : function () { 
 			this.get_container()
-				.bind("jstree.init", $.proxy(function () {
+				.bind("init.jstree", $.proxy(function () {
 						var s = this.get_settings().themes;
 						if(s && s.theme) {
 							this.data.themes.dots = s.dots; 
@@ -1525,9 +1525,9 @@
 				if(tmp && tmp.length) { this.data.ui.to_select = tmp.split(","); }
 			}
 			this.get_container()
-				.one("jstree." + ( this.data.ui ? "reselect" : "reopen" ), $.proxy(function () {
+				.one( ( this.data.ui ? "reselect" : "reopen" ) + ".jstree", $.proxy(function () {
 					this.get_container()
-						.bind("jstree.open_node jstree.close_node jstree.select_node jstree.deselect_node", $.proxy(function (e) { 
+						.bind("open_node.jstree close_node.jstree select_node.jstree deselect_node.jstree", $.proxy(function (e) { 
 								if(this.get_settings().cookies.auto_save) { this.save_cookie((e.handleObj.namespace + e.handleObj.type).replace("jstree","")); }
 							}, this));
 				}, this));
@@ -1584,15 +1584,15 @@
 	$.jstree.plugin("sort", {
 		__init : function () {
 			this.get_container()
-				.bind("jstree.load_node", $.proxy(function (e, data) {
+				.bind("load_node.jstree", $.proxy(function (e, data) {
 						var obj = this._get_node(data.rslt.obj);
 						obj = obj === -1 ? this.get_container().children("ul") : obj.children("ul");
 						this.sort(obj);
 					}, this))
-				.bind("jstree.rename_node", $.proxy(function (e, data) {
+				.bind("rename_node.jstree", $.proxy(function (e, data) {
 						this.sort(data.rslt.obj.parent());
 					}, this))
-				.bind("jstree.move_node", $.proxy(function (e, data) {
+				.bind("move_node.jstree", $.proxy(function (e, data) {
 						var m = data.rslt.np == -1 ? this.get_container() : data.rslt.np;
 						this.sort(m.children("ul"));
 					}, this));
@@ -1923,13 +1923,13 @@
 			this.get_selected = this.get_checked;
 
 			this.get_container()
-				.bind("jstree.open_node jstree.create_node", $.proxy(function (e, data) { 
+				.bind("open_node.jstree create_node.jstree", $.proxy(function (e, data) { 
 						this._prepare_checkboxes(data.rslt.obj);
 					}, this))
-				.bind("jstree.loaded", $.proxy(function (e) {
+				.bind("loaded.jstree", $.proxy(function (e) {
 						this._prepare_checkboxes();
 					}, this))
-				.bind("jstree.clean_node", $.proxy(function (e, data) {
+				.bind("clean_node.jstree", $.proxy(function (e, data) {
 						this._repair_state(data.args[0]);
 					}, this))
 				.delegate("a", "click.jstree", $.proxy(function (e) {
@@ -2544,7 +2544,7 @@
 			var s = this.get_settings().types;
 			this.data.types.attach_to = [];
 			this.get_container()
-				.bind("jstree.init", $.proxy(function () { 
+				.bind("init.jstree", $.proxy(function () { 
 						var types = s.types, 
 							attr  = s.type_attr, 
 							icons_css = "", 
@@ -2566,7 +2566,7 @@
 						});
 						if(icons_css != "") { $.vakata.css.add_sheet({ 'str' : icons_css }); }
 					}, this))
-				.bind("jstree.before", $.proxy(function (e, data) { 
+				.bind("before.jstree", $.proxy(function (e, data) { 
 						if($.inArray(data.func, this.data.types.attach_to) !== -1) {
 							var s = this.get_settings().types.types,
 								t = this._get_type(data.args[0]);
