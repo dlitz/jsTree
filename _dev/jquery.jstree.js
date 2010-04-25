@@ -1838,6 +1838,7 @@
 						this.data.dnd.to1		= false;
 						this.data.dnd.to2		= false;
 						this.data.dnd.active	= false;
+						this.data.dnd.foreign	= false;
 					}, this));
 			var s = this.get_settings().dnd;
 			if(s.drag_target) {
@@ -1849,6 +1850,7 @@
 							m.attr("class", "jstree-" + this.data.themes.theme); 
 							$.vakata.dnd.helper.attr("class", "jstree-" + this.data.themes.theme); 
 						}
+						$.vakata.dnd.helper.children("ins").attr("class","jstree-invalid");
 						var cnt = this.get_container();
 						this.data.dnd.cof = cnt.children("ul").offset();
 						this.data.dnd.cw = parseInt(cnt.width(),10);
