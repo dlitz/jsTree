@@ -1,14 +1,12 @@
 <root>
-	<item parent_id="0" state="closed">
+	<item parent_id="0" id="node_1" state="closed">
 		<content>
-			<name lang="en"><![CDATA[Node 1]]></name>
-			<name lang="bg"><![CDATA[Клон 1]]></name>
+			<name><![CDATA[Node 1]]></name>
 		</content>
 	</item>
-	<item parent_id="0">
+	<item parent_id="0" id="node_2">
 		<content>
-			<name lang="en"><![CDATA[Node 2]]></name>
-			<name lang="bg"><![CDATA[Клон 2]]></name>
+			<name><![CDATA[Node 2]]></name>
 		</content>
 	</item>
 </root>

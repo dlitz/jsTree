@@ -120,7 +120,9 @@ $(function () {
 		"html_data" : {
 			"ajax" : {
 				"url" : "_html_data.html",
-				"data" : function (n) { return { id : n.id }; }
+				"data" : function (n) { 
+					return { id : n.attr ? n.attr("id") : 0 }; 
+				}
 			}
 		},
 		"plugins" : [ "themes", "html_data" ]

@@ -2202,13 +2202,31 @@ SyntaxHighlighter.brushes.JScript.aliases	= ['js', 'jscript', 'javascript'];
 
 SyntaxHighlighter.config.clipboardSwf = 'syntax/clipboard.swf';
 $(function () {
-	var h = 0;
+	var divs = $([]);
 	$("#container .source").each(function () {
-		var code = $(this).html().replace(/</g,'&lt;').replace(/>/g,'&gt;');
-		var div = $('<div class="code"><pre class="brush:' + ( $(this).is("script") ? 'js' : 'xml' ) + ';">' + code + '</pre></div>');
+		var code = $(this).html().replace(/</g,'&lt;').replace(/>/g,'&gt;'),
+			div  = $('<div class="code"><pre class="brush:' + ( $(this).is("script") ? 'js' : 'xml' ) + ';">' + code + '</pre></div>'),
+			demo = $(this).prevAll(".demo:eq(0)");
 		$(this).after(div);
+		divs = divs.add(div);
 	});
 	SyntaxHighlighter.all();
+
+	setTimeout((function (divs) { 
+		return function () {
+			divs.each(function () {
+				var div		= $(this),
+					demo	= $(this).prevAll(".demo:eq(0)"),
+					h		= false;
+				var h = Math.max(demo[0].offsetHeight, div[0].offsetHeight);
+				if(h) {
+					if(h < 198) h = 198;
+					div.height(h);
+					demo.height(h);
+				}
+			});
+		}
+	})(divs), 500);
 
 	// $(".panel").hide().prev().click(function () { $(this).next().toggle(); }).css("cursor","pointer");
 });

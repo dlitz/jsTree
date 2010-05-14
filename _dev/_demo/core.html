@@ -482,11 +482,11 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	</li>
 	<li>
 		<code class="tp">mixed</code> <strong>position</strong>
-		<p>The position of the newly created node. This can be a zero based index to position the element at a specific point among the current children. You can also pass in one of those strings: <code>before</code>, <code>after</code>, <code>inside</code>, <code>first</code>, <code>last</code>.</p>
+		<p>The position of the newly created node. This can be a zero based index to position the element at a specific point among the current children. You can also pass in one of those strings: <code>"before"</code>, <code>"after"</code>, <code>"inside"</code>, <code>"first"</code>, <code>"last"</code>.</p>
 	</li>
 	<li>
 		<code class="tp">object</code> <strong>js</strong>
-		<p>The data for the newly created node. Consists of three keys:</p><p style="margin-left:25px;"><code class="tp">attr</code> - an object of attributes (same used for <code>jQuery.attr()</code>. You can omit this key;<br /><code class="tp">state</code> - a string - either <code>open</code> or <code>closed</code>, for a leaf node - omit this key;<br /><code class="tp">data</code> - a string or an object - if a string is passed it is used for the title of the node, if an object is passed there are two keys you can specify: <code>attr</code> and <code>title</code>;</p>
+		<p>The data for the newly created node. Consists of three keys:</p><p style="margin-left:25px;"><code class="tp">attr</code> - an object of attributes (same used for <code>jQuery.attr()</code>. You can omit this key;<br /><code class="tp">state</code> - a string - either <code>"open"</code> or <code>"closed"</code>, for a leaf node - omit this key;<br /><code class="tp">data</code> - a string or an object - if a string is passed it is used for the title of the node, if an object is passed there are two keys you can specify: <code>attr</code> and <code>title</code>;</p>
 	</li>
 	<li>
 		<code class="tp">function</code> <strong>callback</strong>
@@ -549,7 +549,7 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 <p>Checks if the prepared move is a valid one.</p>
 
 <h3 id="move_node">.move_node ( node , ref , position , is_copy , is_prepared , skip_check )</h3>
-<p>Moves a node to a new place.</p>
+<p>Moves a node to a new place. Triggers an event.</p>
 <ul class="arguments">
 	<li>
 		<code class="tp">mixed</code> <strong>node</strong>
@@ -561,7 +561,7 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	</li>
 	<li>
 		<code class="tp">mixed</code> <strong>position</strong>
-		<p>The new position of the moved node. This can be a zero based index to position the element at a specific point among the reference node's current children. You can also pass in one of those strings: <code>before</code>, <code>after</code>, <code>inside</code>, <code>first</code>, <code>last</code>.</p>
+		<p>The new position of the moved node. This can be a zero based index to position the element at a specific point among the reference node's current children. You can also use one of these strings: <code>"before"</code>, <code>"after"</code>, <code>"inside"</code>, <code>"first"</code>, <code>"last"</code>.</p>
 	</li>
 	<li>
 		<code class="tp">bool</code> <strong>is_copy</strong>
@@ -578,7 +578,15 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 </ul>
 
 <h3 id="_get_move">._get_move ()</h3>
-<p>Returns the lastly prepared move.</p>
+<p>Returns the lastly prepared move. The returned object contains:<br />
+<code>.o</code> - the node being moved<br />
+<code>.r</code> - the reference node in the move<br />
+<code>.ot</code> - the origin tree instance<br />
+<code>.rt</code> - the reference tree instance<br />
+<code>.p</code> - the position to move to (may be a string - <code>"last"</code>, <code>"first"</code>, etc)<br />
+<code>.cp</code> - the calculated position to move to (always a number)<br />
+<code>.np</code> - the new parent<br />
+</p>
 
 </div>
 

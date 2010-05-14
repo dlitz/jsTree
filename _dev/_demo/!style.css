@@ -8,8 +8,8 @@ p.meta { font-size:9pt; color:gray; margin-top:-5px; }
 .arguments .tp, p code { color:green; padding:0 4px; font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace !important; font-weight: normal !important; font-style: normal !important; font-size:13px; }
 #description, .panel { margin:0 20px; }
 #container { width:800px; margin:10px auto; overflow:hidden; }
-.demo { height:198px; width:255px; float:left; margin:0; border:1px solid gray; font-family:Verdana; font-size:10px; background:white; }
-.code { height:198px; width:490px; float:right; margin:0 0 10px 0; border:1px solid gray; font-size:12px; }
+.demo { width:255px; float:left; margin:0; border:1px solid gray; background:white; overflow:auto; }
+.code { width:490px; float:right; margin:0 0 10px 0; border:1px solid gray; font-size:12px; }
 pre { display:block; }
 .code_f { border:1px solid gray; margin-bottom:1em; }
 .syntaxhighlighter { margin:0 0 0 0 !important; padding:0 !important; line-height:18px; }
@@ -28,8 +28,10 @@ pre { display:block; }
 
 ul.columns { list-style-type:none; width:700px; margin:5px auto 15px auto; padding:0; overflow:hidden; }
 ul.columns li { float:left; margin:0; padding:0 0 0 0px; line-height:18px; width:345px; }
-ul.plugins li { width:220px; text-align:center; padding:5px 0; }
+ul.plugins li { width:220px; text-align:left; padding:5px 0; }
 ul.plugins li a { text-decoration:none; color:#3B5998; }
 ul.plugins li a:hover { text-decoration:underline; }
+ul.plugins li p { text-align:left; font-size:9px; color:#333; margin:0 5px 0 0; }
 
+.demo, .demo input, .jstree-dnd-helper { font-size:10px; font-family:Verdana; }
 
