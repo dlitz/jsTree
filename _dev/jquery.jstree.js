@@ -8,25 +8,16 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-05-12
+ * Date: 2010-05-14
  */
 
-// TODO: I18N - loading text, default node title (languages too), context menu (maybe label as a function)
-// TODO: get methods for datasources (JSON mainly)
-// TODO: redo all other themes (themeroller?)
-// TODO: ??? use class on A nodes to make CSS selectors faster ??? (dom will be heavier, as well as fixing nodes onload)
+/*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
+
+// TODO: redo other themes (themeroller?)
 // TODO: IE6 support - single theme or plugin (hook to some events and additional classes)
-// TODO: prepare EXAMPLES and DOCUMENTATON
-// TODO: move demo for sort only using custom callback
-// TODO: search - show only matching nodes
-// TODO: context menu icons + indicate items with submenus + detect when near edge
 
 // TEST: async events - create in two trees - one waits to load the other not ... then rollback
-// TEST: test create_node with types
-// TEST: * unit testing (using each on ._fn?)
 // TEST: multiple nodes to be initially open (async alltogether)
-// TEST: call rename onselect
-// TEST: search - multiple request reported (n instead of one request for search)
 
 "use strict";
 // Common functions not related to jsTree 
@@ -784,7 +775,7 @@
 							obj = this._get_node(event.currentTarget),
 							is_multiple = (s.select_multiple_modifier == "on" || (s.select_multiple_modifier !== false && event[s.select_multiple_modifier + "Key"])),
 							is_selected = this.is_selected(obj);
-						switch(true) {
+						switch(!0) {
 							case (is_selected && !is_multiple): break;
 							case (!is_selected && !is_multiple): 
 								if(s.select_limit == -1 || s.select_limit > 0) {
@@ -1181,7 +1172,7 @@
 					s = this.get_settings().html_data,
 					error_func = function () {},
 					success_func = function () {};
-				switch(true) {
+				switch(!0) {
 					case (!s.data && !s.ajax):
 						if(!obj || obj == -1) {
 							this.get_container()
@@ -1346,7 +1337,7 @@
 				var s = this.get_settings().json_data,
 					error_func = function () {},
 					success_func = function () {};
-				switch(true) {
+				switch(!0) {
 					case (!s.data && !s.ajax): throw "Neither data nor ajax settings supplied.";
 					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
 						if(!obj || obj == -1) {
@@ -1448,6 +1439,54 @@
 					d = ul1;
 				}
 				return d;
+			},
+			get_json : function (obj, li_attr, a_attr) {
+				var result = [], 
+					s = this.get_settings(), 
+					_this = this,
+					tmp1, tmp2, li, a, t;
+				obj = this._get_node(obj);
+				if(!obj || obj === -1) { obj = this.get_container().find("> ul > li"); }
+				li_attr = $.isArray(li_attr) ? li_attr : [ "id", "class" ];
+				if(this.data.types) { li_attr.push(s.types.type_attr); }
+				a_attr = $.isArray(a_attr) ? a_attr : [ ];
+
+				obj.each(function () {
+					li = $(this);
+					tmp1 = { data : [] };
+					if(li_attr.length) { tmp1.attr = { }; }
+					$.each(li_attr, function (i, v) { tmp1.attr[v] = li.attr(v).replace(/jstree[^ ]*|$/ig,''); });
+					if(li.hasClass("jstree-open")) { tmp1.state = "open"; }
+					if(li.hasClass("jstree-closed")) { tmp1.state = "closed"; }
+					a = li.children("a");
+					a.each(function () {
+						t = $(this);
+						if(a_attr.length || $.inArray("languages", s.plugins) !== -1 || t.children("ins").get(0).className.length || t.children("ins").get(0).style.backgroundImage.length) { 
+							tmp2 = { attr : { }, title : t.text().replace(/^\s/i,'') }; 
+							$.each(a_attr, function (k, z) {
+								tmp1.attr[z] = li.attr(z).replace(/jstree[^ ]*|$/ig,'');
+							});
+							$.each(s.languages, function (k, z) {
+								if(t.hasClass(z)) { tmp2.language = z; return true; }
+							});
+							if(t.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"").length) {
+								tmp2.icon = t.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"");
+							}
+							if(t.children("ins").get(0).style.backgroundImage.length) {
+								tmp2.icon = t.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","");
+							}
+						}
+						else {
+							tmp2 = t.text().replace(/^\s/i,'');
+						}
+						if(a.length > 1) { tmp1.data.push(tmp2); }
+						else { tmp1.data = tmp2; }
+					});
+					li = li.find("> ul > li");
+					if(li.length) { tmp1.children = _this.get_json(li, li_attr, a_attr); }
+					result.push(tmp1);
+				});
+				return result;
 			}
 		}
 	});
@@ -2345,7 +2384,7 @@
 				var s = this.get_settings().xml_data,
 					error_func = function () {},
 					success_func = function () {};
-				switch(true) {
+				switch(!0) {
 					case (!s.data && !s.ajax): throw "Neither data nor ajax settings supplied.";
 					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
 						if(!obj || obj == -1) {
@@ -2388,6 +2427,64 @@
 				var s = this.get_settings().xml_data,
 					result = $.vakata.xslt(xml, xsl[s.xsl]);
 				if(result !== false) { result = $(result); }
+				return result;
+			},
+			get_xml : function (tp, obj, li_attr, a_attr, is_callback) {
+				var result = "", 
+					s = this.get_settings(), 
+					_this = this,
+					tmp1, tmp2, li, a;
+				if(!tp) { tp = "flat"; }
+				if(!is_callback) { is_callback = 0; }
+				obj = this._get_node(obj);
+				if(!obj || obj === -1) { obj = this.get_container().find("> ul > li"); }
+				li_attr = $.isArray(li_attr) ? li_attr : [ "id", "class" ];
+				if(this.data.types) { li_attr.push(s.types.type_attr); }
+				a_attr = $.isArray(a_attr) ? a_attr : [ ];
+
+				if(!is_callback) { result += "<root>"; }
+				obj.each(function () {
+					result += "<item";
+					li = $(this);
+					$.each(li_attr, function (i, v) { result += " " + v + "=\"" + li.attr(v).replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"") + "\""; });
+					if(li.hasClass("jstree-open")) { result += " state=\"open\""; }
+					if(li.hasClass("jstree-closed")) { result += " state=\"closed\""; }
+					if(tp === "flat") { result += " parent_id=\"" + is_callback + "\""; }
+					result += ">";
+					result += "<content>";
+					a = li.children("a");
+					a.each(function () {
+						tmp1 = $(this);
+						result += "<name";
+						if($.inArray("languages", s.plugins) !== -1) {
+							$.each(s.languages, function (k, z) {
+								if($(this).hasClass(z)) { result += " lang=\"" + z + "\""; return true; }
+							});
+						}
+						if(a_attr.length) { 
+							$.each(a_attr, function (k, z) {
+								result += " " + z + "=\"" + li.attr(z).replace(/jstree[^ ]*|$/ig,'') + "\"";
+							});
+						}
+						if(tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"").length) {
+							result += ' icon="' + tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"") + '"';
+						}
+						if(tmp1.children("ins").get(0).style.backgroundImage.length) {
+							result += ' icon="' + tmp1.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","") + '"';
+						}
+						result += ">";
+						result += "<![CDATA[" + tmp1.text().replace(/^\s/i,'') + "]]>";
+						result += "</name>";
+					});
+					result += "</content>";
+					tmp2 = li[0].id;
+					li = li.find("> ul > li");
+					if(li.length) { tmp2 = _this.get_xml(tp, li, li_attr, a_attr, tmp2); }
+					if(tp == "nest") { result += tmp2; }
+					result += "</item>";
+					if(tp == "flat") { result += tmp2; }
+				});
+				if(!is_callback) { result += "</root>"; }
 				return result;
 			}
 		}
@@ -2448,8 +2545,8 @@
 			},
 			clear_search : function (str) {
 				this.data.search.result.removeClass("jstree-search");
+				this.__callback(this.data.search.result);
 				this.data.search.result = $();
-				this.__callback();
 			},
 			_search_open : function (is_callback) {
 				var _this = this,
@@ -2488,25 +2585,41 @@
 		func	: false,
 		data	: false,
 		show	: function (s, t, x, y, d) {
-			var html = $.vakata.context.parse(s);
+			var html = $.vakata.context.parse(s), h, w;
 			if(!html) { return; }
 			$.vakata.context.vis = true;
 			$.vakata.context.tgt = t;
 			$.vakata.context.data = d || null;
 			$.vakata.context.cnt
 				.html(html)
-				// Fix for live/delegate not working for mouseenter/mouseleave
-				.find("li")
-					.bind("mouseenter", function (e) {
-						var t = $(this).children("ul"); 
-						if(t.length) { t.show(); }
+				.css({ "visibility" : "hidden", "display" : "block", "left" : 0, "top" : 0 });
+			h = $.vakata.context.cnt.height();
+			w = $.vakata.context.cnt.width();
+			if(x + w > $(document).width()) { 
+				x = $(document).width() - (w + 5); 
+				$.vakata.context.cnt.find("li > ul").addClass("right"); 
+			}
+			if(y + h > $(document).height()) { 
+				y = y - (h + t[0].offsetHeight); 
+				$.vakata.context.cnt.find("li > ul").addClass("bottom"); 
+			}
+
+			$.vakata.context.cnt
+				.css({ "left" : x, "top" : y })
+				.find("li:has(ul)")
+					.bind("mouseenter", function (e) { 
+						var w = $(document).width(),
+							h = $(document).height(),
+							ul = $(this).children("ul").show(); 
+						if(w !== $(document).width()) { ul.toggleClass("right"); }
+						if(h !== $(document).height()) { ul.toggleClass("bottom"); }
 					})
-					.bind("mouseleave", function (e) {
-						var t = $(this).children("ul");
-						if(t.length) { t.hide(); }
+					.bind("mouseleave", function (e) { 
+						$(this).children("ul").hide(); 
 					})
-				.end()
-				.css({ "left" : x, "top" : y }).show();
+					.end()
+				.css({ "visibility" : "visible" })
+				.show();
 			$(document).triggerHandler("vakata.context_show");
 		},
 		hide	: function () {
@@ -2524,7 +2637,14 @@
 				if(val.separator_before) {
 					str += "<li class='vakata-separator vakata-separator-before'></li>";
 				}
-				str += "<li><a href='#' rel='" + i + "'>" + val.label + "</a>";
+				str += "<li><ins ";
+				if(val.icon && val.icon.indexOf("/") === -1) { str += " class='" + val.icon + "' "; }
+				if(val.icon && val.icon.indexOf("/") !== -1) { str += " style='background:url(" + val.icon + ") center center no-repeat; "; }
+				str += ">&#160;</ins><a href='#' rel='" + i + "'>" + val.label;
+				if(val.submenu) {
+					str += "<span style='float:right;'>&raquo;</span>";
+				}
+				str += "</a>";
 				if(val.submenu) {
 					tmp = $.vakata.context.parse(val.submenu, true);
 					if(tmp) { str += tmp; }
@@ -2551,16 +2671,20 @@
 			'#vakata-contextmenu ul { min-width:180px; } ' + 
 			'#vakata-contextmenu ul, #vakata-contextmenu li { margin:0; padding:0; list-style-type:none; display:block; } ' + 
 			'#vakata-contextmenu li { line-height:20px; min-height:20px; position:relative; padding:0px; } ' + 
-			'#vakata-contextmenu li a { line-height:19px; padding:0 5px; display:block; text-decoration:none; margin:1px 1px 0 1px; } ' + 
+			'#vakata-contextmenu li a { padding:1px 6px; line-height:17px; display:block; text-decoration:none; margin:1px 1px 0 1px; } ' + 
+			'#vakata-contextmenu li ins { float:left; width:16px; height:16px; text-decoration:none; margin-right:2px; } ' + 
 			'#vakata-contextmenu li a:hover, #vakata-contextmenu li.vakata-hover > a { background:gray; color:white; } ' + 
-			'#vakata-contextmenu li ul { display:none; position:absolute; top:-1px; left:100%; background:#ebebeb; border:1px solid silver; } ' + 
-			'#vakata-contextmenu li.vakata-separator { min-height:0; height:1px; line-height:1px; font-size:1px; overflow:hidden; margin:0 2px; background:silver; border-top:1px solid #fefefe; padding:0; } ';
+			'#vakata-contextmenu li ul { display:none; position:absolute; top:-2px; left:100%; background:#ebebeb; border:1px solid silver; } ' + 
+			'#vakata-contextmenu .right { right:100%; left:auto; } ' + 
+			'#vakata-contextmenu .bottom { bottom:-1px; top:auto; } ' + 
+			'#vakata-contextmenu li.vakata-separator { min-height:0; height:1px; line-height:1px; font-size:1px; overflow:hidden; margin:0 2px; background:silver; /* border-top:1px solid #fefefe; */ padding:0; } ';
 		$.vakata.css.add_sheet({ str : css_string });
 		$.vakata.context.cnt
-			.delegate("a","click", function () {
+			.delegate("a","click", function (e) {
 				if($.vakata.context.exec($(this).attr("rel"))) {
 					$.vakata.context.hide();
 				}
+				e.preventDefault();
 			})
 			.delegate("a","mouseover", function () {
 				$.vakata.context.cnt.find(".vakata-hover").removeClass("vakata-hover");
@@ -2575,6 +2699,7 @@
 						if(!o.length) { o = $.vakata.context.cnt.find("ul:visible").last().children("li:not(.vakata-separator)").last(); }
 						o.addClass("vakata-hover");
 						e.stopImmediatePropagation(); 
+						e.preventDefault();
 					} 
 				})
 				.bind("keydown", "down", function (e) { 
@@ -2583,25 +2708,30 @@
 						if(!o.length) { o = $.vakata.context.cnt.find("ul:visible").last().children("li:not(.vakata-separator)").first(); }
 						o.addClass("vakata-hover");
 						e.stopImmediatePropagation(); 
+						e.preventDefault();
 					} 
 				})
 				.bind("keydown", "right", function (e) { 
 					if($.vakata.context.vis) { 
 						$.vakata.context.cnt.find(".vakata-hover").children("ul").show().children("li:not(.vakata-separator)").first().addClass("vakata-hover");
 						e.stopImmediatePropagation(); 
+						e.preventDefault();
 					} 
 				})
 				.bind("keydown", "left", function (e) { 
 					if($.vakata.context.vis) { 
 						$.vakata.context.cnt.find(".vakata-hover").children("ul").hide().children(".vakata-separator").removeClass("vakata-hover");
 						e.stopImmediatePropagation(); 
+						e.preventDefault();
 					} 
 				})
 				.bind("keydown", "esc", function (e) { 
 					$.vakata.context.hide(); 
+					e.preventDefault();
 				})
 				.bind("keydown", "space", function (e) { 
 					$.vakata.context.cnt.find(".vakata-hover").last().children("a").click();
+					e.preventDefault();
 				});
 		}
 	});
@@ -2611,11 +2741,7 @@
 			this.get_container()
 				.delegate("a", "contextmenu.jstree", $.proxy(function (e) {
 						e.preventDefault();
-						var s = this.get_settings().contextmenu,
-							o = $(e.currentTarget).offset();
-						if($.isFunction(s)) { s = s.call(this, this._get_node(e.currentTarget)); }
-						$.vakata.context.show(s, e.currentTarget, (o.left), (o.top + this.data.core.li_height), this);
-						if(this.data.themes) { $.vakata.context.cnt.attr("class", "jstree-" + this.data.themes.theme + "-context"); }
+						this.show_contextmenu(e.currentTarget);
 					}, this));
 		},
 		defaults : { // Could be a function that should return an object like this one
@@ -2628,7 +2754,6 @@
 			"remove" : {
 				"separator_before"	: false,
 				"icon"				: false,
-				"icon_position"		: false,
 				"separator_after"	: false,
 				"label"				: "Delete",
 				"action"			: function (obj) { this.remove(obj); },
@@ -2642,12 +2767,22 @@
 					"remove2" : {
 						"separator_before"	: false,
 						"icon"				: false,
-						"icon_position"		: false,
 						"separator_after"	: false,
 						"label"				: "Delete",
 						"action"			: function (obj) { this.remove(obj); }
 					}
 				}
+			}
+		},
+		_fn : {
+			show_contextmenu : function (obj) {
+				obj = this._get_node(obj);
+				var s = this.get_settings().contextmenu,
+					a = obj.children("a:visible:eq(0)"),
+					o = a.offset();
+				if($.isFunction(s)) { s = s.call(this, obj); }
+				$.vakata.context.show(s, a, (o.left), (o.top + this.data.core.li_height), this);
+				if(this.data.themes) { $.vakata.context.cnt.attr("class", "jstree-" + this.data.themes.theme + "-context"); }
 			}
 		}
 	});
