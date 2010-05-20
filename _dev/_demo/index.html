@@ -1,0 +1,83 @@
+<!DOCTYPE html
+PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>jsTree v.1.0 - full featured demo</title>
+	<script type="text/javascript" src="../_lib/jquery.js"></script>
+	<script type="text/javascript" src="../_lib/jquery.cookie.js"></script>
+	<script type="text/javascript" src="../_lib/jquery.hotkeys.js"></script>
+	<script type="text/javascript" src="../jquery.jstree.js"></script>
+
+	<style type="text/css">
+	html, body { margin:0; padding:0; }
+	body, td, th, pre, code, select, option, input, textarea { font-family:verdana,arial,sans-serif; font-size:10px; }
+	.demo, .demo input, .jstree-dnd-helper, #vakata-contextmenu { font-size:10px; font-family:Verdana; }
+	#container { width:800px; margin:10px auto; overflow:hidden; }
+	#demo { width:300px; height:400px; overflow:auto; border:1px solid gray; }
+	</style>
+</head>
+<body>
+<div id="container">
+
+<input type="button" id="button" value="test rollback" />
+<div id="demo" class="demo"></div>
+<script type="text/javascript" class="source">
+$(function () { 
+	$("#button").click(function () {
+		inst = $.jstree._reference("#demo");
+		inst.rename();
+		return;
+		inst.open_all();
+		//inst.create_node("#node_2", "last", "TEST");
+		return;
+		$("#demo")
+			.one("create_node.jstree", function (e, data) {
+				//$("#demo").jstree("open_node","#node_2", false, true);
+				//$.jstree.rollback(data.rlbk);
+			})
+			.jstree("create_node","#node_2", "last", "TEST");
+	});
+});
+$(function () {
+	$("#demo").bind("open_all.jstree", function () { alert(1); });
+
+	$("#demo")
+		.jstree({ 
+			"json_data" : { 
+				"ajax" : {
+					"url" : "./server.php",
+					"data" : function (n) { 
+						return { 
+							"operation" : "get_children", 
+							"id" : n.attr ? n.attr("id").replace("node_","") : 1 
+						}; 
+					}
+				}
+			},
+			"search" : {
+				"ajax" : {
+					"url" : "./server.php",
+					"data" : function (str) {
+						return { 
+							"operation" : "search", 
+							"search_str" : str 
+						}; 
+					}
+				}
+			},
+			"ui" : {
+				"initially_select" : [ "node_4" ]
+			},
+			"core" : { 
+				"initially_open" : [ /*"node_2" , "node_3"*/ ] 
+			},
+			"plugins" : [ "themes", "json_data", "ui", "crrm", "cookie", "dnd", "search", "types", "hotkeys", "contextmenu" ]
+		});
+});
+</script>
+
+</div>
+</body>
+</html>

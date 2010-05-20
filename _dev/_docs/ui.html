@@ -119,9 +119,26 @@ $(function () {
 <h3 id="dehover_node">.dehover_node ( )</h3>
 <p>Removes the hover state from the currently hovered node (if there is one). Triggers an event.</p>
 
-<div style="height:1px; visibility:hidden; overflow:hidden;"><span id="deselect_node">&#160;</span><span id="toggle_select">&#160;</span></div>
-<h3 id="select_node">.select_node ( node ), .deselect_node ( node ), .toggle_select ( node )</h3>
-<p>There functions control the selected state on a node. <code>select_node</code> and <code>deselect_node</code> trigger an event.</p>
+
+<h3 id="select_node">.select_node ( node , check , event )</h3>
+<ul class="arguments">
+	<li>
+		<code class="tp">mixed</code> <strong>node</strong>
+		<p>This can be a DOM node, jQuery node or selector pointing to an element within the tree.</p>
+	</li>
+	<li>
+		<code class="tp">bool</code> <strong>check</strong>
+		<p>Whether to check the specified rules and do appropriate actions (check <code>select_limit</code>, deselect other nodes respectively, etc) or to just force selection of the node regardless of <code>select_limit</code>.</p>
+	</li>
+	<li>
+		<code class="tp">event</code> <strong>event</strong>
+		<p>Used internally - when a click on a node caused this function to be executed.</p>
+	</li>
+</ul>
+
+<div style="height:1px; visibility:hidden; overflow:hidden;"><span id="toggle_select">&#160;</span></div>
+<h3 id="deselect_node">.deselect_node ( node ), .toggle_select ( node )</h3>
+<p>There functions control the selected state on a node. <code>deselect_node</code> triggers an event.</p>
 <ul class="arguments">
 	<li>
 		<code class="tp">mixed</code> <strong>node</strong>

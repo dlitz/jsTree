@@ -8,16 +8,10 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-05-14
+ * Date: 2010-05-19
  */
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
-
-// TODO: redo other themes (themeroller?)
-// TODO: IE6 support - single theme or plugin (hook to some events and additional classes)
-
-// TEST: async events - create in two trees - one waits to load the other not ... then rollback
-// TEST: multiple nodes to be initially open (async alltogether)
 
 "use strict";
 // Common functions not related to jsTree 
@@ -112,7 +106,7 @@
 			this.each(function() {
 				var instance = instances[$.data(this, "jstree-instance-id")],
 					methodValue = (instance && $.isFunction(instance[settings])) ? instance[settings].apply(instance, args) : instance;
-					if(typeof methodValue !== "undefined") { returnValue = methodValue; return false; }
+					if(typeof methodValue !== "undefined" && methodValue !== true && methodValue !== false) { returnValue = methodValue; return false; }
 			});
 		}
 		else {
@@ -281,6 +275,7 @@
 			this.data.core.to_open = $.map($.makeArray(this.get_settings().core.initially_open), function (n) { return "#" + n.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/'); });
 		},
 		defaults : { 
+			html_titles	: false,
 			animation	: 500,
 			initially_open : []
 		},
@@ -306,7 +301,7 @@
 								sel = window.getSelection();
 								try { 
 									sel.removeAllRanges();
-									sel.collpase();
+									sel.collapse();
 								} catch (err) { }
 							}
 						}
@@ -470,7 +465,7 @@
 					t = this;
 				if(!this._is_loaded(obj)) {
 					obj.children("a").addClass("jstree-loading");
-					this.load_node(obj, function () { t.open_node(obj, callback); }, callback);
+					this.load_node(obj, function () { t.open_node(obj, callback, skip_animation); }, callback);
 				}
 				else {
 					if(s) { obj.children("ul").css("display","none"); }
@@ -507,10 +502,11 @@
 				var _this = this;
 				obj.each(function () { 
 					var __this = this; 
-					_this.open_node(this, function() { _this.open_all(__this, original_obj); });
+					if(!_this._is_loaded(this)) { _this.open_node(this, function() { _this.open_all(__this, original_obj); }, true); }
+					else { _this.open_node(this, false, true); }
 				});
 				// so that callback is fired AFTER all nodes are open
-				if(original_obj && original_obj.find('li.jstree-closed').length === 0) { this.__callback({ "obj" : original_obj }); }
+				if(original_obj.find('li.jstree-closed').length === 0) { this.__callback({ "obj" : original_obj }); }
 			},
 			close_all	: function (obj) {
 				var _this = this;
@@ -546,7 +542,8 @@
 			create_node	: function (obj, position, js, callback, is_loaded) {
 				obj = this._get_node(obj);
 				position = typeof position === "undefined" ? "last" : position;
-				var d = $("<li>"), 
+				var d = $("<li>"),
+					s = this.get_settings().core.html_titles,
 					tmp;
 
 				if(obj !== -1 && !obj.length) { return false; }
@@ -563,11 +560,11 @@
 				$.each(js.data, function (i, m) {
 					tmp = $("<a>");
 					if($.isFunction(m)) { m = m.call(this, js); }
-					if(typeof m == "string") { tmp.attr('href','#').text(m); }
+					if(typeof m == "string") { tmp.attr('href','#')[ s ? "html" : "text" ](m); }
 					else {
 						if(!m.attr) { m.attr = {}; }
 						if(!m.attr.href) { m.attr.href = '#'; }
-						tmp.attr(m.attr).text(m.title);
+						tmp.attr(m.attr)[ s ? "html" : "text" ](m.title);
 						if(m.language) { tmp.addClass(m.language); }
 					}
 					tmp.prepend("<ins class='jstree-icon'>&#160;</ins>");
@@ -606,7 +603,7 @@
 						tmp = obj;
 						break;
 				}
-				if(tmp.get(0) === this.get_container().get(0)) { tmp = -1; }
+				if(tmp === -1 || tmp.get(0) === this.get_container().get(0)) { tmp = -1; }
 				this.clean_node(tmp);
 				this.__callback({ "obj" : d, "parent" : tmp });
 				if(callback) { callback.call(this, d); }
@@ -616,20 +613,37 @@
 			get_text	: function (obj) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
+				var s = this.get_settings().core.html_titles;
 				obj = obj.children("a:eq(0)");
-				obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
-				return obj.nodeValue;
+				if(s) {
+					obj = obj.clone();
+					obj.children("INS").remove();
+					return obj.html();
+				}
+				else {
+					obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
+					return obj.nodeValue;
+				}
 			},
 			set_text	: function (obj, val) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				obj = obj.children("a:eq(0)");
-				obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
-				this.__callback({ "obj" : this._get_node(obj) });
-				return (obj.nodeValue = val);
+				if(this.get_settings().core.html_titles) {
+					var tmp = obj.children("INS").clone();
+					obj.html(val).prepend(tmp);
+					this.__callback({ "obj" : obj, "name" : val });
+					return true;
+				}
+				else {
+					obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
+					this.__callback({ "obj" : obj, "name" : val });
+					return (obj.nodeValue = val);
+				}
 			},
 			rename_node : function (obj, val) {
 				obj = this._get_node(obj);
+				this.__rollback();
 				if(obj && obj.length && this.set_text.apply(this, Array.prototype.slice.call(arguments))) { this.__callback({ "obj" : obj, "name" : val }); }
 			},
 			// Basic operations: deleting nodes
@@ -726,6 +740,8 @@
 					});
 				}
 				if(!skip_check && !this.check_move()) { return false; }
+
+				this.__rollback();
 				var o = false;
 				if(is_copy) {
 					o = obj.o.clone();
@@ -771,26 +787,8 @@
 
 			this.get_container()
 				.delegate("a", "click.jstree", $.proxy(function (event) {
-						var s = this.get_settings().ui,
-							obj = this._get_node(event.currentTarget),
-							is_multiple = (s.select_multiple_modifier == "on" || (s.select_multiple_modifier !== false && event[s.select_multiple_modifier + "Key"])),
-							is_selected = this.is_selected(obj);
-						switch(!0) {
-							case (is_selected && !is_multiple): break;
-							case (!is_selected && !is_multiple): 
-								if(s.select_limit == -1 || s.select_limit > 0) {
-									this.deselect_all();
-									this.select_node(obj);
-								}
-								break;
-							case (is_selected && is_multiple): 
-								this.deselect_node(obj);
-								break;
-							case (!is_selected && is_multiple): 
-								if(s.select_limit == -1 || this.data.ui.selected.length + 1 <= s.select_limit) { this.select_node(obj); }
-								break;
-						}
 						event.preventDefault();
+						this.select_node(event.currentTarget, true, event);
 					}, this))
 				.delegate("a", "mouseenter.jstree", $.proxy(function (event) {
 						this.hover_node(event.target);
@@ -870,10 +868,34 @@
 				if(this.data.ui.hovered[0] === p[0]) { this.data.ui.hovered = null; }
 				this.__callback({ "obj" : obj });
 			},
-			select_node : function (obj) {
+			select_node : function (obj, check, e) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
-				if(!this.is_selected(obj)) {
+				var s = this.get_settings().ui,
+					is_multiple = (s.select_multiple_modifier == "on" || (s.select_multiple_modifier !== false && e && e[s.select_multiple_modifier + "Key"])),
+					is_selected = this.is_selected(obj),
+					proceed = true;
+				if(check) {
+					proceed = false;
+					switch(!0) {
+						case (is_selected && !is_multiple): break;
+						case (!is_selected && !is_multiple): 
+							if(s.select_limit == -1 || s.select_limit > 0) {
+								this.deselect_all();
+								proceed = true;
+							}
+							break;
+						case (is_selected && is_multiple): 
+							this.deselect_node(obj);
+							break;
+						case (!is_selected && is_multiple): 
+							if(s.select_limit == -1 || this.data.ui.selected.length + 1 <= s.select_limit) { 
+								proceed = true;
+							}
+							break;
+					}
+				}
+				if(proceed && !is_selected) {
 					obj.children("a").addClass("jstree-clicked");
 					this.data.ui.selected = this.data.ui.selected.add(obj);
 					this.data.ui.last_selected = obj;
@@ -1085,12 +1107,7 @@
 						var s = this.get_settings().themes;
 						this.data.themes.dots = s.dots; 
 						this.data.themes.icons = s.icons; 
-					}, this))
-				.bind("loaded.jstree", $.proxy(function () {
-						var s = this.get_settings().themes;
-						if(s && s.theme) {
-							this.set_theme(s.theme, s.url);
-						}
+						this.set_theme(s.theme, s.url);
 					}, this));
 		},
 		defaults : { 
@@ -1213,7 +1230,7 @@
 							d = $(d);
 							if(!d.is("ul")) { d = $("<ul>").append(d); }
 							if(obj == -1) { this.get_container().children("ul").empty().append(d.children()).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
-							else { obj.children(".jstree-loading").removeClass("jstree-loading").parent().append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
+							else { obj.children(".jstree-loading").removeClass("jstree-loading"); obj.append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
 							this.clean_node(obj);
 							if(s_call) { s_call.call(this); }
 						};
@@ -1364,7 +1381,7 @@
 							var sf = this.get_settings().json_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
 							if(obj == -1) { this.get_container().children("ul").empty().append(this.parse_json(d).children()); }
-							else { obj.children(".jstree-loading").removeClass("jstree-loading").parent().append(this.parse_json(d)); }
+							else { obj.append(this.parse_json(d)).children(".jstree-loading").removeClass("jstree-loading"); }
 							this.clean_node(obj);
 							if(s_call) { s_call.call(this); }
 						};
@@ -1377,7 +1394,7 @@
 				}
 			},
 			parse_json : function (js, is_callback) {
-				var d = $(), tmp, i, j, s = this.get_settings().json_data, ul1, ul2;
+				var d = $(), tmp, i, j, s = this.get_settings().json_data, ul1, ul2, t = this.get_settings().core.html_titles;
 				if(!js) { return d; }
 				if($.isFunction(js)) { 
 					js = js.call(this);
@@ -1399,11 +1416,11 @@
 					$.each(js.data, function (i, m) {
 						tmp = $("<a>");
 						if($.isFunction(m)) { m = m.call(this, js); }
-						if(typeof m == "string") { tmp.attr('href','#').text(m); }
+						if(typeof m == "string") { tmp.attr('href','#')[ t ? "html" : "text" ](m); }
 						else {
 							if(!m.attr) { m.attr = {}; }
 							if(!m.attr.href) { m.attr.href = '#'; }
-							tmp.attr(m.attr).text(m.title);
+							tmp.attr(m.attr)[ t ? "html" : "text" ](m.title);
 							if(m.language) { tmp.addClass(m.language); }
 						}
 						tmp.prepend("<ins class='jstree-icon'>&#160;</ins>");
@@ -1444,7 +1461,7 @@
 				var result = [], 
 					s = this.get_settings(), 
 					_this = this,
-					tmp1, tmp2, li, a, t;
+					tmp1, tmp2, li, a, t, lang;
 				obj = this._get_node(obj);
 				if(!obj || obj === -1) { obj = this.get_container().find("> ul > li"); }
 				li_attr = $.isArray(li_attr) ? li_attr : [ "id", "class" ];
@@ -1455,14 +1472,33 @@
 					li = $(this);
 					tmp1 = { data : [] };
 					if(li_attr.length) { tmp1.attr = { }; }
-					$.each(li_attr, function (i, v) { tmp1.attr[v] = li.attr(v).replace(/jstree[^ ]*|$/ig,''); });
+					$.each(li_attr, function (i, v) { 
+						tmp2 = li.attr(v); 
+						if(tmp2 && tmp2.length && tmp2.replace(/jstree[^ ]*|$/ig,'').length) {
+							tmp1.attr[v] = tmp2.replace(/jstree[^ ]*|$/ig,''); 
+						}
+					});
 					if(li.hasClass("jstree-open")) { tmp1.state = "open"; }
 					if(li.hasClass("jstree-closed")) { tmp1.state = "closed"; }
 					a = li.children("a");
 					a.each(function () {
 						t = $(this);
-						if(a_attr.length || $.inArray("languages", s.plugins) !== -1 || t.children("ins").get(0).className.length || t.children("ins").get(0).style.backgroundImage.length) { 
-							tmp2 = { attr : { }, title : t.text().replace(/^\s/i,'') }; 
+						if(
+							a_attr.length || 
+							$.inArray("languages", s.plugins) !== -1 || 
+							t.children("ins").get(0).style.backgroundImage.length || 
+							(t.children("ins").get(0).className && t.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').length)
+						) { 
+							lang = false;
+							if($.inArray("languages", s.plugins) !== -1 && $.isArray(s.languages) && s.languages.length) {
+								$.each(s.languages, function (l, lv) {
+									if(t.hasClass(lv)) {
+										lang = lv;
+										return false;
+									}
+								});
+							}
+							tmp2 = { attr : { }, title : _this.get_text(t, lang) }; 
 							$.each(a_attr, function (k, z) {
 								tmp1.attr[z] = li.attr(z).replace(/jstree[^ ]*|$/ig,'');
 							});
@@ -1477,7 +1513,7 @@
 							}
 						}
 						else {
-							tmp2 = t.text().replace(/^\s/i,'');
+							tmp2 = _this.get_text(t);
 						}
 						if(a.length > 1) { tmp1.data.push(tmp2); }
 						else { tmp1.data = tmp2; }
@@ -1528,27 +1564,45 @@
 			get_text : function (obj, lang) {
 				obj = this._get_node(obj) || this.data.ui.last_selected;
 				if(!obj.size()) { return false; }
-				var langs = this.get_settings().languages;
+				var langs = this.get_settings().languages,
+					s = this.get_settings().core.html_titles;
 				if($.isArray(langs) && langs.length) {
 					lang = (lang && $.inArray(lang,langs) != -1) ? lang : this.data.languages.current_language;
 					obj = obj.children("a." + lang);
 				}
 				else { obj = obj.children("a:eq(0)"); }
-				obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
-				return obj.nodeValue;
+				if(s) {
+					obj = obj.clone();
+					obj.children("INS").remove();
+					return obj.html();
+				}
+				else {
+					obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
+					return obj.nodeValue;
+				}
 			},
 			set_text : function (obj, val, lang) {
 				obj = this._get_node(obj) || this.data.ui.last_selected;
 				if(!obj.size()) { return false; }
-				var langs = this.get_settings().languages;
+				var langs = this.get_settings().languages,
+					s = this.get_settings().core.html_titles,
+					tmp;
 				if($.isArray(langs) && langs.length) {
 					lang = (lang && $.inArray(lang,langs) != -1) ? lang : this.data.languages.current_language;
 					obj = obj.children("a." + lang);
 				}
 				else { obj = obj.children("a:eq(0)"); }
-				obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
-				this.__callback({ "obj" : obj, "name" : val, "lang" : lang });
-				return (obj.nodeValue = val);
+				if(s) {
+					tmp = obj.children("INS").clone();
+					obj.html(val).prepend(tmp);
+					this.__callback({ "obj" : obj, "name" : val, "lang" : lang });
+					return true;
+				}
+				else {
+					obj = obj.contents().filter(function() { return this.nodeType == 3; })[0];
+					this.__callback({ "obj" : obj, "name" : val, "lang" : lang });
+					return (obj.nodeValue = val);
+				}
 			},
 			_load_css : function () {
 				var langs = this.get_settings().languages,
@@ -2411,7 +2465,7 @@
 							var sf = this.get_settings().xml_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
 							if(obj == -1) { this.get_container().children("ul").empty().append(this.parse_xml(x.responseText).children()); }
-							else { obj.children(".jstree-loading").removeClass("jstree-loading").parent().append(this.parse_xml(x.responseText)); }
+							else { obj.append(this.parse_xml(x.responseText)).children(".jstree-loading").removeClass("jstree-loading"); }
 							if(s.clean_node) { this.clean_node(obj); }
 							if(s_call) { s_call.call(this); }
 						};
@@ -2433,7 +2487,7 @@
 				var result = "", 
 					s = this.get_settings(), 
 					_this = this,
-					tmp1, tmp2, li, a;
+					tmp1, tmp2, li, a, lang;
 				if(!tp) { tp = "flat"; }
 				if(!is_callback) { is_callback = 0; }
 				obj = this._get_node(obj);
@@ -2455,10 +2509,11 @@
 					a = li.children("a");
 					a.each(function () {
 						tmp1 = $(this);
+						lang = false;
 						result += "<name";
 						if($.inArray("languages", s.plugins) !== -1) {
 							$.each(s.languages, function (k, z) {
-								if($(this).hasClass(z)) { result += " lang=\"" + z + "\""; return true; }
+								if(tmp1.hasClass(z)) { result += " lang=\"" + z + "\""; lang = z; return false; }
 							});
 						}
 						if(a_attr.length) { 
@@ -2473,7 +2528,7 @@
 							result += ' icon="' + tmp1.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","") + '"';
 						}
 						result += ">";
-						result += "<![CDATA[" + tmp1.text().replace(/^\s/i,'') + "]]>";
+						result += "<![CDATA[" + _this.get_text(tmp1, lang) + "]]>";
 						result += "</name>";
 					});
 					result += "</content>";
@@ -2633,13 +2688,14 @@
 			if(!is_callback) { $.vakata.context.func = {}; }
 			str += "<ul>";
 			$.each(s, function (i, val) {
+				if(!val) { return true; }
 				$.vakata.context.func[i] = val.action;
 				if(val.separator_before) {
 					str += "<li class='vakata-separator vakata-separator-before'></li>";
 				}
 				str += "<li><ins ";
 				if(val.icon && val.icon.indexOf("/") === -1) { str += " class='" + val.icon + "' "; }
-				if(val.icon && val.icon.indexOf("/") !== -1) { str += " style='background:url(" + val.icon + ") center center no-repeat; "; }
+				if(val.icon && val.icon.indexOf("/") !== -1) { str += " style='background:url(" + val.icon + ") center center no-repeat;' "; }
 				str += ">&#160;</ins><a href='#' rel='" + i + "'>" + val.label;
 				if(val.submenu) {
 					str += "<span style='float:right;'>&raquo;</span>";
@@ -2674,13 +2730,13 @@
 			'#vakata-contextmenu li a { padding:1px 6px; line-height:17px; display:block; text-decoration:none; margin:1px 1px 0 1px; } ' + 
 			'#vakata-contextmenu li ins { float:left; width:16px; height:16px; text-decoration:none; margin-right:2px; } ' + 
 			'#vakata-contextmenu li a:hover, #vakata-contextmenu li.vakata-hover > a { background:gray; color:white; } ' + 
-			'#vakata-contextmenu li ul { display:none; position:absolute; top:-2px; left:100%; background:#ebebeb; border:1px solid silver; } ' + 
+			'#vakata-contextmenu li ul { display:none; position:absolute; top:-2px; left:100%; background:#ebebeb; border:1px solid gray; } ' + 
 			'#vakata-contextmenu .right { right:100%; left:auto; } ' + 
 			'#vakata-contextmenu .bottom { bottom:-1px; top:auto; } ' + 
 			'#vakata-contextmenu li.vakata-separator { min-height:0; height:1px; line-height:1px; font-size:1px; overflow:hidden; margin:0 2px; background:silver; /* border-top:1px solid #fefefe; */ padding:0; } ';
 		$.vakata.css.add_sheet({ str : css_string });
 		$.vakata.context.cnt
-			.delegate("a","click", function (e) {
+			.delegate("a","mouseup", function (e) {
 				if($.vakata.context.exec($(this).attr("rel"))) {
 					$.vakata.context.hide();
 				}
@@ -2690,12 +2746,12 @@
 				$.vakata.context.cnt.find(".vakata-hover").removeClass("vakata-hover");
 			})
 			.appendTo("body");
-		$(document).bind("mousedown mouseup click", function (e) { if($.vakata.context.vis && !$.contains($.vakata.context.cnt[0], e.target)) { $.vakata.context.hide(); } });
+		$(document).bind("mousedown", function (e) { if($.vakata.context.vis && !$.contains($.vakata.context.cnt[0], e.target)) { $.vakata.context.hide(); } });
 		if(typeof $.hotkeys !== "undefined") {
 			$(document)
 				.bind("keydown", "up", function (e) { 
 					if($.vakata.context.vis) { 
-						var o = $.vakata.context.cnt.find("ul:visible").last().children(".vakata-hover").removeClass("vakata-hover").prevAll("li:not(.vakata-separator)");
+						var o = $.vakata.context.cnt.find("ul:visible").last().children(".vakata-hover").removeClass("vakata-hover").prevAll("li:not(.vakata-separator)").first();
 						if(!o.length) { o = $.vakata.context.cnt.find("ul:visible").last().children("li:not(.vakata-separator)").last(); }
 						o.addClass("vakata-hover");
 						e.stopImmediatePropagation(); 
@@ -2704,7 +2760,7 @@
 				})
 				.bind("keydown", "down", function (e) { 
 					if($.vakata.context.vis) { 
-						var o = $.vakata.context.cnt.find("ul:visible").last().children(".vakata-hover").removeClass("vakata-hover").nextAll("li:not(.vakata-separator)");
+						var o = $.vakata.context.cnt.find("ul:visible").last().children(".vakata-hover").removeClass("vakata-hover").nextAll("li:not(.vakata-separator)").first();
 						if(!o.length) { o = $.vakata.context.cnt.find("ul:visible").last().children("li:not(.vakata-separator)").first(); }
 						o.addClass("vakata-hover");
 						e.stopImmediatePropagation(); 
@@ -2713,7 +2769,7 @@
 				})
 				.bind("keydown", "right", function (e) { 
 					if($.vakata.context.vis) { 
-						$.vakata.context.cnt.find(".vakata-hover").children("ul").show().children("li:not(.vakata-separator)").first().addClass("vakata-hover");
+						$.vakata.context.cnt.find(".vakata-hover").children("ul").show().children("li:not(.vakata-separator)").removeClass("vakata-hover").first().addClass("vakata-hover");
 						e.stopImmediatePropagation(); 
 						e.preventDefault();
 					} 
@@ -2741,47 +2797,55 @@
 			this.get_container()
 				.delegate("a", "contextmenu.jstree", $.proxy(function (e) {
 						e.preventDefault();
-						this.show_contextmenu(e.currentTarget);
+						this.show_contextmenu(e.currentTarget, e.pageX, e.pageY);
 					}, this));
 		},
-		defaults : { // Could be a function that should return an object like this one
-			"rename" : {
-				"separator_before"	: false,
-				"separator_after"	: true,
-				"label"				: "Rename",
-				"action"			: function (obj) { this.rename(obj); }
-			},
-			"remove" : {
-				"separator_before"	: false,
-				"icon"				: false,
-				"separator_after"	: false,
-				"label"				: "Delete",
-				"action"			: function (obj) { this.remove(obj); },
-				"submenu" : { 
-					"rename2" : {
-						"separator_before"	: false,
-						"separator_after"	: true,
-						"label"				: "Rename",
-						"action"			: function (obj) { this.rename(obj); }
-					},
-					"remove2" : {
-						"separator_before"	: false,
-						"icon"				: false,
-						"separator_after"	: false,
-						"label"				: "Delete",
-						"action"			: function (obj) { this.remove(obj); }
+		defaults : { 
+			show_at_node : true,
+			items : { // Could be a function that should return an object like this one
+				"rename" : {
+					"separator_before"	: false,
+					"separator_after"	: true,
+					"label"				: "Rename",
+					"action"			: function (obj) { this.rename(obj); }
+				},
+				"remove" : {
+					"separator_before"	: false,
+					"icon"				: false,
+					"separator_after"	: false,
+					"label"				: "Delete",
+					"action"			: function (obj) { this.remove(obj); },
+					"submenu" : { 
+						"rename2" : {
+							"separator_before"	: false,
+							"separator_after"	: true,
+							"label"				: "Rename",
+							"action"			: function (obj) { this.rename(obj); }
+						},
+						"remove2" : {
+							"separator_before"	: false,
+							"icon"				: false,
+							"separator_after"	: false,
+							"label"				: "Delete",
+							"action"			: function (obj) { this.remove(obj); }
+						}
 					}
 				}
 			}
 		},
 		_fn : {
-			show_contextmenu : function (obj) {
+			show_contextmenu : function (obj, x, y) {
 				obj = this._get_node(obj);
 				var s = this.get_settings().contextmenu,
 					a = obj.children("a:visible:eq(0)"),
+					o = false;
+				if(s.show_at_node || typeof x === "undefined" || typeof y === "undefined") {
 					o = a.offset();
-				if($.isFunction(s)) { s = s.call(this, obj); }
-				$.vakata.context.show(s, a, (o.left), (o.top + this.data.core.li_height), this);
+					x = o.left;
+					y = o.top + this.data.core.li_height;
+				}
+				if($.isFunction(s.items)) { s.items = s.items.call(this, obj); }
+				$.vakata.context.show(s.items, a, x, y, this);
 				if(this.data.themes) { $.vakata.context.cnt.attr("class", "jstree-" + this.data.themes.theme + "-context"); }
 			}
 		}

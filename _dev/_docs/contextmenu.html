@@ -25,6 +25,11 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
 <h2 id="configuration">Configuration</h2>
 <div class="panel configuration">
+<h3>show_at_node</h3>
+<p class="meta">Boolean. Default is <code>true</code>.</p>
+<p>Whether to show the context menu just below the node, or at the clicked point exactly.</p>
+
+<h3>items</h3>
 <p>Expects an object or a function, which should return an object. If a function is used it fired in the tree's context and receives one argument - the node that was right clicked. The object format is:</p>
 <div style="border:1px solid gray">
 <pre class="brush:js">
@@ -85,12 +90,20 @@ $(function () {
 <h2 id="api">API</h2>
 <div class="panel api">
 
-<h3 id="show_contextmenu">.show_contextmenu ( node )</h3>
+<h3 id="show_contextmenu">.show_contextmenu ( node , x, y )</h3>
 <p>Shows the contextmenu next to a node. Triggered automatically when right-clicking a node.</p>
 <ul class="arguments">
 	<li>
 		<code class="tp">mixed</code> <strong>node</strong>
 		<p>This can be a DOM node, jQuery node or selector pointing to an element within the tree.</p>
+	</li>
+	<li>
+		<code class="tp">number</code> <strong>x</strong>
+		<p>The X-coordinate to show the menu at - may be overwritten by <code>show_at_node</code>. If you omit this the menu is shown aligned with the left of the node.</p>
+	</li>
+	<li>
+		<code class="tp">number</code> <strong>y</strong>
+		<p>The Y-coordinate to show the menu at - may be overwritten by <code>show_at_node</code>. If you omit this the menu is shown just below the node.</p>
 	</li>
 </ul>
 

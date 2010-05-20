@@ -44,10 +44,13 @@
 
 .jstree-default a.jstree-search { color:aqua; }
 
-#vakata-contextmenu.jstree-default-context { background:#f0f0f0; border:1px solid #979797; }
+#vakata-contextmenu.jstree-default-context, 
+#vakata-contextmenu.jstree-default-context li ul { background:#f0f0f0; border:1px solid #979797; -moz-box-shadow: 1px 1px 2px #999; -webkit-box-shadow: 1px 1px 2px #999; box-shadow: 1px 1px 2px #999; }
 #vakata-contextmenu.jstree-default-context li { }
 #vakata-contextmenu.jstree-default-context a { color:black; }
-#vakata-contextmenu.jstree-default-context a:hover { padding:0 5px; background:#e7f4f9; border:1px solid #d8f0fa; color:black; }
+#vakata-contextmenu.jstree-default-context a:hover, 
+#vakata-contextmenu.jstree-default-context .vakata-hover > a { padding:0 5px; background:#e8eff7; border:1px solid #aecff7; color:black; -moz-border-radius:2px; -webkit-border-radius:2px; border-radius:2px; }
 #vakata-contextmenu.jstree-default-context li.vakata-separator { background:white; border-top:1px solid #e0e0e0; margin:0; }
+#vakata-contextmenu.jstree-default-context li ul { margin-left:-4px; }
 
 /* TODO: IE6 support - the `>` selectors */
