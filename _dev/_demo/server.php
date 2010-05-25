@@ -2,6 +2,15 @@
 require_once("config.php");
 $jstree = new json_tree();
 
+if(isset($_GET["reconstruct"])) {
+	$jstree->_reconstruct();
+	die();
+}
+if(isset($_GET["analyze"])) {
+	echo $jstree->_analyze();
+	die();
+}
+
 if($_REQUEST["operation"] && strpos("_", $_REQUEST["operation"]) !== 0 && method_exists($jstree, $_REQUEST["operation"])) {
 	header("HTTP/1.0 200 OK");
 	header('Content-type: text/json; charset=utf-8');

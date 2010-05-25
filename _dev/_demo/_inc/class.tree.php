@@ -119,7 +119,7 @@ class _tree_struct {
 		}
 
 		// Not creating or copying - old parent is cleaned
-		if($node !== false && $is_copy === false) {
+		if($node !== false && $is_copy == false) {
 			$sql[] = "" . 
 				"UPDATE `".$this->table."` " . 
 					"SET `".$this->fields["position"]."` = `".$this->fields["position"]."` - 1 " . 
@@ -387,6 +387,21 @@ class _tree_struct {
 
 		$this->db->query("" . 
 			"SELECT " . 
+				"`".$this->fields["left"]."` FROM `".$this->table."` s " . 
+			"WHERE " . 
+				"`".$this->fields["parent_id"]."` = 0 "
+		);
+		$this->db->nextr();
+		if($this->db->nf() == 0) {
+			$report[] = "[FAIL]\tNo root node.";
+		}
+		else {
+			$report[] = ($this->db->nf() > 1) ? "[FAIL]\tMore than one root node." : "[OK]\tJust one root node.";
+		}
+		$report[] = ($this->db->f(0) != 1) ? "[FAIL]\tRoot node's left index is not 1." : "[OK]\tRoot node's left index is 1.";
+
+		$this->db->query("" . 
+			"SELECT " . 
 				"COUNT(*) FROM `".$this->table."` s " . 
 			"WHERE " . 
 				"`".$this->fields["parent_id"]."` != 0 AND " . 
@@ -417,7 +432,7 @@ class _tree_struct {
 		$this->db->nextr();
 		$report[] = ($this->db->f(0) > 0) ? "[FAIL]\tAdjacency and nested set do not match." : "[OK]\tNS and AJ match";
 
-		return "<pre>".implode("\n",$report)."</pre>";
+		return implode("<br />",$report);
 	}
 
 	function _dump($output = false) {
@@ -441,33 +456,40 @@ class _tree_struct {
 }
 
 class json_tree extends _tree_struct { 
-	function __construct($table = "tree", $fields = array(), $add_fields = array("title" => "title")) {
+	function __construct($table = "tree", $fields = array(), $add_fields = array("title" => "title", "type" => "type")) {
 		parent::__construct($table, $fields);
 		$this->fields = array_merge($this->fields, $add_fields);
+		$this->add_fields = $add_fields;
 	}
 
 	function create_node($data) {
 		$id = parent::_create((int)$data["id"], (int)$data["position"]);
 		if($id) {
-			$this->rename_node(array("id" => $id, "name" => $data["name"]));
+			$data["id"] = $id;
+			$this->set_data($data);
 			return  "{ \"status\" : 1, \"id\" : ".(int)$id." }";
 		}
+		return "{ \"status\" : 0 }";
+	}
+	function set_data($data) {
+		if(count($this->add_fiels) == 0) return "{ \"status\" : 1 }";
+		$q = "UPDATE `".$this->table."` SET `".$this->fields["id"]."` = `".$this->fields["id"]."` "; 
+		foreach($this->add_fiels[$k] as $k => $v) {
+			if(isset($data[$k]))	$q .= ", `".$this->fields[$v]."` = \"".$this->db->escape($data[$k])."\" ";
+			else					$q .= ", `".$this->fields[$v]."` = `".$this->fields[$v]."` ";
+		}
+		$q = "WHERE `".$this->fields["id"]."` = ".(int)$data["id"];
+		$this->db->query($q);
 		return "{ \"status\" : 1 }";
 	}
-	function rename_node($data) {
-		$this->db->query("" . 
-			"UPDATE `".$this->table."` " . 
-				"SET `".$this->fields["title"]."` = \"".$this->db->escape($data["name"])."\"" . 
-			"WHERE " . 
-				"`".$this->fields["id"]."` = ".(int)$data["id"]
-		);
-		return "{ \"status\" : 1 }";
-	}
-	function move_node($data) {
-		return "{ \"status\" : ".parent::_move((int)$data["id"], (int)$data["ref"], (int)$data["pos"], (int)$data["copy"])." }";
+	function rename_node($data) { return $this->set_data($data); }
+
+	function move_node($data) { 
+		return "{ \"status\" : ".parent::_move((int)$data["id"], (int)$data["ref"], (int)$data["position"], (int)$data["copy"])." }";
 	}
 	function remove_node($data) {
-		return "{ \"status\" : ".(int)parent::_remove((int)$data["id"])." }";
+		$id = (int)parent::_remove((int)$data["id"]);
+		return "{ \"status\" : 1, \"id\" : ".$id." }";
 	}
 	function get_children($data) {
 		$tmp = $this->_get_children((int)$data["id"]);
@@ -478,15 +500,24 @@ class json_tree extends _tree_struct {
 		$result = array();
 		foreach($tmp as $k => $v) {
 			$result[] = array(
-				"attr" => array("id" => "node_".$k),
-				"data" => $v["title"],
-				"state" => ($v["right"] - $v["left"] > 1) ? "closed" : ""
+				"attr" => array("id" => "node_".$k, "rel" => $v[$this->fields["type"]]),
+				"data" => $v[$this->fields["title"]],
+				"state" => ($v[$this->fields["right"]] - $v[$this->fields["left"]] > 1) ? "closed" : ""
 			);
 		}
 		return json_encode($result);
 	}
-	function search($str) {
-
+	function search($data) {
+		$this->db->query("SELECT `".$this->fields["left"]."`, `".$this->fields["right"]."` FROM `".$this->table."` WHERE `".$this->fields["title"]."` LIKE '%".$this->db->escape($data["search_str"])."%'");
+		if($this->db->nf() === 0) return "[]";
+		$q = "SELECT DISTINCT `".$this->fields["id"]."` FROM `".$this->table."` WHERE 0 ";
+		while($this->db->nextr()) {
+			$q .= " OR (`".$this->fields["left"]."` < ".(int)$this->db->f(0)." AND `".$this->fields["right"]."` > ".(int)$this->db->f(1).") ";
+		}
+		$result = array();
+		$this->db->query($q);
+		while($this->db->nextr()) { $result[] = "#node_".$this->db->f(0); }
+		return json_encode($result);
 	}
 
 	function _create_default() {
