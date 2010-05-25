@@ -8,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-05-19
+ * Date: 2010-05-25
  */
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
@@ -1038,6 +1038,7 @@
 			create : function (obj, position, js, callback, skip_rename) {
 				var t, _this = this;
 				obj = this._get_node(obj);
+				if(!obj) { obj = -1; }
 				this.__rollback();
 				t = this.create_node(obj, position, js, function (t) {
 					var p = this._get_parent(t),
@@ -2782,11 +2783,11 @@
 			'#vakata-contextmenu li.vakata-separator { min-height:0; height:1px; line-height:1px; font-size:1px; overflow:hidden; margin:0 2px; background:silver; /* border-top:1px solid #fefefe; */ padding:0; } ';
 		$.vakata.css.add_sheet({ str : css_string });
 		$.vakata.context.cnt
+			.delegate("a","click", function (e) { e.preventDefault(); })
 			.delegate("a","mouseup", function (e) {
 				if($.vakata.context.exec($(this).attr("rel"))) {
 					$.vakata.context.hide();
 				}
-				e.preventDefault();
 			})
 			.delegate("a","mouseover", function () {
 				$.vakata.context.cnt.find(".vakata-hover").removeClass("vakata-hover");
@@ -2849,9 +2850,15 @@
 		defaults : { 
 			show_at_node : true,
 			items : { // Could be a function that should return an object like this one
-				"rename" : {
+				"create" : {
 					"separator_before"	: false,
 					"separator_after"	: true,
+					"label"				: "Create",
+					"action"			: function (obj) { this.create(obj); }
+				},
+				"rename" : {
+					"separator_before"	: false,
+					"separator_after"	: false,
 					"label"				: "Rename",
 					"action"			: function (obj) { this.rename(obj); }
 				},
@@ -2860,20 +2867,34 @@
 					"icon"				: false,
 					"separator_after"	: false,
 					"label"				: "Delete",
+					"action"			: function (obj) { this.remove(obj); }
+				},
+				"ccp" : {
+					"separator_before"	: true,
+					"icon"				: false,
+					"separator_after"	: false,
+					"label"				: "Edit",
 					"action"			: function (obj) { this.remove(obj); },
 					"submenu" : { 
-						"rename2" : {
+						"cut" : {
 							"separator_before"	: false,
-							"separator_after"	: true,
-							"label"				: "Rename",
-							"action"			: function (obj) { this.rename(obj); }
+							"separator_after"	: false,
+							"label"				: "Cut",
+							"action"			: function (obj) { this.cut(obj); }
 						},
-						"remove2" : {
+						"copy" : {
 							"separator_before"	: false,
 							"icon"				: false,
 							"separator_after"	: false,
-							"label"				: "Delete",
-							"action"			: function (obj) { this.remove(obj); }
+							"label"				: "Copy",
+							"action"			: function (obj) { this.copy(obj); }
+						},
+						"paste" : {
+							"separator_before"	: false,
+							"icon"				: false,
+							"separator_after"	: false,
+							"label"				: "Paste",
+							"action"			: function (obj) { this.paste(obj); }
 						}
 					}
 				}
@@ -3045,6 +3066,7 @@
 						md = this._check("max_depth", p),
 						vc = this._check("valid_children", p),
 						ch;
+					if(!js) { js = {}; }
 					if(vc === "none") { return false; } 
 					if($.isArray(vc)) {
 						if(!js.attr || !js.attr[s.type_attr]) { 

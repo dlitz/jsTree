@@ -463,7 +463,7 @@ class json_tree extends _tree_struct {
 	}
 
 	function create_node($data) {
-		$id = parent::_create((int)$data["id"], (int)$data["position"]);
+		$id = parent::_create((int)$data[$this->fields["id"]], (int)$data[$this->fields["position"]]);
 		if($id) {
 			$data["id"] = $id;
 			$this->set_data($data);
@@ -472,14 +472,14 @@ class json_tree extends _tree_struct {
 		return "{ \"status\" : 0 }";
 	}
 	function set_data($data) {
-		if(count($this->add_fiels) == 0) return "{ \"status\" : 1 }";
-		$q = "UPDATE `".$this->table."` SET `".$this->fields["id"]."` = `".$this->fields["id"]."` "; 
-		foreach($this->add_fiels[$k] as $k => $v) {
-			if(isset($data[$k]))	$q .= ", `".$this->fields[$v]."` = \"".$this->db->escape($data[$k])."\" ";
-			else					$q .= ", `".$this->fields[$v]."` = `".$this->fields[$v]."` ";
+		if(count($this->add_fields) == 0) { return "{ \"status\" : 1 }"; }
+		$s = "UPDATE `".$this->table."` SET `".$this->fields["id"]."` = `".$this->fields["id"]."` "; 
+		foreach($this->add_fields as $k => $v) {
+			if(isset($data[$k]))	$s .= ", `".$this->fields[$v]."` = \"".$this->db->escape($data[$k])."\" ";
+			else					$s .= ", `".$this->fields[$v]."` = `".$this->fields[$v]."` ";
 		}
-		$q = "WHERE `".$this->fields["id"]."` = ".(int)$data["id"];
-		$this->db->query($q);
+		$s .= "WHERE `".$this->fields["id"]."` = ".(int)$data["id"];
+		$this->db->query($s);
 		return "{ \"status\" : 1 }";
 	}
 	function rename_node($data) { return $this->set_data($data); }
@@ -488,8 +488,8 @@ class json_tree extends _tree_struct {
 		return "{ \"status\" : ".parent::_move((int)$data["id"], (int)$data["ref"], (int)$data["position"], (int)$data["copy"])." }";
 	}
 	function remove_node($data) {
-		$id = (int)parent::_remove((int)$data["id"]);
-		return "{ \"status\" : 1, \"id\" : ".$id." }";
+		$id = parent::_remove((int)$data["id"]);
+		return "{ \"status\" : 1 }";
 	}
 	function get_children($data) {
 		$tmp = $this->_get_children((int)$data["id"]);
@@ -525,32 +525,43 @@ class json_tree extends _tree_struct {
 		$this->create_node(array(
 			"id" => 0,
 			"position" => 0,
-			"name" => "ROOT"
+			"title" => "ROOT"
 		));
 		$this->create_node(array(
 			"id" => 1,
 			"position" => 0,
-			"name" => "www.jstree.com"
-		));
-		$this->create_node(array(
-			"id" => 2,
-			"position" => 0,
-			"name" => "_demo"
-		));
-		$this->create_node(array(
-			"id" => 3,
-			"position" => 0,
-			"name" => "This Page"
-		));
-		$this->create_node(array(
-			"id" => 2,
-			"position" => 1,
-			"name" => "_docs"
+			"title" => "C:",
+			"type" => "drive"
 		));
 		$this->create_node(array(
 			"id" => 1,
 			"position" => 1,
-			"name" => "www.vakata.com"
+			"title" => "D:",
+			"type" => "drive"
+		));
+		$this->create_node(array(
+			"id" => 2,
+			"position" => 0,
+			"title" => "_demo",
+			"type" => "folder"
+		));
+		$this->create_node(array(
+			"id" => 2,
+			"position" => 1,
+			"title" => "_docs",
+			"type" => "folder"
+		));
+		$this->create_node(array(
+			"id" => 4,
+			"position" => 0,
+			"title" => "index.html",
+			"type" => "default"
+		));
+		$this->create_node(array(
+			"id" => 5,
+			"position" => 1,
+			"title" => "doc.html",
+			"type" => "default"
 		));
 	}
 }

@@ -47,6 +47,7 @@ class _database {
 			$this->error("Could node connect for query: ".$sql);
 			return false;
 		}
+		//echo $sql."<br />:";
 		if(!($this->result = $this->data->query($sql))) $this->error($sql);
 		return ($this->result) ? true : false;
 	}

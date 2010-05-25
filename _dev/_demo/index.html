@@ -8,19 +8,19 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	<script type="text/javascript" src="../_lib/jquery.js"></script>
 	<script type="text/javascript" src="../_lib/jquery.cookie.js"></script>
 	<script type="text/javascript" src="../_lib/jquery.hotkeys.js"></script>
-	<script type="text/javascript" src="../jquery.jstree.js"></script>
+	<script type="text/javascript" src="../jquery.jstree.min.js"></script>
 
 	<style type="text/css">
 	html, body { margin:0; padding:0; }
 	body, td, th, pre, code, select, option, input, textarea { font-family:verdana,arial,sans-serif; font-size:10px; }
 	.demo, .demo input, .jstree-dnd-helper, #vakata-contextmenu { font-size:10px; font-family:Verdana; }
-	#container { width:800px; margin:10px auto; overflow:hidden; }
+	#container { width:780px; margin:10px auto; overflow:hidden; position:relative; }
 	#demo { width:auto; height:400px; overflow:auto; border:1px solid gray; }
 
 	#menu { height:30px; overflow:auto; }
 	#text { margin-top:1px; }
 
-	#alog { font-size:9px !important; }
+	#alog { font-size:9px !important; margin:5px; border:1px solid silver; }
 	</style>
 </head>
 <body>
@@ -125,7 +125,8 @@ $(function () {
 						// internally the `before` event is used
 						"start_drag" : false,
 						"move_node" : false,
-						"delete_node" : false
+						"delete_node" : false,
+						"remove" : false
 					}
 				}
 			},
@@ -239,13 +240,14 @@ $(function () {
 });
 </script>
 
-</div>
-
-<div style="position:absolute; left:10px; top:10px; width:180px; border:1px solid silver; min-height:150px;">
+<div style="position:absolute; right:10px; top:40px; width:220px; border:1px solid silver; min-height:160px;">
 	<input type="button" style='display:block; width:170px; height:24px; margin:5px auto;' value="reconstruct" onclick="$.get('./server.php?reconstruct', function () { $('#demo').jstree('refresh',-1); });" />
 	<input type="button" style='display:block; width:170px; height:24px; margin:5px auto;' id="analyze" value="analyze" onclick="$('#alog').load('./server.php?analyze');" />
 	<input type="button" style='display:block; width:170px; height:24px; margin:5px auto;' value="refresh" onclick="$('#demo').jstree('refresh',-1);" />
 	<div id='alog'></div>
 </div>
+
+</div>
+
 </body>
 </html>

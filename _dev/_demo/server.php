@@ -2,6 +2,9 @@
 require_once("config.php");
 $jstree = new json_tree();
 
+//$jstree->_create_default();
+//die();
+
 if(isset($_GET["reconstruct"])) {
 	$jstree->_reconstruct();
 	die();
