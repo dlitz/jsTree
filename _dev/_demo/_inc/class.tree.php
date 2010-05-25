@@ -501,7 +501,7 @@ class json_tree extends _tree_struct {
 		foreach($tmp as $k => $v) {
 			$result[] = array(
 				"attr" => array("id" => "node_".$k, "rel" => $v[$this->fields["type"]]),
-				"data" => $v[$this->fields["title"]],
+				"data" => stripslashes($v[$this->fields["title"]]),
 				"state" => ($v[$this->fields["right"]] - $v[$this->fields["left"]] > 1) ? "closed" : ""
 			);
 		}
