@@ -1289,13 +1289,14 @@
 			_is_loaded : function (obj) { 
 				var s = this.get_settings().json_data, d;
 				obj = this._get_node(obj); 
-				if(obj && obj !== -1 && s.progressive_render) {
+				if(obj && obj !== -1 && s.progressive_render && !obj.is(".jstree-open, .jstree-leaf") && obj.children("ul").children("li").length === 0) {
 					d = this._parse_json(obj.data("jstree-children"));
 					if(d) {
 						obj.append(d);
 						$.removeData(obj, "jstree-children");
 					}
 					this.clean_node(obj);
+					return true;
 				}
 				return obj == -1 || !obj || !s.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
 			},
@@ -1327,11 +1328,11 @@
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
-							if(x.responseText == "" || (!$.isArray(d) && !$.isPlainObject(d))) {
-								return error_func.call(this, x, t, "");
-							}
 							var sf = this.get_settings().json_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
+							if(d === "" || (!$.isArray(d) && !$.isPlainObject(d))) {
+								return error_func.call(this, x, t, "");
+							}
 							d = this._parse_json(d);
 							if(d) {
 								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
@@ -2432,12 +2433,12 @@
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
-							if(x.responseText == "") {
-								return error_func.call(this, x, t, "");
-							}
 							d = x.responseText;
 							var sf = this.get_settings().xml_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
+							if(d == "") {
+								return error_func.call(this, x, t, "");
+							}
 							d = this.parse_xml(d);
 							if(d) {
 								if(obj === -1 || !obj) { this.get_container().children("ul").empty().append(this.parse_xml(x.responseText).children()); }
@@ -3082,11 +3083,11 @@
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
-							if(x.responseText == "") {
-								return error_func.call(this, x, t, "");
-							}
 							var sf = this.get_settings().html_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
+							if(d == "") {
+								return error_func.call(this, x, t, "");
+							}
 							if(d) {
 								d = $(d);
 								if(!d.is("ul")) { d = $("<ul>").append(d); }
