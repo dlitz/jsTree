@@ -65,6 +65,7 @@ class _tree_struct {
 		return $this->_move(0, $parent, $position);
 	}
 	function _remove($id) {
+		if((int)$id === 1) { return false; }
 		$data = $this->_get_node($id);
 		$lft = (int)$data[$this->fields["left"]];
 		$rgt = (int)$data[$this->fields["right"]];
@@ -100,6 +101,7 @@ class _tree_struct {
 		return true;
 	}
 	function _move($id, $ref_id, $position = 0, $is_copy = false) {
+		if((int)$ref_id === 0 || (int)$id === 1) { return false; }
 		$sql		= array();						// Queries executed at the end
 		$node		= $this->_get_node($id);		// Node data
 		$nchildren	= $this->_get_children($id);	// Node children
@@ -452,6 +454,23 @@ class _tree_struct {
 	}
 	function _drop() {
 		$this->db->query("TRUNCATE TABLE `".$this->table."`");
+		$this->db->query("" . 
+				"INSERT INTO `".$this->table."` (" . 
+					"`".$this->fields["id"]."`, " . 
+					"`".$this->fields["parent_id"]."`, " . 
+					"`".$this->fields["position"]."`, " . 
+					"`".$this->fields["left"]."`, " . 
+					"`".$this->fields["right"]."`, " . 
+					"`".$this->fields["level"]."` " . 
+					") " . 
+				"VALUES (" . 
+					"1, " . 
+					"0, " . 
+					"0, " . 
+					"1, " . 
+					"2, " . 
+					"0 ". 
+				")");
 	}
 }
 
@@ -501,7 +520,7 @@ class json_tree extends _tree_struct {
 		foreach($tmp as $k => $v) {
 			$result[] = array(
 				"attr" => array("id" => "node_".$k, "rel" => $v[$this->fields["type"]]),
-				"data" => stripslashes($v[$this->fields["title"]]),
+				"data" => $v[$this->fields["title"]],
 				"state" => ($v[$this->fields["right"]] - $v[$this->fields["left"]] > 1) ? "closed" : ""
 			);
 		}
@@ -522,11 +541,6 @@ class json_tree extends _tree_struct {
 
 	function _create_default() {
 		$this->_drop();
-		$this->create_node(array(
-			"id" => 0,
-			"position" => 0,
-			"title" => "ROOT"
-		));
 		$this->create_node(array(
 			"id" => 1,
 			"position" => 0,

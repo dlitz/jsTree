@@ -8,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-05-25
+ * Date: 2010-05-27
  */
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
@@ -120,6 +120,7 @@
 				// store the jstree instance id to the container element
 				$.data(this, "jstree-instance-id", instance_id);
 				// clean up all plugins
+				if(!settings) { settings = {}; }
 				settings.plugins = $.isArray(settings.plugins) ? settings.plugins : $.jstree.defaults.plugins;
 				if($.inArray("core", settings.plugins) === -1) { settings.plugins.unshift("core"); }
 				
@@ -129,11 +130,12 @@
 				// extend defaults with passed data
 				s = $.extend(true, {}, $.jstree.defaults, settings);
 				s.plugins = settings.plugins;
+				$.each(plugins, function (i, val) { if($.inArray(i, s.plugins) === -1) { s[i] = null; delete s[i]; } });
 				// push the new object to the instances array (at the same time set the default classes to the container) and init
 				instances[instance_id] = new $.jstree._instance(instance_id, $(this).addClass("jstree jstree-" + instance_id), s); 
 				// init all activated plugins for this instance
-				$.each(instances[instance_id].get_settings().plugins, function (i, val) { instances[instance_id].data[val] = {}; });
-				$.each(instances[instance_id].get_settings().plugins, function (i, val) { if(plugins[val]) { plugins[val].__init.apply(instances[instance_id]); } });
+				$.each(instances[instance_id]._get_settings().plugins, function (i, val) { instances[instance_id].data[val] = {}; });
+				$.each(instances[instance_id]._get_settings().plugins, function (i, val) { if(plugins[val]) { plugins[val].__init.apply(instances[instance_id]); } });
 				// initialize the instance
 				instances[instance_id].init();
 			});
@@ -160,6 +162,7 @@
 			// for plugins to store data in
 			this.data = { core : {} };
 			this.get_settings	= function () { return $.extend(true, {}, settings); };
+			this._get_settings	= function () { return settings; };
 			this.get_index		= function () { return index; };
 			this.get_container	= function () { return container; };
 			this._set_settings	= function (s) { 
@@ -184,13 +187,12 @@
 					var rslt,
 						func = val,
 						args = Array.prototype.slice.call(arguments),
-						stgs = this.get_settings(),
 						evnt = new $.Event("before.jstree"),
 						rlbk = false;
 
 					// Check if function belongs to the included plugins of this instance
 					do {
-						if(func && func.plugin && $.inArray(func.plugin, stgs.plugins) !== -1) { break; }
+						if(func && func.plugin && $.inArray(func.plugin, this._get_settings().plugins) !== -1) { break; }
 						func = func.old;
 					} while(func);
 					if(!func) { return; }
@@ -205,19 +207,24 @@
 					if(typeof rslt !== "undefined") { args = rslt; }
 
 					// context and function to trigger events, then finally call the function
-					rslt = func.apply(
-						$.extend({}, this, { 
-							__callback : function (data) { 
-								this.get_container().triggerHandler( i + '.jstree', { "inst" : this, "args" : args, "rslt" : data, "rlbk" : rlbk });
-							},
-							__rollback : function () { 
-								rlbk = this.get_rollback();
-								return rlbk;
-							},
-							__call_old : function (replace_arguments) {
-								return func.old.apply(this, (replace_arguments ? Array.prototype.slice.call(arguments, 1) : args ) );
-							}
-						}), args);
+					if(i.indexOf("_") === 0) {
+						rslt = func.apply(this, args);
+					}
+					else {
+						rslt = func.apply(
+							$.extend({}, this, { 
+								__callback : function (data) { 
+									this.get_container().triggerHandler( i + '.jstree', { "inst" : this, "args" : args, "rslt" : data, "rlbk" : rlbk });
+								},
+								__rollback : function () { 
+									rlbk = this.get_rollback();
+									return rlbk;
+								},
+								__call_old : function (replace_arguments) {
+									return func.old.apply(this, (replace_arguments ? Array.prototype.slice.call(arguments, 1) : args ) );
+								}
+							}), args);
+					}
 
 					// return the result
 					return rslt;
@@ -312,7 +319,7 @@
 			destroy	: function () { 
 				var i,
 					n = this.get_index(),
-					s = this.get_settings(),
+					s = this._get_settings(),
 					_this = this;
 
 				$.each(s.plugins, function (i, val) {
@@ -462,7 +469,7 @@
 			open_node	: function (obj, callback, skip_animation) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
-				var s = skip_animation ? 0 : this.get_settings().core.animation,
+				var s = skip_animation ? 0 : this._get_settings().core.animation,
 					t = this;
 				if(!this._is_loaded(obj)) {
 					obj.children("a").addClass("jstree-loading");
@@ -478,7 +485,7 @@
 			},
 			close_node	: function (obj, skip_animation) {
 				obj = this._get_node(obj);
-				var s = skip_animation ? 0 : this.get_settings().core.animation;
+				var s = skip_animation ? 0 : this._get_settings().core.animation;
 				if(!obj.length) { return false; }
 				if(s) { obj.children("ul").attr("style","display:block !important"); }
 				obj.removeClass("jstree-open").addClass("jstree-closed");
@@ -544,7 +551,7 @@
 				obj = this._get_node(obj);
 				position = typeof position === "undefined" ? "last" : position;
 				var d = $("<li>"),
-					s = this.get_settings().core.html_titles,
+					s = this._get_settings().core.html_titles,
 					tmp;
 
 				if(obj !== -1 && !obj.length) { return false; }
@@ -614,7 +621,7 @@
 			get_text	: function (obj) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
-				var s = this.get_settings().core.html_titles;
+				var s = this._get_settings().core.html_titles;
 				obj = obj.children("a:eq(0)");
 				if(s) {
 					obj = obj.clone();
@@ -630,7 +637,7 @@
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				obj = obj.children("a:eq(0)");
-				if(this.get_settings().core.html_titles) {
+				if(this._get_settings().core.html_titles) {
 					var tmp = obj.children("INS").clone();
 					obj.html(val).prepend(tmp);
 					this.__callback({ "obj" : obj, "name" : val });
@@ -813,7 +820,7 @@
 						this.reselect();
 					}, this))
 				.bind("close_node.jstree", $.proxy(function (event, data) { 
-						var s = this.get_settings().ui,
+						var s = this._get_settings().ui,
 							obj = this._get_node(data.args[0]),
 							clk = (obj && obj.length) ? obj.find(".jstree-clicked") : [],
 							_this = this;
@@ -844,7 +851,10 @@
 		_fn : { 
 			_get_node : function (obj, allow_multiple) {
 				if(typeof obj === "undefined" || obj === null) { return allow_multiple ? this.data.ui.selected : this.data.ui.last_selected; }
-				return this.__call_old();
+				var $obj = $(obj, this.get_container()); 
+				if($obj.is(".jstree") || obj == -1) { return -1; } 
+				$obj = $obj.closest("li", this.get_container()); 
+				return $obj.length ? $obj : false; 
 			},
 			save_selected : function () {
 				var _this = this;
@@ -882,7 +892,7 @@
 			select_node : function (obj, check, e) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
-				var s = this.get_settings().ui,
+				var s = this._get_settings().ui,
 					is_multiple = (s.select_multiple_modifier == "on" || (s.select_multiple_modifier !== false && e && e[s.select_multiple_modifier + "Key"])),
 					is_selected = this.is_selected(obj),
 					proceed = true;
@@ -956,7 +966,7 @@
 		__init : function () {
 			this.get_container()
 				.bind("move_node.jstree", $.proxy(function (e, data) {
-					if(this.get_settings().crrm.move.open_onmove) {
+					if(this._get_settings().crrm.move.open_onmove) {
 						var t = this;
 						data.rslt.np.parentsUntil(".jstree").andSelf().filter(".jstree-closed").each(function () {
 							t.open_node(this, false, true);
@@ -976,7 +986,7 @@
 		_fn : {
 			_show_input : function (obj, callback) {
 				obj = this._get_node(obj);
-				var w = this.get_settings().crrm.input_width_limit,
+				var w = this._get_settings().crrm.input_width_limit,
 					w1 = obj.children("ins").width(),
 					w2 = obj.find("> a:visible > ins").width() * obj.find("> a:visible > ins").length,
 					t = this.get_text(obj),
@@ -1062,12 +1072,12 @@
 			},
 			check_move : function () {
 				if(!this.__call_old()) { return false; }
-				var s = this.get_settings().crrm.move;
+				var s = this._get_settings().crrm.move;
 				if(!s.check_move.call(this, this._get_move())) { return false; }
 				return true;
 			},
 			move_node : function (obj, ref, position, is_copy, is_prepared, skip_check) {
-				var s = this.get_settings().crrm.move;
+				var s = this._get_settings().crrm.move;
 				if(!is_prepared) { 
 					if(!position) { position = s.default_position; }
 					return this.__call_old(true, obj, ref, position, is_copy, false, skip_check);
@@ -1118,7 +1128,7 @@
 		__init : function () { 
 			this.get_container()
 				.bind("init.jstree", $.proxy(function () {
-						var s = this.get_settings().themes;
+						var s = this._get_settings().themes;
 						this.data.themes.dots = s.dots; 
 						this.data.themes.icons = s.icons; 
 						//alert(s.dots);
@@ -1185,97 +1195,6 @@
 })(jQuery);
 //*/
 
-/* 
- * jsTree HTML data 1.0
- * The HTML data store. Datastores are build by replacing the `load_node` and `_is_loaded` functions.
- */
-(function ($) {
-	$.jstree.plugin("html_data", {
-		__init : function () { 
-			this.data.html_data.original_container_html = this.get_container().html().replace(/<\/([^>]+)>\s+</ig,"</$1><").replace(/>\s+<([a-z]{1})/ig,"><$1");
-		},
-		defaults : { 
-			data : false,
-			ajax : false,
-			correct_state : false
-		},
-		_fn : {
-			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_html(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
-			_is_loaded : function (obj) { 
-				obj = this._get_node(obj); 
-				return obj == -1 || !obj || !this.get_settings().html_data.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
-			},
-			load_node_html : function (obj, s_call, e_call) {
-				var d,
-					s = this.get_settings().html_data,
-					error_func = function () {},
-					success_func = function () {};
-				switch(!0) {
-					case (!s.data && !s.ajax):
-						if(!obj || obj == -1) {
-							this.get_container()
-								.html(this.data.html_data.original_container_html)
-								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>");
-							this.clean_node();
-						}
-						if(s_call) { s_call.call(this); }
-						break;
-					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
-						if(!obj || obj == -1) {
-							d = $(s.data);
-							if(!d.is("ul")) { d = $("<ul>").append(d); }
-							this.get_container()
-								.children("ul").empty().append(d.children())
-								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>");
-							this.clean_node();
-						}
-						if(s_call) { s_call.call(this); }
-						break;
-					case (!s.data && !!s.ajax) || (!!s.data && !!s.ajax && obj && obj !== -1):
-						obj = this._get_node(obj);
-						error_func = function (x, t, e) {
-							var ef = this.get_settings().html_data.ajax.error; 
-							if(ef) { ef.call(this, x, t, e); }
-							if(obj != -1 && obj.length) {
-								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
-							}
-							if(e_call) { e_call.call(this); }
-						};
-						success_func = function (d, t, x) {
-							if(x.responseText == "") {
-								return error_func.call(this, x, t, "");
-							}
-							var sf = this.get_settings().html_data.ajax.success; 
-							if(sf) { d = sf.call(this,d,t,x) || d; }
-							if(d) {
-								d = $(d);
-								if(!d.is("ul")) { d = $("<ul>").append(d); }
-								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
-								else { obj.children(".jstree-loading").removeClass("jstree-loading"); obj.append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
-								this.clean_node(obj);
-								if(s_call) { s_call.call(this); }
-							}
-							else {
-								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
-							}
-						};
-						s.ajax.context = this;
-						s.ajax.error = error_func;
-						s.ajax.success = success_func;
-						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this, obj); }
-						$.ajax(s.ajax);
-						break;
-				}
-			}
-		}
-	});
-	// include the HTML data plugin by default
-	$.jstree.defaults.plugins.push("html_data");
-})(jQuery);
-//*/
-
 /*
  * jsTree hotkeys plugin 1.0
  * Enables keyboard navigation for all tree instances
@@ -1286,15 +1205,15 @@
 	function exec(i, event) {
 		var f = $.jstree._focused();
 		if(f && f.data && f.data.hotkeys && f.data.hotkeys.enabled) { 
-			var tmp = f.get_settings().hotkeys[i];
-			if(tmp) { return f.get_settings().hotkeys[i].call(f, event); }
+			var tmp = f._get_settings().hotkeys[i];
+			if(tmp) { return tmp.call(f, event); }
 		}
 	}
 	$.jstree.plugin("hotkeys", {
 		__init : function () {
 			if(typeof $.hotkeys === "undefined") { throw "jsTree hotkeys: jQuery hotkeys plugin not included."; }
 			if(!this.data.ui) { throw "jsTree hotkeys: jsTree UI plugin not included."; }
-			$.each(this.get_settings().hotkeys, function (i, val) {
+			$.each(this._get_settings().hotkeys, function (i, val) {
 				if($.inArray(i, bound) == -1) {
 					$(document).bind("keydown", i, function (event) { return exec(i, event); });
 					bound.push(i);
@@ -1368,25 +1287,31 @@
 		_fn : {
 			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_json(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
-				var s = this.get_settings().json_data;
+				var s = this.get_settings().json_data, d;
 				obj = this._get_node(obj); 
 				if(obj && obj !== -1 && s.progressive_render) {
-					obj.append(this.parse_json(obj.data("jstree-children")));
-					$.removeData(obj, "jstree-children");
+					d = this._parse_json(obj.data("jstree-children"));
+					if(d) {
+						obj.append(d);
+						$.removeData(obj, "jstree-children");
+					}
 					this.clean_node(obj);
 				}
 				return obj == -1 || !obj || !s.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
 			},
 			load_node_json : function (obj, s_call, e_call) {
-				var s = this.get_settings().json_data,
+				var s = this.get_settings().json_data, d,
 					error_func = function () {},
 					success_func = function () {};
 				switch(!0) {
 					case (!s.data && !s.ajax): throw "Neither data nor ajax settings supplied.";
 					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
 						if(!obj || obj == -1) {
-							this.get_container().children("ul").empty().append(this.parse_json(s.data).children());
-							this.clean_node();
+							d = this._parse_json(s.data);
+							if(d) {
+								this.get_container().children("ul").empty().append(d.children());
+								this.clean_node();
+							}
 						}
 						if(s_call) { s_call.call(this); }
 						break;
@@ -1407,7 +1332,7 @@
 							}
 							var sf = this.get_settings().json_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
-							d = this.parse_json(d);
+							d = this._parse_json(d);
 							if(d) {
 								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
 								else { obj.append(d).children(".jstree-loading").removeClass("jstree-loading"); }
@@ -1427,16 +1352,22 @@
 						break;
 				}
 			},
-			parse_json : function (js, is_callback) {
-				var d = $(), tmp, i, j, s = this.get_settings().json_data, ul1, ul2, t = this.get_settings().core.html_titles;
+			_parse_json : function (js, is_callback) {
+				var d = false, 
+					p = this._get_settings(),
+					s = p.json_data,
+					t = p.core.html_titles,
+					tmp, i, j, ul1, ul2;
+
 				if(!js) { return d; }
 				if($.isFunction(js)) { 
 					js = js.call(this);
 				}
 				if($.isArray(js)) {
+					d = $();
 					if(!js.length) { return false; }
 					for(i = 0, j = js.length; i < j; i++) {
-						tmp = this.parse_json(js[i], true);
+						tmp = this._parse_json(js[i], true);
 						if(tmp.length) { d = d.add(tmp); }
 					}
 				}
@@ -1475,7 +1406,7 @@
 								js.children = js.children.call(this, js);
 							}
 							if($.isArray(js.children) && js.children.length) {
-								tmp = this.parse_json(js.children, true);
+								tmp = this._parse_json(js.children, true);
 								if(tmp.length) {
 									ul2 = $("<ul>");
 									ul2.append(tmp);
@@ -1494,7 +1425,7 @@
 			},
 			get_json : function (obj, li_attr, a_attr) {
 				var result = [], 
-					s = this.get_settings(), 
+					s = this._get_settings(), 
 					_this = this,
 					tmp1, tmp2, li, a, t, lang;
 				obj = this._get_node(obj);
@@ -1576,7 +1507,7 @@
 		defaults : [],
 		_fn : {
 			set_lang : function (i) { 
-				var langs = this.get_settings().languages,
+				var langs = this._get_settings().languages,
 					st = false,
 					selector = ".jstree-" + this.get_index() + ' a';
 				if(!$.isArray(langs) || langs.length === 0) { return false; }
@@ -1599,8 +1530,8 @@
 			get_text : function (obj, lang) {
 				obj = this._get_node(obj) || this.data.ui.last_selected;
 				if(!obj.size()) { return false; }
-				var langs = this.get_settings().languages,
-					s = this.get_settings().core.html_titles;
+				var langs = this._get_settings().languages,
+					s = this._get_settings().core.html_titles;
 				if($.isArray(langs) && langs.length) {
 					lang = (lang && $.inArray(lang,langs) != -1) ? lang : this.data.languages.current_language;
 					obj = obj.children("a." + lang);
@@ -1619,8 +1550,8 @@
 			set_text : function (obj, val, lang) {
 				obj = this._get_node(obj) || this.data.ui.last_selected;
 				if(!obj.size()) { return false; }
-				var langs = this.get_settings().languages,
-					s = this.get_settings().core.html_titles,
+				var langs = this._get_settings().languages,
+					s = this._get_settings().core.html_titles,
 					tmp;
 				if($.isArray(langs) && langs.length) {
 					lang = (lang && $.inArray(lang,langs) != -1) ? lang : this.data.languages.current_language;
@@ -1640,7 +1571,7 @@
 				}
 			},
 			_load_css : function () {
-				var langs = this.get_settings().languages,
+				var langs = this._get_settings().languages,
 					str = "/* languages css */",
 					selector = ".jstree-" + this.get_index() + ' a',
 					ln;
@@ -1656,7 +1587,7 @@
 			},
 			create_node : function (obj, position, js, callback) {
 				var t = this.__call_old(true, obj, position, js, function (t) {
-					var langs = this.get_settings().languages,
+					var langs = this._get_settings().languages,
 						a = t.children("a"),
 						ln;
 					if($.isArray(langs) && langs.length) {
@@ -1686,7 +1617,7 @@
 		__init : function () {
 			if(typeof $.cookie === "undefined") { throw "jsTree cookie: jQuery cookie plugin not included."; }
 
-			var s = this.get_settings().cookies,
+			var s = this._get_settings().cookies,
 				tmp;
 			if(!!s.save_opened) {
 				tmp = $.cookie(s.save_opened);
@@ -1700,7 +1631,7 @@
 				.one( ( this.data.ui ? "reselect" : "reopen" ) + ".jstree", $.proxy(function () {
 					this.get_container()
 						.bind("open_node.jstree close_node.jstree select_node.jstree deselect_node.jstree", $.proxy(function (e) { 
-								if(this.get_settings().cookies.auto_save) { this.save_cookie((e.handleObj.namespace + e.handleObj.type).replace("jstree","")); }
+								if(this._get_settings().cookies.auto_save) { this.save_cookie((e.handleObj.namespace + e.handleObj.type).replace("jstree","")); }
 							}, this));
 				}, this));
 		},
@@ -1713,7 +1644,7 @@
 		_fn : {
 			save_cookie : function (c) {
 				if(this.data.core.refreshing) { return; }
-				var s = this.get_settings().cookies;
+				var s = this._get_settings().cookies;
 				if(!c) { // if called manually and not by event
 					if(s.save_opened) {
 						this.save_opened();
@@ -1773,7 +1704,7 @@
 		defaults : function (a, b) { return this.get_text(a) > this.get_text(b) ? 1 : -1; },
 		_fn : {
 			sort : function (obj) {
-				var s = this.get_settings().sort,
+				var s = this._get_settings().sort,
 					t = this;
 				obj.append($.makeArray(obj.children("li")).sort($.proxy(s, t)));
 				obj.find("> li > ul").each(function() { t.sort($(this)); });
@@ -1975,7 +1906,7 @@
 						}
 					}, this));
 
-			var s = this.get_settings().dnd;
+			var s = this._get_settings().dnd;
 			if(s.drag_target) {
 				$(document)
 					.delegate(s.drag_target, "mousedown.jstree", $.proxy(function (e) {
@@ -1997,7 +1928,7 @@
 			if(s.drop_target) {
 				$(document)
 					.delegate(s.drop_target, "mouseenter.jstree", $.proxy(function (e) {
-							if(this.data.dnd.active && this.get_settings().dnd.drop_check.call(this, { "o" : o, "r" : $(e.target) })) {
+							if(this.data.dnd.active && this._get_settings().dnd.drop_check.call(this, { "o" : o, "r" : $(e.target) })) {
 								$.vakata.dnd.helper.children("ins").attr("class","jstree-ok");
 							}
 						}, this))
@@ -2008,7 +1939,7 @@
 						}, this))
 					.delegate(s.drop_target, "mouseup.jstree", $.proxy(function (e) {
 							if(this.data.dnd.active && $.vakata.dnd.helper.children("ins").hasClass("jstree-ok")) {
-								this.get_settings().dnd.drop_finish.call(this, { "o" : o, "r" : $(e.target) });
+								this._get_settings().dnd.drop_finish.call(this, { "o" : o, "r" : $(e.target) });
 							}
 						}, this));
 			}
@@ -2028,7 +1959,7 @@
 			dnd_prepare : function () {
 				this.data.dnd.off = r.offset();
 				if(this.data.dnd.foreign) {
-					var a = this.get_settings().dnd.drag_check.call(this, { "o" : o, "r" : r });
+					var a = this._get_settings().dnd.drag_check.call(this, { "o" : o, "r" : r });
 					this.data.dnd.after = a.after;
 					this.data.dnd.before = a.before;
 					this.data.dnd.inside = a.inside;
@@ -2089,19 +2020,19 @@
 			dnd_finish : function (e) {
 				if(this.data.dnd.foreign) {
 					if(this.data.dnd.after || this.data.dnd.before || this.data.dnd.inside) {
-						this.get_settings().dnd.drag_finish.call(this, { "o" : o, "r" : r });
+						this._get_settings().dnd.drag_finish.call(this, { "o" : o, "r" : r });
 					}
 				}
 				else {
 					this.dnd_prepare();
-					this.move_node(o, r, this.dnd_show(), e[this.get_settings().dnd.copy_modifier + "Key"]);
+					this.move_node(o, r, this.dnd_show(), e[this._get_settings().dnd.copy_modifier + "Key"]);
 				}
 				o = false;
 				r = false;
 				m.hide();
 			},
 			dnd_enter : function (obj) {
-				var s = this.get_settings().dnd;
+				var s = this._get_settings().dnd;
 				this.data.dnd.prepared = false;
 				r = this._get_node(obj);
 				if(s.check_timeout) { 
@@ -2470,19 +2401,22 @@
 		_fn : {
 			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_xml(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
-				var s = this.get_settings().xml_data;
+				var s = this._get_settings().xml_data;
 				return obj == -1 || !obj || !s.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
 			},
 			load_node_xml : function (obj, s_call, e_call) {
-				var s = this.get_settings().xml_data,
+				var s = this.get_settings().xml_data, d,
 					error_func = function () {},
 					success_func = function () {};
 				switch(!0) {
 					case (!s.data && !s.ajax): throw "Neither data nor ajax settings supplied.";
 					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
 						if(!obj || obj == -1) {
-							this.get_container().children("ul").empty().append(this.parse_xml(s.data).children());
-							if(s.clean_node) { this.clean_node(obj); }
+							d = this.parse_xml(s.data);
+							if(d) {
+								this.get_container().children("ul").empty().append(d.children());
+								if(s.clean_node) { this.clean_node(obj); }
+							}
 						}
 						if(s_call) { s_call.call(this); }
 						break;
@@ -2525,14 +2459,14 @@
 				}
 			},
 			parse_xml : function (xml) {
-				var s = this.get_settings().xml_data,
+				var s = this._get_settings().xml_data,
 					result = $.vakata.xslt(xml, xsl[s.xsl]);
 				if(result !== false) { result = $(result); }
 				return result;
 			},
 			get_xml : function (tp, obj, li_attr, a_attr, is_callback) {
 				var result = "", 
-					s = this.get_settings(), 
+					s = this._get_settings(), 
 					_this = this,
 					tmp1, tmp2, li, a, lang;
 				if(!tp) { tp = "flat"; }
@@ -2903,7 +2837,7 @@
 		_fn : {
 			show_contextmenu : function (obj, x, y) {
 				obj = this._get_node(obj);
-				var s = this.get_settings().contextmenu,
+				var s = this._get_settings().contextmenu,
 					a = obj.children("a:visible:eq(0)"),
 					o = false;
 				if(s.show_at_node || typeof x === "undefined" || typeof y === "undefined") {
@@ -2929,7 +2863,7 @@
 (function ($) {
 	$.jstree.plugin("types", {
 		__init : function () {
-			var s = this.get_settings().types;
+			var s = this._get_settings().types;
 			this.data.types.attach_to = [];
 			this.get_container()
 				.bind("init.jstree", $.proxy(function () { 
@@ -2956,7 +2890,7 @@
 					}, this))
 				.bind("before.jstree", $.proxy(function (e, data) { 
 						if($.inArray(data.func, this.data.types.attach_to) !== -1) {
-							var s = this.get_settings().types.types,
+							var s = this._get_settings().types.types,
 								t = this._get_type(data.args[0]);
 							if(s[t] && typeof s[t][data.func] !== "undefined" && !this._check(data.func, data.args[0])) {
 								e.stopImmediatePropagation();
@@ -2995,14 +2929,14 @@
 		_fn : {
 			_get_type : function (obj) {
 				obj = this._get_node(obj);
-				return (!obj || !obj.length) ? false : obj.attr(this.get_settings().types.type_attr) || "default";
+				return (!obj || !obj.length) ? false : obj.attr(this._get_settings().types.type_attr) || "default";
 			},
 			set_type : function (str, obj) {
 				obj = this._get_node(obj);
-				return (!obj.length || !str) ? false : obj.attr(this.get_settings().types.type_attr, str);
+				return (!obj.length || !str) ? false : obj.attr(this._get_settings().types.type_attr, str);
 			},
 			_check : function (rule, obj, opts) {
-				var v = false, t = this._get_type(obj), d = 0, _this = this, s = this.get_settings().types;
+				var v = false, t = this._get_type(obj), d = 0, _this = this, s = this._get_settings().types;
 				if(obj === -1) { 
 					if(!!s[rule]) { v = s[rule]; }
 					else { return; }
@@ -3025,7 +2959,7 @@
 			check_move : function () {
 				if(!this.__call_old()) { return false; }
 				var m  = this._get_move(),
-					s  = m.rt.get_settings().types,
+					s  = m.rt._get_settings().types,
 					mc = m.rt._check("max_children", m.cr),
 					md = m.rt._check("max_depth", m.cr),
 					vc = m.rt._check("valid_children", m.cr),
@@ -3061,7 +2995,7 @@
 			create_node : function (obj, position, js, callback, is_loaded, skip_check) {
 				if(!skip_check && (is_loaded || this._is_loaded(obj))) {
 					var p  = (position && position.match(/^before|after$/i)) ? this._get_parent(obj) : this._get_node(obj),
-						s  = this.get_settings().types,
+						s  = this._get_settings().types,
 						mc = this._check("max_children", p),
 						md = this._check("max_depth", p),
 						vc = this._check("valid_children", p),
@@ -3087,5 +3021,96 @@
 			}
 		}
 	});
+})(jQuery);
+//*/
+
+/* 
+ * jsTree HTML data 1.0
+ * The HTML data store. Datastores are build by replacing the `load_node` and `_is_loaded` functions.
+ */
+(function ($) {
+	$.jstree.plugin("html_data", {
+		__init : function () { 
+			this.data.html_data.original_container_html = this.get_container().html().replace(/<\/([^>]+)>\s+</ig,"</$1><").replace(/>\s+<([a-z]{1})/ig,"><$1");
+		},
+		defaults : { 
+			data : false,
+			ajax : false,
+			correct_state : false
+		},
+		_fn : {
+			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_html(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
+			_is_loaded : function (obj) { 
+				obj = this._get_node(obj); 
+				return obj == -1 || !obj || !this._get_settings().html_data.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
+			},
+			load_node_html : function (obj, s_call, e_call) {
+				var d,
+					s = this.get_settings().html_data,
+					error_func = function () {},
+					success_func = function () {};
+				switch(!0) {
+					case (!s.data && !s.ajax):
+						if(!obj || obj == -1) {
+							this.get_container()
+								.html(this.data.html_data.original_container_html)
+								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>");
+							this.clean_node();
+						}
+						if(s_call) { s_call.call(this); }
+						break;
+					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
+						if(!obj || obj == -1) {
+							d = $(s.data);
+							if(!d.is("ul")) { d = $("<ul>").append(d); }
+							this.get_container()
+								.children("ul").empty().append(d.children())
+								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>");
+							this.clean_node();
+						}
+						if(s_call) { s_call.call(this); }
+						break;
+					case (!s.data && !!s.ajax) || (!!s.data && !!s.ajax && obj && obj !== -1):
+						obj = this._get_node(obj);
+						error_func = function (x, t, e) {
+							var ef = this.get_settings().html_data.ajax.error; 
+							if(ef) { ef.call(this, x, t, e); }
+							if(obj != -1 && obj.length) {
+								obj.children(".jstree-loading").removeClass("jstree-loading");
+								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+							}
+							if(e_call) { e_call.call(this); }
+						};
+						success_func = function (d, t, x) {
+							if(x.responseText == "") {
+								return error_func.call(this, x, t, "");
+							}
+							var sf = this.get_settings().html_data.ajax.success; 
+							if(sf) { d = sf.call(this,d,t,x) || d; }
+							if(d) {
+								d = $(d);
+								if(!d.is("ul")) { d = $("<ul>").append(d); }
+								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
+								else { obj.children(".jstree-loading").removeClass("jstree-loading"); obj.append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
+								this.clean_node(obj);
+								if(s_call) { s_call.call(this); }
+							}
+							else {
+								obj.children(".jstree-loading").removeClass("jstree-loading");
+								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+							}
+						};
+						s.ajax.context = this;
+						s.ajax.error = error_func;
+						s.ajax.success = success_func;
+						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this, obj); }
+						$.ajax(s.ajax);
+						break;
+				}
+			}
+		}
+	});
+	// include the HTML data plugin by default
+	$.jstree.defaults.plugins.push("html_data");
 })(jQuery);
 //*/

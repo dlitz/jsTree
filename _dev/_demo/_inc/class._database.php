@@ -76,7 +76,7 @@ class _database {
 				$return = $this->row;
 				break;
 		}
-		return $return;
+		return array_map("stripslashes",$return);
 	}
 
 	function get_all($mode = "both", $key = false) {

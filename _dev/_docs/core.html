@@ -68,7 +68,7 @@ jQuery("some-selector-to-container-node-here")
 jQuery("some-selector-to-container-node-here")
 	.jstree({
 		core : { /* core options go here */ },
-		plugins : { "themes", "html_data", "some-other-plugin" }
+		plugins : [ "themes", "html_data", "some-other-plugin" ]
 	});
 </pre></div>
 
@@ -268,6 +268,9 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 <p>An object where all plugins store instance specific data. Do not modify manually.</p>
 
 <h3 id="get_settings">.get_settings ()</h3>
+<p>Returns a copy of the instance's settings object - the defaults, extended by your own config object.</p>
+
+<h3 id="_get_settings">._get_settings ()</h3>
 <p>Returns the instance's settings object - the defaults, extended by your own config object.</p>
 
 <h3 id="get_index">.get_index ()</h3>
