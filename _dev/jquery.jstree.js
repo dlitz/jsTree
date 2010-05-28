@@ -1290,7 +1290,7 @@
 		_fn : {
 			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_json(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
-				var s = this.get_settings().json_data, d;
+				var s = this._get_settings().json_data, d;
 				obj = this._get_node(obj); 
 				if(obj && obj !== -1 && s.progressive_render && !obj.is(".jstree-open, .jstree-leaf") && obj.children("ul").children("li").length === 0) {
 					d = this._parse_json(obj.data("jstree-children"));
@@ -2230,7 +2230,7 @@
  * The XML data store. Datastores are build by overriding the `load_node` and `_is_loaded` functions.
  */
 (function ($) {
-	$.vakata.xslt = function (xml, xsl) {
+	$.vakata.xslt = function (xml, xsl, callback) {
 		var rs = "", xm, xs, processor, support;
 		if(document.recalc) {
 			xm = document.createElement('xml');
@@ -2238,9 +2238,13 @@
 			xm.innerHTML = xml;
 			xs.innerHTML = xsl;
 			$("body").append(xm).append(xs);
-			rs = xm.transformNode(xs.XMLDocument);
-			$("body").remove(xm).remove(xs);
-			return rs;
+			setTimeout( (function (xm, xs, callback) {
+				return function () {
+					callback.call(null, xm.transformNode(xs.XMLDocument));
+					$("body").remove(xm).remove(xs);
+				};
+			}) (xm, xs, callback), 100);
+			return true;
 		}
 		if(typeof window.DOMParser !== "undefined" && typeof window.XMLHttpRequest !== "undefined" && typeof window.XSLTProcessor !== "undefined") {
 			processor = new XSLTProcessor();
@@ -2251,12 +2255,14 @@
 			if($.isFunction(processor.transformDocument)) {
 				rs = document.implementation.createDocument("", "", null);
 				processor.transformDocument(xml, xsl, rs, null);
-				return new XMLSerializer().serializeToString(rs);
+				callback.call(null, XMLSerializer().serializeToString(rs));
+				return true;
 			}
 			else {
 				processor.importStylesheet(xsl);
 				rs = processor.transformToFragment(xml, document);
-				return $("<div>").append(rs).html();
+				callback.call(null, $("<div>").append(rs).html());
+				return true;
 			}
 		}
 		return false;
@@ -2400,7 +2406,8 @@
 			data : false,
 			ajax : false,
 			xsl : "flat",
-			clean_node : false
+			clean_node : false,
+			correct_state : false
 		},
 		_fn : {
 			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_xml(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
@@ -2409,18 +2416,23 @@
 				return obj == -1 || !obj || !s.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
 			},
 			load_node_xml : function (obj, s_call, e_call) {
-				var s = this.get_settings().xml_data, d,
+				var s = this.get_settings().xml_data,
 					error_func = function () {},
 					success_func = function () {};
 				switch(!0) {
 					case (!s.data && !s.ajax): throw "Neither data nor ajax settings supplied.";
 					case (!!s.data && !s.ajax) || (!!s.data && !!s.ajax && (!obj || obj === -1)):
 						if(!obj || obj == -1) {
-							d = this.parse_xml(s.data);
-							if(d) {
-								this.get_container().children("ul").empty().append(d.children());
-								if(s.clean_node) { this.clean_node(obj); }
-							}
+							this.parse_xml(s.data, $.proxy(function (d) {
+								if(d) {
+									d = d.replace(/ ?xmlns="[^"]*"/ig, "");
+									if(d.length > 10) {
+										d = $(d);
+										this.get_container().children("ul").empty().append(d.children());
+										if(s.clean_node) { this.clean_node(obj); }
+									}
+								}
+							}, this));
 						}
 						if(s_call) { s_call.call(this); }
 						break;
@@ -2442,17 +2454,22 @@
 							if(d == "") {
 								return error_func.call(this, x, t, "");
 							}
-							d = this.parse_xml(d);
-							if(d) {
-								if(obj === -1 || !obj) { this.get_container().children("ul").empty().append(this.parse_xml(x.responseText).children()); }
-								else { obj.append(this.parse_xml(x.responseText)).children(".jstree-loading").removeClass("jstree-loading"); }
-								if(s.clean_node) { this.clean_node(obj); }
-								if(s_call) { s_call.call(this); }
-							}
-							else {
-								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
-							}
+							this.parse_xml(d, $.proxy(function (d) {
+								if(d) {
+									d = d.replace(/ ?xmlns="[^"]*"/ig, "");
+									if(d.length > 10) {
+										d = $(d);
+										if(obj === -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
+										else { obj.children(".jstree-loading").removeClass("jstree-loading"); obj.append(d); }
+										if(s.clean_node) { this.clean_node(obj); }
+										if(s_call) { s_call.call(this); }
+									}
+									else {
+										if(obj && obj !== -1) { obj.children(".jstree-loading").removeClass("jstree-loading"); }
+										if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+									}
+								}
+							}, this));
 						};
 						s.ajax.context = this;
 						s.ajax.error = error_func;
@@ -2462,11 +2479,9 @@
 						break;
 				}
 			},
-			parse_xml : function (xml) {
-				var s = this._get_settings().xml_data,
-					result = $.vakata.xslt(xml, xsl[s.xsl]);
-				if(result !== false) { result = $(result); }
-				return result;
+			parse_xml : function (xml, callback) {
+				var s = this._get_settings().xml_data;
+				$.vakata.xslt(xml, xsl[s.xsl], callback);
 			},
 			get_xml : function (tp, obj, li_attr, a_attr, is_callback) {
 				var result = "", 
