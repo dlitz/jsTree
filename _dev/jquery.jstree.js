@@ -388,6 +388,9 @@
 				var _this = this;
 				this.save_opened();
 				if(!obj) { obj = -1; }
+				obj = this._get_node(obj);
+				if(!obj) { obj = -1; }
+				if(obj !== -1) { obj.children("UL").remove(); }
 				this.load_node(obj, function () { _this.__callback({}); _this.reopen(); });
 			},
 			// Dummy function to fire after the first load (so that there is a jstree.loaded event)
@@ -578,7 +581,7 @@
 					tmp.prepend("<ins class='jstree-icon'>&#160;</ins>");
 					if(m.icon) { 
 						if(m.icon.indexOf("/") === -1) { tmp.children("ins").addClass(m.icon); }
-						else { tmp.children("ins").css("background","url('" + m.icon + "') center center no-repeat;"); }
+						else { tmp.children("ins").css("background","url('" + m.icon + "') center center no-repeat"); }
 					}
 					d.append(tmp);
 				});
@@ -1393,7 +1396,7 @@
 						tmp.prepend("<ins class='jstree-icon'>&#160;</ins>");
 						if(m.icon) { 
 							if(m.icon.indexOf("/") === -1) { tmp.children("ins").addClass(m.icon); }
-							else { tmp.children("ins").css("background","url('" + m.icon + "') center center no-repeat;"); }
+							else { tmp.children("ins").css("background","url('" + m.icon + "') center center no-repeat"); }
 						}
 						d.append(tmp);
 					});
@@ -2809,7 +2812,7 @@
 					"icon"				: false,
 					"separator_after"	: false,
 					"label"				: "Edit",
-					"action"			: function (obj) { this.remove(obj); },
+					"action"			: false,
 					"submenu" : { 
 						"cut" : {
 							"separator_before"	: false,

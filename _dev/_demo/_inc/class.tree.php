@@ -504,7 +504,25 @@ class json_tree extends _tree_struct {
 	function rename_node($data) { return $this->set_data($data); }
 
 	function move_node($data) { 
-		return "{ \"status\" : ".parent::_move((int)$data["id"], (int)$data["ref"], (int)$data["position"], (int)$data["copy"])." }";
+		$id = parent::_move((int)$data["id"], (int)$data["ref"], (int)$data["position"], (int)$data["copy"]);
+		if(!$id) return "{ \"status\" : 0 }";
+		if((int)$data["copy"] && count($this->add_fields)) {
+			$ids	= array_keys($this->_get_children($id, true));
+			$data	= $this->_get_children((int)$data["id"], true);
+
+			$i = 0;
+			foreach($data as $dk => $dv) {
+				$s = "UPDATE `".$this->table."` SET `".$this->fields["id"]."` = `".$this->fields["id"]."` "; 
+				foreach($this->add_fields as $k => $v) {
+					if(isset($dv[$k]))	$s .= ", `".$this->fields[$v]."` = \"".$this->db->escape($dv[$k])."\" ";
+					else				$s .= ", `".$this->fields[$v]."` = `".$this->fields[$v]."` ";
+				}
+				$s .= "WHERE `".$this->fields["id"]."` = ".$ids[$i];
+				$this->db->query($s);
+				$i++;
+			}
+		}
+		return "{ \"status\" : 1, \"id\" : ".$id." }";
 	}
 	function remove_node($data) {
 		$id = parent::_remove((int)$data["id"]);
