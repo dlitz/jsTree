@@ -8,10 +8,12 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-05-27
+ * Date: 2010-05-31
  */
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
+
+// if not set - add dataType - json/xml (search for $.ajax)
 
 "use strict";
 // Common functions not related to jsTree 
@@ -1086,7 +1088,7 @@
 					return this.__call_old(true, obj, ref, position, is_copy, false, skip_check);
 				}
 				// if the move is already prepared
-				if(s.always_copy === true || (s.always_copy === "multitree" && obj.rt.get_index() === obj.ot.get_index() )) {
+				if(s.always_copy === true || (s.always_copy === "multitree" && obj.rt.get_index() !== obj.ot.get_index() )) {
 					is_copy = true;
 				}
 				this.__call_old(true, obj, ref, position, is_copy, true, skip_check);
@@ -1284,7 +1286,7 @@
 		defaults : { 
 			data : false,
 			ajax : false,
-			correct_state : false,
+			correct_state : true,
 			progressive_render : false
 		},
 		_fn : {
@@ -1326,7 +1328,7 @@
 							if(ef) { ef.call(this, x, t, e); }
 							if(obj != -1 && obj.length) {
 								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+								if(t === "success" && s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
 							}
 							if(e_call) { e_call.call(this); }
 						};
@@ -1345,12 +1347,13 @@
 							}
 							else {
 								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); if(s_call) { s_call.call(this); } }
 							}
 						};
 						s.ajax.context = this;
 						s.ajax.error = error_func;
 						s.ajax.success = success_func;
+						if(!s.ajax.dataType) { s.ajax.dataType = "json"; }
 						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this, obj); }
 						$.ajax(s.ajax);
 						break;
@@ -2241,7 +2244,7 @@
 			setTimeout( (function (xm, xs, callback) {
 				return function () {
 					callback.call(null, xm.transformNode(xs.XMLDocument));
-					$("body").remove(xm).remove(xs);
+					jQuery("body").remove(xm).remove(xs);
 				};
 			}) (xm, xs, callback), 100);
 			return true;
@@ -2407,7 +2410,7 @@
 			ajax : false,
 			xsl : "flat",
 			clean_node : false,
-			correct_state : false
+			correct_state : true
 		},
 		_fn : {
 			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_xml(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
@@ -2443,7 +2446,7 @@
 							if(ef) { ef.call(this, x, t, e); }
 							if(obj !== -1 && obj.length) {
 								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+								if(t === "success" && s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
 							}
 							if(e_call) { e_call.call(this); }
 						};
@@ -2466,7 +2469,7 @@
 									}
 									else {
 										if(obj && obj !== -1) { obj.children(".jstree-loading").removeClass("jstree-loading"); }
-										if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+										if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); if(s_call) { s_call.call(this); } }
 									}
 								}
 							}, this));
@@ -2474,6 +2477,7 @@
 						s.ajax.context = this;
 						s.ajax.error = error_func;
 						s.ajax.success = success_func;
+						if(!s.ajax.dataType) { s.ajax.dataType = "xml"; }
 						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(null, obj); }
 						$.ajax(s.ajax);
 						break;
@@ -2856,7 +2860,7 @@
 		_fn : {
 			show_contextmenu : function (obj, x, y) {
 				obj = this._get_node(obj);
-				var s = this._get_settings().contextmenu,
+				var s = this.get_settings().contextmenu,
 					a = obj.children("a:visible:eq(0)"),
 					o = false;
 				if(s.show_at_node || typeof x === "undefined" || typeof y === "undefined") {
@@ -3055,7 +3059,7 @@
 		defaults : { 
 			data : false,
 			ajax : false,
-			correct_state : false
+			correct_state : true
 		},
 		_fn : {
 			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_html(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
@@ -3096,7 +3100,7 @@
 							if(ef) { ef.call(this, x, t, e); }
 							if(obj != -1 && obj.length) {
 								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+								if(t === "success" && s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
 							}
 							if(e_call) { e_call.call(this); }
 						};
@@ -3116,12 +3120,13 @@
 							}
 							else {
 								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
+								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); if(s_call) { s_call.call(this); } }
 							}
 						};
 						s.ajax.context = this;
 						s.ajax.error = error_func;
 						s.ajax.success = success_func;
+						if(!s.ajax.dataType) { s.ajax.dataType = "html"; }
 						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this, obj); }
 						$.ajax(s.ajax);
 						break;

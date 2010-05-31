@@ -62,8 +62,8 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <p>The only difference is that you can set the <code>data</code> option to a function, that will be executed in the current tree's scope (<code>this</code> will be the tree instance) and gets the node about to be open as a paramater (or <code>-1</code> for initial load). Whatever you return in the function will be sent to the server as data (so for example you can send the node's ID).</p>
 <p>The <code>error</code> and <code>success</code> functions (if present) also fire in the context of the tree, and if you return a value in the <code>success</code> function it will be used to populate the tree - this can be useful if you want to somehow change what the server returned on the client side before it is displayed in the tree.</p>
 <h3>correct_state</h3>
-<p class="meta">A Boolean. Default is <code>false</code>.</p>
-<p>If this option is set to <code>true</code> if an AJAX request fails (or returns an empty result), the node that was about to be opened will be converted to a leaf node (the open icon will no longer be displayed).</p>
+<p class="meta">A Boolean. Default is <code>true</code>.</p>
+<p>If this option is set to <code>true</code> if an AJAX request returns an empty result, the node that was about to be opened will be converted to a leaf node (the open icon will no longer be displayed).</p>
 
 <p class="note"><strong>NOTE:</strong><br />If both <code>data</code> and <code>ajax</code> are not set, the current container's HTML is used to build the tree.<br />If both <code>data</code> and <code>ajax</code> are set the initial tree is rendered from the <code>data</code> string. When opening a closed node (that has no loaded children) an AJAX request is made.</p>
 </div>
