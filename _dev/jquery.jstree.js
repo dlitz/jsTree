@@ -664,14 +664,13 @@
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				this.__rollback();
-				var p = this._get_parent(obj);
-				this.deselect_node(obj);
+				var p = this._get_parent(obj), prev = this._get_prev(obj);
 				obj = obj.remove();
 				if(p !== -1 && p.find("> ul > li").length === 0) {
 					p.removeClass("jstree-open, jstree-closed").addClass("jstree-leaf");
 				}
 				this.clean_node(p);
-				this.__callback({ "obj" : obj });
+				this.__callback({ "obj" : obj, "prev" : prev });
 				return obj;
 			},
 			prepare_move : function (o, r, pos, cb, is_cb) {
@@ -836,10 +835,12 @@
 						});
 					}, this))
 				.bind("delete_node.jstree", $.proxy(function (event, data) { 
-						var obj = this._get_node(data.rslt.obj),
+						var s = this._get_settings().ui.select_prev_on_delete,
+							obj = this._get_node(data.rslt.obj),
 							clk = (obj && obj.length) ? obj.find(".jstree-clicked") : [],
 							_this = this;
 						clk.each(function () { _this.deselect_node(this); });
+						if(s) { this.select_node(data.rslt.prev); }
 					}, this))
 				.bind("move_node.jstree", $.proxy(function (event, data) { 
 						if(data.rslt.cy) { 
@@ -851,6 +852,7 @@
 			select_limit : -1, // 0, 1, 2 ... or -1 for unlimited
 			select_multiple_modifier : "ctrl", // on, or ctrl, shift, alt
 			selected_parent_close : "select_parent", // false, "deselect", "select_parent"
+			select_prev_on_delete : true,
 			initially_select : []
 		},
 		_fn : { 
@@ -896,7 +898,7 @@
 			},
 			select_node : function (obj, check, e) {
 				obj = this._get_node(obj);
-				if(!obj.length) { return false; }
+				if(obj == -1 || !obj || !obj.length) { return false; }
 				var s = this._get_settings().ui,
 					is_multiple = (s.select_multiple_modifier == "on" || (s.select_multiple_modifier !== false && e && e[s.select_multiple_modifier + "Key"])),
 					is_selected = this.is_selected(obj),
