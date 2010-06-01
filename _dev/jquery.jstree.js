@@ -825,8 +825,8 @@
 					}, this))
 				.bind("close_node.jstree", $.proxy(function (event, data) { 
 						var s = this._get_settings().ui,
-							obj = this._get_node(data.args[0]),
-							clk = (obj && obj.length) ? obj.find(".jstree-clicked") : [],
+							obj = this._get_node(data.rslt.obj),
+							clk = (obj && obj.length) ? obj.children("ul").find(".jstree-clicked") : $(),
 							_this = this;
 						if(s.selected_parent_close === false || !clk.length) { return; }
 						clk.each(function () { 
@@ -906,7 +906,11 @@
 				if(check) {
 					proceed = false;
 					switch(!0) {
-						case (is_selected && !is_multiple): break;
+						case (is_selected && !is_multiple): 
+							this.deselect_all();
+							is_selected = false;
+							proceed = true;
+							break;
 						case (!is_selected && !is_multiple): 
 							if(s.select_limit == -1 || s.select_limit > 0) {
 								this.deselect_all();
@@ -3212,7 +3216,9 @@
 						data.rslt.obj.children("a").addClass(s.item_a);
 					}, this))
 				.bind("deselect_node.jstree deselect_all.jstree", $.proxy(function (e, data) {
-						this.get_container().find("." + s.item_a).removeClass(s.item_a);
+						this.get_container()
+							.find("." + s.item_a).removeClass(s.item_a).end()
+							.find(".jstree-clicked").addClass(s.item_a);
 					}, this))
 				.bind("move_node.jstree", $.proxy(function (e, data) {
 						this._themeroller(data.rslt.o);
