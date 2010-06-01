@@ -8,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-05-31
+ * Date: 2010-06-01
  */
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
@@ -108,7 +108,7 @@
 			this.each(function() {
 				var instance = instances[$.data(this, "jstree-instance-id")],
 					methodValue = (instance && $.isFunction(instance[settings])) ? instance[settings].apply(instance, args) : instance;
-					if(typeof methodValue !== "undefined" && methodValue !== true && methodValue !== false) { returnValue = methodValue; return false; }
+					if(typeof methodValue !== "undefined" && (settings.indexOf("is_" === 0) || (methodValue !== true && methodValue !== false))) { returnValue = methodValue; return false; }
 			});
 		}
 		else {
@@ -1161,8 +1161,8 @@
 					$.vakata.css.add_sheet({ "url" : theme_url, "rel" : "jstree" });
 					themes_loaded.push(theme_url);
 				}
-				if(this.data.theme != theme_name) {
-					this.get_container().removeClass('jstree-' + this.data.theme);
+				if(this.data.themes.theme != theme_name) {
+					this.get_container().removeClass('jstree-' + this.data.themes.theme);
 					this.data.themes.theme = theme_name;
 				}
 				this.get_container().addClass('jstree-' + theme_name);
@@ -1330,6 +1330,9 @@
 								obj.children(".jstree-loading").removeClass("jstree-loading");
 								if(t === "success" && s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
 							}
+							else {
+								if(t === "success" && s.correct_state) { this.get_container().children("ul").empty(); }
+							}
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
@@ -1340,14 +1343,25 @@
 							}
 							d = this._parse_json(d);
 							if(d) {
-								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
+								if(obj === -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
 								else { obj.append(d).children(".jstree-loading").removeClass("jstree-loading"); }
 								this.clean_node(obj);
 								if(s_call) { s_call.call(this); }
 							}
 							else {
-								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); if(s_call) { s_call.call(this); } }
+								if(obj === -1 || !obj) {
+									if(s.correct_state) { 
+										this.get_container().children("ul").empty(); 
+										if(s_call) { s_call.call(this); }
+									}
+								}
+								else {
+									obj.children(".jstree-loading").removeClass("jstree-loading");
+									if(s.correct_state) { 
+										obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); 
+										if(s_call) { s_call.call(this); } 
+									}
+								}
 							}
 						};
 						s.ajax.context = this;
@@ -2448,6 +2462,9 @@
 								obj.children(".jstree-loading").removeClass("jstree-loading");
 								if(t === "success" && s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
 							}
+							else {
+								if(t === "success" && s.correct_state) { this.get_container().children("ul").empty(); }
+							}
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
@@ -2468,8 +2485,19 @@
 										if(s_call) { s_call.call(this); }
 									}
 									else {
-										if(obj && obj !== -1) { obj.children(".jstree-loading").removeClass("jstree-loading"); }
-										if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); if(s_call) { s_call.call(this); } }
+										if(obj && obj !== -1) { 
+											obj.children(".jstree-loading").removeClass("jstree-loading"); 
+											if(s.correct_state) { 
+												obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); 
+												if(s_call) { s_call.call(this); } 
+											}
+										}
+										else {
+											if(s.correct_state) { 
+												this.get_container().children("ul").empty();
+												if(s_call) { s_call.call(this); } 
+											}
+										}
 									}
 								}
 							}, this));
@@ -3102,6 +3130,9 @@
 								obj.children(".jstree-loading").removeClass("jstree-loading");
 								if(t === "success" && s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); }
 							}
+							else {
+								if(t === "success" && s.correct_state) { this.get_container().children("ul").empty(); }
+							}
 							if(e_call) { e_call.call(this); }
 						};
 						success_func = function (d, t, x) {
@@ -3119,8 +3150,19 @@
 								if(s_call) { s_call.call(this); }
 							}
 							else {
-								obj.children(".jstree-loading").removeClass("jstree-loading");
-								if(s.correct_state) { obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); if(s_call) { s_call.call(this); } }
+								if(obj && obj !== -1) {
+									obj.children(".jstree-loading").removeClass("jstree-loading");
+									if(s.correct_state) { 
+										obj.removeClass("jstree-open jstree-closed").addClass("jstree-leaf"); 
+										if(s_call) { s_call.call(this); } 
+									}
+								}
+								else {
+									if(s.correct_state) { 
+										this.get_container().children("ul").empty();
+										if(s_call) { s_call.call(this); } 
+									}
+								}
 							}
 						};
 						s.ajax.context = this;
@@ -3136,5 +3178,67 @@
 	});
 	// include the HTML data plugin by default
 	$.jstree.defaults.plugins.push("html_data");
+})(jQuery);
+//*/
+
+/* 
+ * jsTree themeroller plugin 1.0
+ * Adds support for jQuery UI themes. Include this at the end of your plugins list, also make sure "themes" is not included.
+ */
+(function ($) {
+	$.jstree.plugin("themeroller", {
+		__init : function () {
+			var s = this._get_settings().themeroller;
+			this.get_container()
+				.addClass("ui-widget-content")
+				.delegate("a","mouseenter", function () {
+					$(this).addClass(s.item_h);
+				})
+				.delegate("a","mouseleave", function () {
+					$(this).removeClass(s.item_h);
+				})
+				.bind("open_node.jstree create_node.jstree", $.proxy(function (e, data) { 
+						this._themeroller(data.rslt.obj);
+					}, this))
+				.bind("loaded.jstree", $.proxy(function (e) {
+						this._themeroller();
+					}, this))
+				.bind("close_node.jstree", $.proxy(function (e, data) {
+						data.rslt.obj.children("ins").removeClass(s.opened).addClass(s.closed);
+					}, this))
+				.bind("select_node.jstree", $.proxy(function (e, data) {
+						data.rslt.obj.children("a").addClass(s.item_a);
+					}, this))
+				.bind("deselect_node.jstree deselect_all.jstree", $.proxy(function (e, data) {
+						this.get_container().find("." + s.item_a).removeClass(s.item_a);
+					}, this))
+				.bind("move_node.jstree", $.proxy(function (e, data) {
+						this._themeroller(data.rslt.o);
+					}, this));
+		},
+		_fn : {
+			_themeroller : function (obj) {
+				var s = this._get_settings().themeroller;
+				obj = !obj || obj == -1 ? this.get_container() : this._get_node(obj).parent();
+				obj
+					.find("li.jstree-closed > ins.jstree-icon").removeClass(s.opened).addClass("ui-icon " + s.closed).end()
+					.find("li.jstree-open > ins.jstree-icon").removeClass(s.closed).addClass("ui-icon " + s.opened).end()
+					.find("a").addClass(s.item)
+						.children("ins.jstree-icon").addClass("ui-icon " + s.item_icon);
+			}
+		},
+		defaults : {
+			"opened" : "ui-icon-triangle-1-se",
+			"closed" : "ui-icon-triangle-1-e",
+			"item" : "ui-state-default",
+			"item_h" : "ui-state-hover",
+			"item_a" : "ui-state-active",
+			"item_icon" : "ui-icon-folder-collapsed"
+		}
+	});
+	$(function() {
+		var css_string = '.jstree .ui-icon { overflow:visible; } .jstree a { padding:0 2px; }';
+		$.vakata.css.add_sheet({ str : css_string });
+	});
 })(jQuery);
 //*/

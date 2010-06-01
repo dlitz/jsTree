@@ -48,7 +48,9 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
 <h3>Using the themes plugin</h3>
 <input type="button" class="button" value="toggle_dots" id="toggle_dots" style="float:left;" />
-<input type="button" class="button" value="toggle_icons" id="toggle_icons" style="" />
+<input type="button" class="button" value="toggle_icons" id="toggle_icons" style="float:left;" />
+<input type="button" class="button" value="set_theme1" id="set_theme1" style="float:left;" />
+<input type="button" class="button" value="set_theme2" id="set_theme2" style="" />
 <div id="demo1" class="demo">
 	<ul>
 		<li id="phtml_1">
@@ -71,6 +73,12 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 $(function () {
 	$("#toggle_dots, #toggle_icons").click(function () { 
 		$("#demo1").jstree(this.value);
+	});
+	$("#set_theme1").click(function () { 
+		$("#demo1").jstree("set_theme","apple");
+	});
+	$("#set_theme2").click(function () { 
+		$("#demo1").jstree("set_theme","default");
 	});
 	$("#demo1").jstree({ 
 		"themes" : {
