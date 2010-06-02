@@ -393,7 +393,7 @@
 				obj = this._get_node(obj);
 				if(!obj) { obj = -1; }
 				if(obj !== -1) { obj.children("UL").remove(); }
-				this.load_node(obj, function () { _this.__callback({}); _this.reopen(); });
+				this.load_node(obj, function () { _this.__callback({ "obj" : obj}); _this.reopen(); });
 			},
 			// Dummy function to fire after the first load (so that there is a jstree.loaded event)
 			loaded	: function () { 
@@ -853,6 +853,7 @@
 			select_multiple_modifier : "ctrl", // on, or ctrl, shift, alt
 			selected_parent_close : "select_parent", // false, "deselect", "select_parent"
 			select_prev_on_delete : true,
+			disable_selecting_children : false,
 			initially_select : []
 		},
 		_fn : { 
@@ -904,6 +905,9 @@
 					is_selected = this.is_selected(obj),
 					proceed = true;
 				if(check) {
+					if(s.disable_selecting_children && obj.parents("li", this.get_container()).children(".jstree-clicked").length) {
+						return false;
+					}
 					proceed = false;
 					switch(!0) {
 						case (is_selected && !is_multiple): 
@@ -2357,7 +2361,7 @@
 			'<xsl:output method="html" encoding="utf-8" omit-xml-declaration="yes" standalone="no" indent="no" media-type="text/xml" />' + 
 			'<xsl:template match="/">' + 
 			'	<ul>' + 
-			'	<xsl:for-each select="//item[not(@parent_id) or @parent_id=0]">' + 
+			'	<xsl:for-each select="//item[not(@parent_id) or @parent_id=0 or not(@parent_id = //item/@id)]">' + /* the last `or` may be removed */
 			'		<xsl:call-template name="nodes">' + 
 			'			<xsl:with-param name="node" select="." />' + 
 			'			<xsl:with-param name="is_last" select="number(position() = last())" />' + 
@@ -2839,6 +2843,7 @@
 					}, this));
 		},
 		defaults : { 
+			select_node : true, // requires UI plugin
 			show_at_node : true,
 			items : { // Could be a function that should return an object like this one
 				"create" : {
@@ -2897,6 +2902,10 @@
 				var s = this.get_settings().contextmenu,
 					a = obj.children("a:visible:eq(0)"),
 					o = false;
+				if(s.select_node && this.data.ui && !this.is_selected(obj)) {
+					this.deselect_all();
+					this.select_node(obj, true);
+				}
 				if(s.show_at_node || typeof x === "undefined" || typeof y === "undefined") {
 					o = a.offset();
 					x = o.left;
@@ -3206,7 +3215,7 @@
 				.bind("open_node.jstree create_node.jstree", $.proxy(function (e, data) { 
 						this._themeroller(data.rslt.obj);
 					}, this))
-				.bind("loaded.jstree", $.proxy(function (e) {
+				.bind("loaded.jstree refresh.jstree", $.proxy(function (e) {
 						this._themeroller();
 					}, this))
 				.bind("close_node.jstree", $.proxy(function (e, data) {
