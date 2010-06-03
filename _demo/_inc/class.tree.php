@@ -535,11 +535,12 @@ class json_tree extends _tree_struct {
 			$tmp = $this->_get_children((int)$data["id"]);
 		}
 		$result = array();
+		if((int)$data["id"] === 0) return json_encode($result);
 		foreach($tmp as $k => $v) {
 			$result[] = array(
 				"attr" => array("id" => "node_".$k, "rel" => $v[$this->fields["type"]]),
 				"data" => $v[$this->fields["title"]],
-				"state" => ($v[$this->fields["right"]] - $v[$this->fields["left"]] > 1) ? "closed" : ""
+				"state" => ((int)$v[$this->fields["right"]] - (int)$v[$this->fields["left"]] > 1) ? "closed" : ""
 			);
 		}
 		return json_encode($result);

@@ -1310,7 +1310,7 @@
 			_is_loaded : function (obj) { 
 				var s = this._get_settings().json_data, d;
 				obj = this._get_node(obj); 
-				if(obj && obj !== -1 && s.progressive_render && !obj.is(".jstree-open, .jstree-leaf") && obj.children("ul").children("li").length === 0) {
+				if(obj && obj !== -1 && s.progressive_render && !obj.is(".jstree-open, .jstree-leaf") && obj.children("ul").children("li").length === 0 && obj.data("jstree-children")) {
 					d = this._parse_json(obj.data("jstree-children"));
 					if(d) {
 						obj.append(d);
