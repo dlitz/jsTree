@@ -85,6 +85,7 @@ jQuery.jstree._reference(needle)
 	/* NEEDLE can be a DOM node or selector for the container or a node within the container */
 	.operation_name([ argument_1, argument_2, ...]);
 </pre></div>
+<p class="note">NOTE: Functions prefixed with <code>_</code> can not be called with method one.</p>
 
 <p>jsTree uses events to notify of any changes happening in the tree. All events fire on the tree container in the <code>jstree</code> namespace and are named after the function that triggered them. Please note that for some events it is best to bind before creating the instance. For example:</p>
 <div class="code_f"><pre class="brush:js;">
