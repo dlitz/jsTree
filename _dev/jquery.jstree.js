@@ -8,7 +8,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: 2010-06-01
+ * Date: 2010-06-03
  */
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
@@ -508,6 +508,7 @@
 			},
 			open_all	: function (obj, original_obj) {
 				obj = obj ? this._get_node(obj) : this.get_container();
+				if(!obj || obj === -1) { obj = this.get_container(); }
 				if(original_obj) { 
 					obj = obj.find("li.jstree-closed");
 				}
@@ -528,6 +529,7 @@
 			close_all	: function (obj) {
 				var _this = this;
 				obj = obj ? this._get_node(obj) : this.get_container();
+				if(!obj || obj === -1) { obj = this.get_container(); }
 				obj.find("li.jstree-open").andSelf().each(function () { _this.close_node(this); });
 				this.__callback({ "obj" : obj });
 			},
@@ -1426,6 +1428,7 @@
 							if(m.language) { tmp.addClass(m.language); }
 						}
 						tmp.prepend("<ins class='jstree-icon'>&#160;</ins>");
+						if(!m.icon && js.icon) { m.icon = js.icon; }
 						if(m.icon) { 
 							if(m.icon.indexOf("/") === -1) { tmp.children("ins").addClass(m.icon); }
 							else { tmp.children("ins").css("background","url('" + m.icon + "') center center no-repeat"); }
@@ -1810,7 +1813,7 @@
 		}
 	};
 	$(function() {
-		var css_string = '#vakata-dragged { display:block; margin:0 0 0 0; padding:4px 4px 4px 24px; position:absolute; left:-2000px; top:-2000px; line-height:16px; z-index:1000; } ';
+		var css_string = '#vakata-dragged { display:block; margin:0 0 0 0; padding:4px 4px 4px 24px; position:absolute; left:-2000px; top:-2000px; line-height:16px; z-index:10000; } ';
 		$.vakata.css.add_sheet({ str : css_string });
 	});
 
@@ -2113,7 +2116,7 @@
 			'#vakata-dragged ins { display:block; text-decoration:none; width:16px; height:16px; margin:0 0 0 0; padding:0; position:absolute; top:4px; left:4px; } ' + 
 			'#vakata-dragged .jstree-ok { background:green; } ' + 
 			'#vakata-dragged .jstree-invalid { background:red; } ' + 
-			'#jstree-marker { padding:0; margin:0; line-height:12px; font-size:1px; overflow:hidden; height:12px; width:8px; position:absolute; left:-45px; top:-30px; z-index:1000; background-repeat:no-repeat; display:none; background-color:silver; } ';
+			'#jstree-marker { padding:0; margin:0; line-height:12px; font-size:1px; overflow:hidden; height:12px; width:8px; position:absolute; left:-45px; top:-30px; z-index:10000; background-repeat:no-repeat; display:none; background-color:silver; } ';
 		$.vakata.css.add_sheet({ str : css_string });
 		m = $("<div>").attr({ id : "jstree-marker" }).hide().appendTo("body");
 		$(document).bind("drag_start.vakata", function (e, data) {
@@ -2771,7 +2774,7 @@
 	};
 	$(function () {
 		var css_string = '' + 
-			'#vakata-contextmenu { display:none; position:absolute; margin:0; padding:0; min-width:180px; background:#ebebeb; border:1px solid silver; z-index:1000; *width:180px; } ' + 
+			'#vakata-contextmenu { display:none; position:absolute; margin:0; padding:0; min-width:180px; background:#ebebeb; border:1px solid silver; z-index:10000; *width:180px; } ' + 
 			'#vakata-contextmenu ul { min-width:180px; *width:180px; } ' + 
 			'#vakata-contextmenu ul, #vakata-contextmenu li { margin:0; padding:0; list-style-type:none; display:block; } ' + 
 			'#vakata-contextmenu li { line-height:20px; min-height:20px; position:relative; padding:0px; } ' + 
