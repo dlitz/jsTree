@@ -1334,6 +1334,9 @@
 								this.get_container().children("ul").empty().append(d.children());
 								this.clean_node();
 							}
+							else { 
+								if(s.correct_state) { this.get_container().children("ul").empty(); }
+							}
 						}
 						if(s_call) { s_call.call(this); }
 						break;
@@ -2465,6 +2468,9 @@
 										this.get_container().children("ul").empty().append(d.children());
 										if(s.clean_node) { this.clean_node(obj); }
 									}
+								}
+								else { 
+									if(s.correct_state) { this.get_container().children("ul").empty(); }
 								}
 							}, this));
 						}
