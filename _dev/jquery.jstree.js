@@ -14,8 +14,6 @@
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
 
-// if not set - add dataType - json/xml (search for $.ajax)
-
 "use strict";
 // Common functions not related to jsTree 
 // decided to move them to a `vakata` "namespace"
