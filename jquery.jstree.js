@@ -1883,8 +1883,10 @@
 						}
 					}, this))
 				.delegate("a", "mousedown.jstree", $.proxy(function (e) { 
-						this.start_drag(e.currentTarget, e);
-						return false;
+						if(e.which === 1) {
+							this.start_drag(e.currentTarget, e);
+							return false;
+						}
 					}, this))
 				.delegate("a", "mouseenter.jstree", $.proxy(function (e) { 
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
