@@ -2749,15 +2749,17 @@
 		},
 		parse	: function (s, is_callback) {
 			var str = "",
-				tmp = false;
+				tmp = false,
+				was_sep = true;
 			if(!is_callback) { $.vakata.context.func = {}; }
 			str += "<ul>";
 			$.each(s, function (i, val) {
 				if(!val) { return true; }
 				$.vakata.context.func[i] = val.action;
-				if(val.separator_before) {
+				if(!was_sep && val.separator_before) {
 					str += "<li class='vakata-separator vakata-separator-before'></li>";
 				}
+				was_sep = false;
 				str += "<li><ins ";
 				if(val.icon && val.icon.indexOf("/") === -1) { str += " class='" + val.icon + "' "; }
 				if(val.icon && val.icon.indexOf("/") !== -1) { str += " style='background:url(" + val.icon + ") center center no-repeat;' "; }
@@ -2773,8 +2775,10 @@
 				str += "</li>";
 				if(val.separator_after) {
 					str += "<li class='vakata-separator vakata-separator-after'></li>";
+					was_sep = true;
 				}
 			});
+			str = str.replace(/<li class\='vakata-separator vakata-separator-after'\><\/li\>$/,"");
 			str += "</ul>";
 			return str.length > 10 ? str : false;
 		},
