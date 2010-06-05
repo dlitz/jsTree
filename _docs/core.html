@@ -440,6 +440,16 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	</li>
 </ul>
 
+<div style="height:1px; visibility:hidden;"><span id="is_leaf">&nbsp;</span><span id="is_closed">&nbsp;</span></div>
+<h3 id="is_open">.is_open ( node ), .is_closed ( node ), .is_leaf ( node )</h3>
+<p>Those function check if the <code>node</code> is in a state.</p>
+<ul class="arguments">
+	<li>
+		<code class="tp">mixed</code> <strong>node</strong>
+		<p>This can be a DOM node, jQuery node or selector pointing to an element you want checked.</p>
+	</li>
+</ul>
+
 <h3 id="clean_node">.clean_node ( node )</h3>
 <p>Applies all necessary classes to the <code>node</code> and its descendants. Used internally. Triggers an event.</p>
 <ul class="arguments">

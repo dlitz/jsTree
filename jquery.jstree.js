@@ -88,7 +88,8 @@
 	var instances = [],			// instance array (used by $.jstree.reference/create/focused)
 		focused_instance = -1,	// the index in the instance array of the currently focused instance
 		plugins = {},			// list of included plugins
-		prepared_move = {};		// for the move plugin
+		prepared_move = {},		// for the move plugin
+		is_ie6 = false;
 
 	// jQuery plugin wrapper (thanks to jquery UI widget function)
 	$.fn.jstree = function (settings) {
@@ -266,12 +267,13 @@
 				'li.jstree-closed > ul { display:none; } ';
 		// Correct IE 6 (does not support the > CSS selector)
 		if(/msie/.test(u) && parseInt(v, 10) == 6) { 
+			is_ie6 = true;
 			css_string += '' + 
 				'.jstree li { height:18px; margin-left:0; } ' + 
 				'.jstree li li { margin-left:18px; } ' + 
 				'li.jstree-open ul { display:block; } ' + 
 				'li.jstree-closed ul { display:none !important; } ' + 
-				'.jstree li a { display:inline; } ' + 
+				'.jstree li a { display:inline; border-width:0 !important; padding:0px 2px !important; } ' + 
 				'.jstree li a ins { height:16px; width:16px; margin-right:3px; } ';
 		}
 		// Correct IE 7 (shifts anchor nodes onhover)
@@ -473,11 +475,14 @@
 				return p;
 			},
 
+			is_open		: function (obj) { obj = this._get_node(obj); return obj && obj !== -1 && obj.hasClass("jstree-open"); },
+			is_closed	: function (obj) { obj = this._get_node(obj); return obj && obj !== -1 && obj.hasClass("jstree-closed"); },
+			is_leaf		: function (obj) { obj = this._get_node(obj); return obj && obj !== -1 && obj.hasClass("jstree-leaf"); },
 			// open/close
 			open_node	: function (obj, callback, skip_animation) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
-				var s = skip_animation ? 0 : this._get_settings().core.animation,
+				var s = skip_animation || is_ie6 ? 0 : this._get_settings().core.animation,
 					t = this;
 				if(!this._is_loaded(obj)) {
 					obj.children("a").addClass("jstree-loading");
@@ -493,7 +498,7 @@
 			},
 			close_node	: function (obj, skip_animation) {
 				obj = this._get_node(obj);
-				var s = skip_animation ? 0 : this._get_settings().core.animation;
+				var s = skip_animation || is_ie6 ? 0 : this._get_settings().core.animation;
 				if(!obj.length) { return false; }
 				if(s) { obj.children("ul").attr("style","display:block !important"); }
 				obj.removeClass("jstree-open").addClass("jstree-closed");
@@ -2695,13 +2700,15 @@
 		cnt		: $("<div id='vakata-contextmenu'>"),
 		vis		: false,
 		tgt		: false,
+		par		: false,
 		func	: false,
 		data	: false,
-		show	: function (s, t, x, y, d) {
+		show	: function (s, t, x, y, d, p) {
 			var html = $.vakata.context.parse(s), h, w;
 			if(!html) { return; }
 			$.vakata.context.vis = true;
 			$.vakata.context.tgt = t;
+			$.vakata.context.par = p || t || null;
 			$.vakata.context.data = d || null;
 			$.vakata.context.cnt
 				.html(html)
@@ -2773,7 +2780,7 @@
 		},
 		exec	: function (i) {
 			if($.isFunction($.vakata.context.func[i])) {
-				$.vakata.context.func[i].call($.vakata.context.data, $.vakata.context.tgt);
+				$.vakata.context.func[i].call($.vakata.context.data, $.vakata.context.par);
 				return true;
 			}
 			else { return false; }
@@ -2935,7 +2942,7 @@
 				}
 				if($.isFunction(s.items)) { s.items = s.items.call(this, obj); }
 				this.data.contextmenu = true;
-				$.vakata.context.show(s.items, a, x, y, this);
+				$.vakata.context.show(s.items, a, x, y, this, obj);
 				if(this.data.themes) { $.vakata.context.cnt.attr("class", "jstree-" + this.data.themes.theme + "-context"); }
 			}
 		}
