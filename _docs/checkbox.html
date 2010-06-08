@@ -20,7 +20,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <h1>jsTree v.1.0 - checkbox plugin</h1>
 <h2>Description</h2>
 <div id="description">
-<p>The <code>checkbox</code> plugin makes multiselection possible using three-state checkboxes. The checkbox plugin requires the <a href="ui.html">UI plugin</a>.</p>
+<p>The <code>checkbox</code> plugin makes multiselection possible using three-state checkboxes.</p>
 </div>
 
 <h2 id="configuration">Configuration</h2>
@@ -36,7 +36,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 		<li id="phtml_1">
 			<a href="#">Root node 1</a>
 			<ul>
-				<li id="phtml_2">
+				<li id="phtml_2" class="jstree-checked">
 					<a href="#">Child node 1</a>
 				</li>
 				<li id="phtml_3">
@@ -52,7 +52,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <script type="text/javascript" class="source">
 $(function () {
 	$("#demo1").jstree({ 
-		"plugins" : [ "themes", "html_data", "ui", "checkbox" ]
+		"plugins" : [ "themes", "html_data", "checkbox" ]
 	});
 });
 </script>
