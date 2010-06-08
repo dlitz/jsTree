@@ -196,29 +196,33 @@ $(function () {
 			);
 		})
 		.bind("move_node.jstree", function (e, data) {
-			$.post(
-				"./server.php", 
-				{ 
-					"operation" : "move_node", 
-					"id" : data.rslt.o.attr("id").replace("node_",""), 
-					"ref" : data.rslt.np.attr("id").replace("node_",""), 
-					"position" : data.rslt.cp,
-					"title" : data.rslt.name,
-					"copy" : data.rslt.cy ? 1 : 0
-				}, 
-				function (r) {
-					if(!r.status) {
-						$.jstree.rollback(data.rlbk);
-					}
-					else {
-						$(data.rslt.oc).attr("id", "node_" + r.id);
-						if(data.rslt.cy && $(data.rslt.oc).children("UL").length) {
-							data.inst.refresh(data.inst._get_parent(data.rslt.oc));
+			data.rslt.o.each(function (i) {
+				$.ajax({
+					async : false,
+					type: 'POST',
+					url: "./server.php",
+					data : { 
+						"operation" : "move_node", 
+						"id" : $(this).attr("id").replace("node_",""), 
+						"ref" : data.rslt.np.attr("id").replace("node_",""), 
+						"position" : data.rslt.cp + i,
+						"title" : data.rslt.name,
+						"copy" : data.rslt.cy ? 1 : 0
+					},
+					success : function (r) {
+						if(!r.status) {
+							$.jstree.rollback(data.rlbk);
 						}
+						else {
+							$(data.rslt.oc).attr("id", "node_" + r.id);
+							if(data.rslt.cy && $(data.rslt.oc).children("UL").length) {
+								data.inst.refresh(data.inst._get_parent(data.rslt.oc));
+							}
+						}
+						$("#analyze").click();
 					}
-					$("#analyze").click();
-				}
-			);
+				});
+			});
 		});
 });
 </script>
