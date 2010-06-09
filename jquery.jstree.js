@@ -853,7 +853,7 @@
 							clk = (obj && obj.length) ? obj.find(".jstree-clicked") : [],
 							_this = this;
 						clk.each(function () { _this.deselect_node(this); });
-						if(s) { this.select_node(data.rslt.prev); }
+						if(s && clk.length) { this.select_node(data.rslt.prev); }
 					}, this))
 				.bind("move_node.jstree", $.proxy(function (event, data) { 
 						if(data.rslt.cy) { 
@@ -1401,6 +1401,7 @@
 						s.ajax.error = error_func;
 						s.ajax.success = success_func;
 						if(!s.ajax.dataType) { s.ajax.dataType = "json"; }
+						if($.isFunction(s.ajax.url)) { s.ajax.url = s.ajax.url.call(this, obj); }
 						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this, obj); }
 						$.ajax(s.ajax);
 						break;
@@ -2474,6 +2475,7 @@
 			load_node : function (obj, s_call, e_call) { var _this = this; this.load_node_xml(obj, function () { _this.__callback({ "obj" : obj }); s_call.call(this); }, e_call); },
 			_is_loaded : function (obj) { 
 				var s = this._get_settings().xml_data;
+				obj = this._get_node(obj);
 				return obj == -1 || !obj || !s.ajax || obj.is(".jstree-open, .jstree-leaf") || obj.children("ul").children("li").size() > 0;
 			},
 			load_node_xml : function (obj, s_call, e_call) {
@@ -2560,7 +2562,8 @@
 						s.ajax.error = error_func;
 						s.ajax.success = success_func;
 						if(!s.ajax.dataType) { s.ajax.dataType = "xml"; }
-						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(null, obj); }
+						if($.isFunction(s.ajax.url)) { s.ajax.url = s.ajax.url.call(this, obj); }
+						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this, obj); }
 						$.ajax(s.ajax);
 						break;
 				}
@@ -2672,6 +2675,7 @@
 					s.ajax.context = this;
 					s.ajax.error = error_func;
 					s.ajax.success = success_func;
+					if($.isFunction(s.ajax.url)) { s.ajax.url = s.ajax.url.call(this, str); }
 					if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this, str); }
 					if(!s.ajax.data) { s.ajax.data = { "search_string" : str }; }
 					if(!s.ajax.dataType || /^json/.exec(s.ajax.dataType)) { s.ajax.dataType = "json"; }
@@ -3255,6 +3259,7 @@
 						s.ajax.error = error_func;
 						s.ajax.success = success_func;
 						if(!s.ajax.dataType) { s.ajax.dataType = "html"; }
+						if($.isFunction(s.ajax.url)) { s.ajax.url = s.ajax.url.call(this, obj); }
 						if($.isFunction(s.ajax.data)) { s.ajax.data = s.ajax.data.call(this, obj); }
 						$.ajax(s.ajax);
 						break;
