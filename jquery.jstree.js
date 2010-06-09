@@ -3083,6 +3083,7 @@
 				if($.isFunction(v)) { v = v.call(this, obj); }
 				if(rule === "max_depth" && obj !== -1 && opts !== false && s.max_depth !== -2 && v !== 0) {
 					this._get_node(obj).parentsUntil(this.get_container(),"li").each(function (i) {
+						if(s.max_depth !== -1 && s.max_depth - (i + 1) <= 0) { v = 0; return false; }
 						d = _this._check(rule, this, false);
 						if(d !== -1 && d - (i + 1) <= 0) { v = 0; return false; }
 						if(d >= 0 && (d - (i + 1) < v || v < 0) ) { v = d - (i + 1); }
