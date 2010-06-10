@@ -2104,13 +2104,13 @@
 				}
 				if(s.open_timeout) { 
 					if(this.data.dnd.to2) { clearTimeout(this.data.dnd.to2); }
-					if(r.hasClass("jstree-closed")) { 
+					if(r && r.length && r.hasClass("jstree-closed")) { 
 						// if the node is closed - open it, then recalculate
 						this.data.dnd.to2 = setTimeout($.proxy(this.dnd_open, this), s.open_timeout);
 					}
 				}
 				else {
-					if(r.hasClass("jstree-closed")) { 
+					if(r && r.length && r.hasClass("jstree-closed")) { 
 						this.dnd_open();
 					}
 				}
