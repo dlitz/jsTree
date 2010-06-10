@@ -435,7 +435,7 @@
 
 				if(obj.hasClass("jstree-open")) { return obj.find("li:eq(0)"); }
 				else if(obj.nextAll("li").size() > 0) { return obj.nextAll("li:eq(0)"); }
-				else { return obj.parentsUntil(this.get_container(),"li").next("li").eq(0); }
+				else { return obj.parentsUntil(".jstree","li").next("li").eq(0); }
 			},
 			_get_prev		: function (obj, strict) {
 				obj = this._get_node(obj);
@@ -448,12 +448,12 @@
 					while(obj.hasClass("jstree-open")) { obj = obj.children("ul:eq(0)").children("li:last"); }
 					return obj;
 				}
-				else { var o = obj.parentsUntil(this.get_container(),"li:eq(0)"); return o.length ? o : false; }
+				else { var o = obj.parentsUntil(".jstree","li:eq(0)"); return o.length ? o : false; }
 			},
 			_get_parent		: function (obj) {
 				obj = this._get_node(obj);
 				if(obj == -1 || !obj.length) { return false; }
-				var o = obj.parentsUntil(this.get_container(), "li:eq(0)");
+				var o = obj.parentsUntil(".jstree", "li:eq(0)");
 				return o.length ? o : -1;
 			},
 			_get_children	: function (obj) {
@@ -467,7 +467,7 @@
 					_this = this;
 				obj = this._get_node(obj);
 				if(obj === -1 || !obj || !obj.length) { return false; }
-				obj.parentsUntil(this.get_container(), "li").each(function () {
+				obj.parentsUntil(".jstree", "li").each(function () {
 					p.push( id_mode ? this.id : _this.get_text(this) );
 				});
 				p.reverse();
@@ -2015,6 +2015,7 @@
 		},
 		_fn : {
 			dnd_prepare : function () {
+				if(!r || !r.length) { return; }
 				this.data.dnd.off = r.offset();
 				if(this.data.dnd.foreign) {
 					var a = this._get_settings().dnd.drag_check.call(this, { "o" : o, "r" : r });
@@ -2197,13 +2198,11 @@
 					if(this.data.ui) { this.data.ui.last_selected = obj; }
 					this.data.checkbox.last_selected = obj;
 				}
-
-				var _this = this;
-				obj.parentsUntil(this.get_container(), "li").each(function () {
+				obj.parentsUntil(".jstree", "li").each(function () {
 					var $this = $(this);
 					if(state) {
 						if($this.children("ul").children(".jstree-checked, .jstree-undetermined").length) {
-							$this.parentsUntil(_this.get_container(), "li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
+							$this.parentsUntil(".jstree", "li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
 							return false;
 						}
 						else {
@@ -2212,7 +2211,7 @@
 					}
 					else {
 						if($this.children("ul").children(".jstree-unchecked, .jstree-undetermined").length) {
-							$this.parentsUntil(_this.get_container(), "li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
+							$this.parentsUntil(".jstree", "li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
 							return false;
 						}
 						else {
@@ -2269,7 +2268,7 @@
 				else if(a === 0 && b === 0) { this.uncheck_node(obj); }
 				else if(a === c) { this.check_node(obj); }
 				else { 
-					obj.parentsUntil(this.get_container(),"li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
+					obj.parentsUntil(".jstree","li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
 				}
 			},
 			reselect : function () {
@@ -3082,7 +3081,7 @@
 				}
 				if($.isFunction(v)) { v = v.call(this, obj); }
 				if(rule === "max_depth" && obj !== -1 && opts !== false && s.max_depth !== -2 && v !== 0) {
-					this._get_node(obj).parentsUntil(this.get_container(),"li").each(function (i) {
+					this._get_node(obj).parentsUntil(".jstree","li").each(function (i) {
 						if(s.max_depth !== -1 && s.max_depth - (i + 1) <= 0) { v = 0; return false; }
 						d = _this._check(rule, this, false);
 						if(d !== -1 && d - (i + 1) <= 0) { v = 0; return false; }
