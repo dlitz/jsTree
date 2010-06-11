@@ -1109,6 +1109,7 @@
 				var s = this._get_settings().crrm.move;
 				if(!is_prepared) { 
 					if(!position) { position = s.default_position; }
+					if(position === "inside" && !s.default_position.match(/^(before|after)$/)) { position = s.default_position; }
 					return this.__call_old(true, obj, ref, position, is_copy, false, skip_check);
 				}
 				// if the move is already prepared
