@@ -14,6 +14,8 @@
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
 
+// TODO: IE XML data -> preload XSL, add + icon when copying
+
 "use strict";
 // Common functions not related to jsTree 
 // decided to move them to a `vakata` "namespace"
@@ -2654,6 +2656,7 @@
 		},
 		_fn : {
 			search : function (str, skip_async) {
+				if(str === "") { return; }
 				var s = this.get_settings().search, 
 					t = this,
 					error_func = function () { },
