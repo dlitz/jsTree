@@ -2165,14 +2165,11 @@
 			this.get_selected = this.get_checked;
 
 			this.get_container()
-				.bind("open_node.jstree create_node.jstree", $.proxy(function (e, data) { 
+				.bind("open_node.jstree create_node.jstree clean_node.jstree", $.proxy(function (e, data) { 
 						this._prepare_checkboxes(data.rslt.obj);
 					}, this))
 				.bind("loaded.jstree", $.proxy(function (e) {
 						this._prepare_checkboxes();
-					}, this))
-				.bind("clean_node.jstree", $.proxy(function (e, data) {
-						this._repair_state(data.args[0]);
 					}, this))
 				.delegate("a", "click.jstree", $.proxy(function (e) {
 						if(this._get_node(e.target).hasClass("jstree-checked")) { this.uncheck_node(e.target); }
@@ -2269,7 +2266,7 @@
 				else if(a === 0 && b === 0) { this.uncheck_node(obj); }
 				else if(a === c) { this.check_node(obj); }
 				else { 
-					obj.parentsUntil(".jstree","li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
+					obj.parentsUntil(".jstree","li").removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
 				}
 			},
 			reselect : function () {
