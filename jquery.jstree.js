@@ -14,8 +14,6 @@
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
 
-// TODO: add + icon when copying, rtl theme + plugin
-
 "use strict";
 // Common functions not related to jsTree 
 // decided to move them to a `vakata` "namespace"
@@ -259,24 +257,29 @@
 			css_string = '' + 
 				'.jstree ul, .jstree li { display:block; margin:0 0 0 0; padding:0 0 0 0; list-style-type:none; } ' + 
 				'.jstree li { display:block; min-height:18px; line-height:18px; white-space:nowrap; margin-left:18px; } ' + 
+				'.jstree-rtl li { margin-left:0; margin-right:18px; } ' + 
 				'.jstree > ul > li { margin-left:0px; } ' + 
+				'.jstree-rtl > ul > li { margin-right:0px; } ' + 
 				'.jstree ins { display:inline-block; text-decoration:none; width:18px; height:18px; margin:0 0 0 0; padding:0; } ' + 
 				'.jstree a { display:inline-block; line-height:16px; height:16px; color:black; white-space:nowrap; text-decoration:none; padding:1px 2px; margin:0; } ' + 
 				'.jstree a:focus { outline: none; } ' + 
 				'.jstree a > ins { height:16px; width:16px; } ' + 
 				'.jstree a > .jstree-icon { margin-right:3px; } ' + 
+				'.jstree-rtl a > .jstree-icon { margin-left:3px; margin-right:0; } ' + 
 				'li.jstree-open > ul { display:block; } ' + 
 				'li.jstree-closed > ul { display:none; } ';
 		// Correct IE 6 (does not support the > CSS selector)
 		if(/msie/.test(u) && parseInt(v, 10) == 6) { 
 			is_ie6 = true;
 			css_string += '' + 
-				'.jstree li { height:18px; margin-left:0; } ' + 
+				'.jstree li { height:18px; margin-left:0; margin-right:0; } ' + 
 				'.jstree li li { margin-left:18px; } ' + 
+				'.jstree-rtl li li { margin-left:0px; margin-right:18px; } ' + 
 				'li.jstree-open ul { display:block; } ' + 
 				'li.jstree-closed ul { display:none !important; } ' + 
 				'.jstree li a { display:inline; border-width:0 !important; padding:0px 2px !important; } ' + 
-				'.jstree li a ins { height:16px; width:16px; margin-right:3px; } ';
+				'.jstree li a ins { height:16px; width:16px; margin-right:3px; } ' + 
+				'.jstree-rtl li a ins { margin-right:0px; margin-left:3px; } ';
 		}
 		// Correct IE 7 (shifts anchor nodes onhover)
 		if(/msie/.test(u) && parseInt(v, 10) == 7) { 
@@ -293,11 +296,15 @@
 		defaults : { 
 			html_titles	: false,
 			animation	: 500,
-			initially_open : []
+			initially_open : [],
+			rtl			: false
 		},
 		_fn : { 
 			init	: function () { 
 				this.set_focus(); 
+				if(this._get_settings().core.rtl) {
+					this.get_container().addClass("jstree-rtl").css("direction", "rtl");
+				}
 				this.get_container().html("<ul><li class='jstree-last jstree-leaf'><ins>&#160;</ins><a class='jstree-loading' href='#'><ins class='jstree-icon'>&#160;</ins>Loading ...</a></li></ul>");
 				this.data.core.li_height = this.get_container().find("ul li.jstree-closed, ul li.jstree-leaf").eq(0).height() || 18;
 
@@ -1016,11 +1023,12 @@
 		_fn : {
 			_show_input : function (obj, callback) {
 				obj = this._get_node(obj);
-				var w = this._get_settings().crrm.input_width_limit,
+				var rtl = this._get_settings().core.rtl,
+					w = this._get_settings().crrm.input_width_limit,
 					w1 = obj.children("ins").width(),
 					w2 = obj.find("> a:visible > ins").width() * obj.find("> a:visible > ins").length,
 					t = this.get_text(obj),
-					h1 = $("<div>", { css : { "position" : "absolute", "top" : "-200px", "left" : "-1000px", "visibility" : "hidden" } }).appendTo("body"),
+					h1 = $("<div>", { css : { "position" : "absolute", "top" : "-200px", "left" : (rtl ? "0px" : "-1000px"), "visibility" : "hidden" } }).appendTo("body"),
 					h2 = obj.css("position","relative").append(
 					$("<input>", { 
 						"value" : t,
@@ -1029,7 +1037,8 @@
 							"padding" : "0",
 							"border" : "1px solid silver",
 							"position" : "absolute",
-							"left" : (w1 + w2 + 4) + "px",
+							"left"  : (rtl ? "auto" : (w1 + w2 + 4) + "px"),
+							"right" : (rtl ? (w1 + w2 + 4) + "px" : "auto"),
 							"top" : "0px",
 							"height" : (this.data.core.li_height - 2) + "px",
 							"lineHeight" : (this.data.core.li_height - 2) + "px",
@@ -1821,7 +1830,8 @@
 				}
 				else { return; }
 			}
-			
+
+			// maybe use a scrolling parent element instead of document?
 			if(e.type === "mousemove") { // thought of adding scroll in order to move the helper, but mouse poisition is n/a
 				var d = $(document), t = d.scrollTop(), l = d.scrollLeft();
 				if(e.pageY - t < 20) { 
@@ -1994,7 +2004,7 @@
 						this.data.dnd.to2		= false;
 						this.data.dnd.active	= false;
 						this.data.dnd.foreign	= false;
-						if(m) { m.css({ "left" : "-2000px", "top" : "-2000px" }); }
+						if(m) { m.css({ "left" : (this._get_settings().core.rtl ? "0px" : "-2000px"), "top" : "-2000px" }); }
 					}, this))
 				.bind("drag_start.vakata", $.proxy(function (e, data) {
 						if(data.data.jstree) { 
@@ -2058,6 +2068,9 @@
 			dnd_prepare : function () {
 				if(!r || !r.length) { return; }
 				this.data.dnd.off = r.offset();
+				if(this._get_settings().core.rtl) {
+					this.data.dnd.off.right = this.data.dnd.off.left + r.width();
+				}
 				if(this.data.dnd.foreign) {
 					var a = this._get_settings().dnd.drag_check.call(this, { "o" : o, "r" : r });
 					this.data.dnd.after = a.after;
@@ -2083,7 +2096,9 @@
 			dnd_show : function () {
 				if(!this.data.dnd.prepared) { return; }
 				var o = ["before","inside","after"],
-					r = false;
+					r = false,
+					rtl = this._get_settings().core.rtl,
+					pos;
 				if(this.data.dnd.w < this.data.core.li_height/3) { o = ["before","inside","after"]; }
 				else if(this.data.dnd.w <= this.data.core.li_height*2/3) {
 					o = this.data.dnd.w < this.data.core.li_height/2 ? ["inside","before","after"] : ["inside","after","before"];
@@ -2097,15 +2112,17 @@
 					}
 				}, this));
 				if(r === false) { $.vakata.dnd.helper.children("ins").attr("class","jstree-invalid"); }
+				
+				pos = rtl ? (this.data.dnd.off.right - 18) : (this.data.dnd.off.left + 10);
 				switch(r) {
 					case "before":
-						m.css({ "left" : (this.data.dnd.off.left + 10) + "px", "top" : (this.data.dnd.off.top - 6) + "px" }).show();
+						m.css({ "left" : pos + "px", "top" : (this.data.dnd.off.top - 6) + "px" }).show();
 						break;
 					case "after":
-						m.css({ "left" : (this.data.dnd.off.left + 10) + "px", "top" : (this.data.dnd.off.top + this.data.core.li_height - 7) + "px" }).show();
+						m.css({ "left" : pos + "px", "top" : (this.data.dnd.off.top + this.data.core.li_height - 7) + "px" }).show();
 						break;
 					case "inside":
-						m.css({ "left" : (this.data.dnd.off.left + 14) + "px", "top" : (this.data.dnd.off.top + this.data.core.li_height/2 - 5) + "px" }).show();
+						m.css({ "left" : pos + ( rtl ? -4 : 4) + "px", "top" : (this.data.dnd.off.top + this.data.core.li_height/2 - 5) + "px" }).show();
 						break;
 					default:
 						m.hide();
@@ -2177,7 +2194,7 @@
 			'#vakata-dragged ins { display:block; text-decoration:none; width:16px; height:16px; margin:0 0 0 0; padding:0; position:absolute; top:4px; left:4px; } ' + 
 			'#vakata-dragged .jstree-ok { background:green; } ' + 
 			'#vakata-dragged .jstree-invalid { background:red; } ' + 
-			'#jstree-marker { padding:0; margin:0; line-height:12px; font-size:1px; overflow:hidden; height:12px; width:8px; position:absolute; left:-45px; top:-30px; z-index:10000; background-repeat:no-repeat; display:none; background-color:silver; } ';
+			'#jstree-marker { padding:0; margin:0; line-height:12px; font-size:1px; overflow:hidden; height:12px; width:8px; position:absolute; top:-30px; z-index:10000; background-repeat:no-repeat; display:none; background-color:silver; } ';
 		$.vakata.css.add_sheet({ str : css_string });
 		m = $("<div>").attr({ id : "jstree-marker" }).hide().appendTo("body");
 		$(document).bind("drag_start.vakata", function (e, data) {
@@ -2827,7 +2844,7 @@
 					str += "<li class='vakata-separator vakata-separator-before'></li>";
 				}
 				was_sep = false;
-				str += "<li><ins ";
+				str += "<li class='" + (val._class || "") + (val._disabled ? " jstree-contextmenu-disabled " : "") + "'><ins ";
 				if(val.icon && val.icon.indexOf("/") === -1) { str += " class='" + val.icon + "' "; }
 				if(val.icon && val.icon.indexOf("/") !== -1) { str += " style='background:url(" + val.icon + ") center center no-repeat;' "; }
 				str += ">&#160;</ins><a href='#' rel='" + i + "'>";
@@ -2874,9 +2891,10 @@
 		$.vakata.context.cnt
 			.delegate("a","click", function (e) { e.preventDefault(); })
 			.delegate("a","mouseup", function (e) {
-				if($.vakata.context.exec($(this).attr("rel"))) {
+				if(!$(this).parent().hasClass("jstree-contextmenu-disabled") && $.vakata.context.exec($(this).attr("rel"))) {
 					$.vakata.context.hide();
 				}
+				else { $(this).blur(); }
 			})
 			.delegate("a","mouseover", function () {
 				$.vakata.context.cnt.find(".vakata-hover").removeClass("vakata-hover");
@@ -3167,7 +3185,7 @@
 			},
 			create_node : function (obj, position, js, callback, is_loaded, skip_check) {
 				if(!skip_check && (is_loaded || this._is_loaded(obj))) {
-					var p  = (position && position.match(/^before|after$/i)) ? this._get_parent(obj) : this._get_node(obj),
+					var p  = (position && position.match(/^before|after$/i) && obj !== -1) ? this._get_parent(obj) : this._get_node(obj),
 						s  = this._get_settings().types,
 						mc = this._check("max_children", p),
 						md = this._check("max_depth", p),

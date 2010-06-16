@@ -45,6 +45,8 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	// The function to execute upon a click
 	"action"			: function (obj) { this.rename(obj); },
 	// All below are optional 
+	"_disabled"			: true,		// clicking the item won't do a thing
+	"_class"			: "class",	// class is applied to the item LI node
 	"separator_before"	: false,	// Insert a separator before the item
 	"separator_after"	: true,		// Insert a separator after the item
 	// false or string - if does not contain `/` - used as classname
