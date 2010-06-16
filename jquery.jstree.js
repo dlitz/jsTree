@@ -14,7 +14,7 @@
 
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
 
-// TODO: IE XML data -> preload XSL, add + icon when copying
+// TODO: add + icon when copying, rtl theme + plugin
 
 "use strict";
 // Common functions not related to jsTree 
@@ -483,7 +483,7 @@
 			// open/close
 			open_node	: function (obj, callback, skip_animation) {
 				obj = this._get_node(obj);
-				if(!obj.length) { return false; }
+				if(!obj.length || !obj.hasClass("jstree-closed")) { return false; }
 				var s = skip_animation || is_ie6 ? 0 : this._get_settings().core.animation,
 					t = this;
 				if(!this._is_loaded(obj)) {
@@ -501,7 +501,7 @@
 			close_node	: function (obj, skip_animation) {
 				obj = this._get_node(obj);
 				var s = skip_animation || is_ie6 ? 0 : this._get_settings().core.animation;
-				if(!obj.length) { return false; }
+				if(!obj.length || !obj.hasClass("jstree-open")) { return false; }
 				if(s) { obj.children("ul").attr("style","display:block !important"); }
 				obj.removeClass("jstree-open").addClass("jstree-closed");
 				if(s) { obj.children("ul").stop(true).slideUp(s, function () { this.style.display = ""; }); }
@@ -1781,7 +1781,11 @@
 (function ($) {
 	var o = false,
 		r = false,
-		m = false;
+		m = false,
+		sli = false,
+		sti = false,
+		dir1 = false,
+		dir2 = false;
 	$.vakata.dnd = {
 		is_down : false,
 		is_drag : false,
@@ -1817,6 +1821,40 @@
 				}
 				else { return; }
 			}
+			
+			if(e.type === "mousemove") { // thought of adding scroll in order to move the helper, but mouse poisition is n/a
+				var d = $(document), t = d.scrollTop(), l = d.scrollLeft();
+				if(e.pageY - t < 20) { 
+					if(sti && dir1 === "down") { clearInterval(sti); sti = false; }
+					if(!sti) { dir1 = "up"; sti = setInterval(function () { $(document).scrollTop($(document).scrollTop() - 15); }, 150); }
+				}
+				else { 
+					if(sti && dir1 === "up") { clearInterval(sti); sti = false; }
+				}
+				if($(window).height() - (e.pageY - t) < 20) {
+					if(sti && dir1 === "up") { clearInterval(sti); sti = false; }
+					if(!sti) { dir1 = "down"; sti = setInterval(function () { $(document).scrollTop($(document).scrollTop() + 15); }, 150); }
+				}
+				else { 
+					if(sti && dir1 === "down") { clearInterval(sti); sti = false; }
+				}
+
+				if(e.pageX - l < 20) {
+					if(sli && dir2 === "right") { clearInterval(sli); sli = false; }
+					if(!sli) { dir2 = "left"; sli = setInterval(function () { $(document).scrollLeft($(document).scrollLeft() - 15); }, 150); }
+				}
+				else { 
+					if(sli && dir2 === "left") { clearInterval(sli); sli = false; }
+				}
+				if($(window).width() - (e.pageX - l) < 20) {
+					if(sli && dir2 === "left") { clearInterval(sli); sli = false; }
+					if(!sli) { dir2 = "right"; sli = setInterval(function () { $(document).scrollLeft($(document).scrollLeft() + 15); }, 150); }
+				}
+				else { 
+					if(sli && dir2 === "right") { clearInterval(sli); sli = false; }
+				}
+			}
+
 			$.vakata.dnd.helper.css({ left : (e.pageX + 5) + "px", top : (e.pageY + 10) + "px" });
 			$(document).triggerHandler("drag.vakata", { "event" : e, "data" : $.vakata.dnd.user_data });
 		},
@@ -2302,7 +2340,7 @@
 			setTimeout( (function (xm, xs, callback) {
 				return function () {
 					callback.call(null, xm.transformNode(xs.XMLDocument));
-					jQuery("body").remove(xm).remove(xs);
+					setTimeout( (function (xm, xs) { return function () { jQuery("body").remove(xm).remove(xs); }; })(xm, xs), 200);
 				};
 			}) (xm, xs, callback), 100);
 			return true;
