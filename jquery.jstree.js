@@ -3396,7 +3396,7 @@
 /* 
  * jsTree unique plugin 1.0
  * Forces different names amongst siblings (still a bit experimental)
- * TODO: check_move (if CRRM exists) to check runtime for matching titles
+ * NOTE: does not check language versions (it will not be possible to have nodes with the same title, even in different languages)
  */
 (function ($) {
 	$.jstree.plugin("unique", {
@@ -3449,6 +3449,15 @@
 				cnms = cnms.sort().join(",,").replace(/(,|^)([^,]+)(,,\2)+(,|$)/g,"$1$2$4").replace(/,,+/g,",").replace(/,$/,"").split(",");
 				if((cnms.length + nms.length) != cnms.concat(nms).sort().join(",,").replace(/(,|^)([^,]+)(,,\2)+(,|$)/g,"$1$2$4").replace(/,,+/g,",").replace(/,$/,"").split(",").length) {
 					return false;
+				}
+				return true;
+			},
+			check_move : function () {
+				if(!this.__call_old()) { return false; }
+				var p = this._get_move(), nms = [];
+				if(p.o && p.o.length) {
+					p.o.children("a").each(function () { nms.push($(this).text().replace(/^\s+/g,"")); });
+					return this._check_unique(nms, p.np.find("> ul > li").not(p.o));
 				}
 				return true;
 			}
