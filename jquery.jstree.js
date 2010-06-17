@@ -339,7 +339,7 @@
 					_this = this;
 
 				$.each(s.plugins, function (i, val) {
-					plugins[val].__destroy.apply(_this);
+					try { plugins[val].__destroy.apply(_this); } catch(err) { }
 				});
 				this.__callback();
 				// set focus to another instance if this one is focused
@@ -1881,7 +1881,7 @@
 		}
 	};
 	$(function() {
-		var css_string = '#vakata-dragged { display:block; margin:0 0 0 0; padding:4px 4px 4px 24px; position:absolute; left:-2000px; top:-2000px; line-height:16px; z-index:10000; } ';
+		var css_string = '#vakata-dragged { display:block; margin:0 0 0 0; padding:4px 4px 4px 24px; position:absolute; top:-2000px; line-height:16px; z-index:10000; } ';
 		$.vakata.css.add_sheet({ str : css_string });
 	});
 
@@ -2004,7 +2004,7 @@
 						this.data.dnd.to2		= false;
 						this.data.dnd.active	= false;
 						this.data.dnd.foreign	= false;
-						if(m) { m.css({ "left" : (this._get_settings().core.rtl ? "0px" : "-2000px"), "top" : "-2000px" }); }
+						if(m) { m.css({ "top" : "-2000px" }); }
 					}, this))
 				.bind("drag_start.vakata", $.proxy(function (e, data) {
 						if(data.data.jstree) { 
@@ -3389,6 +3389,70 @@
 	$(function() {
 		var css_string = '.jstree .ui-icon { overflow:visible; } .jstree a { padding:0 2px; }';
 		$.vakata.css.add_sheet({ str : css_string });
+	});
+})(jQuery);
+//*/
+
+/* 
+ * jsTree unique plugin 1.0
+ * Forces different names amongst siblings (still a bit experimental)
+ * TODO: check_move (if CRRM exists) to check runtime for matching titles
+ */
+(function ($) {
+	$.jstree.plugin("unique", {
+		__init : function () {
+			this.get_container()
+				.bind("before.jstree", $.proxy(function (e, data) { 
+						var nms = [], res = true, p, t;
+						if(data.func == "move_node") {
+							// obj, ref, position, is_copy, is_prepared, skip_check
+							if(data.args[4] === true) {
+								if(data.args[0].o && data.args[0].o.length) {
+									data.args[0].o.children("a").each(function () { nms.push($(this).text().replace(/^\s+/g,"")); });
+									res = this._check_unique(nms, data.args[0].np.find("> ul > li").not(data.args[0].o));
+								}
+							}
+						}
+						if(data.func == "create_node") {
+							// obj, position, js, callback, is_loaded
+							if(data.args[4] || this._is_loaded(data.args[0])) {
+								p = this._get_node(data.args[0]);
+								if(data.args[1] && (data.args[1] === "before" || data.args[1] === "after")) {
+									p = this._get_parent(data.args[0]);
+									if(!p || p === -1) { p = this.get_container(); }
+								}
+								if(typeof data.args[2] === "string") { nms.push(data.args[2]); }
+								else if(!data.args[2] || !data.args[2].data) { nms.push("New node"); }
+								else { nms.push(data.args[2].data); }
+								res = this._check_unique(nms, p.find("> ul > li"));
+							}
+						}
+						if(data.func == "rename_node") {
+							// obj, val
+							nms.push(data.args[1]);
+							t = this._get_node(data.args[0]);
+							p = this._get_parent(t);
+							if(!p || p === -1) { p = this.get_container(); }
+							res = this._check_unique(nms, p.find("> ul > li").not(t));
+						}
+						if(!res) {
+							e.stopPropagation();
+							return false;
+						}
+					}, this));
+		},
+		_fn : { 
+			_check_unique : function (nms, p) {
+				var cnms = [];
+				p.children("a").each(function () { cnms.push($(this).text().replace(/^\s+/g,"")); });
+				if(!cnms.length || !nms.length) { return true; }
+				cnms = cnms.sort().join(",,").replace(/(,|^)([^,]+)(,,\2)+(,|$)/g,"$1$2$4").replace(/,,+/g,",").replace(/,$/,"").split(",");
+				if((cnms.length + nms.length) != cnms.concat(nms).sort().join(",,").replace(/(,|^)([^,]+)(,,\2)+(,|$)/g,"$1$2$4").replace(/,,+/g,",").replace(/,$/,"").split(",").length) {
+					return false;
+				}
+				return true;
+			}
+		}
 	});
 })(jQuery);
 //*/
