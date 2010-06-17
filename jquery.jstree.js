@@ -1921,11 +1921,11 @@
 							var cnt = this.get_container()[0];
 
 							// Horizontal scroll
-							if(e.pageX + 20 > this.data.dnd.cof.left + this.data.dnd.cw) {
+							if(e.pageX + 24 > this.data.dnd.cof.left + this.data.dnd.cw) {
 								if(this.data.dnd.i1) { clearInterval(this.data.dnd.i1); }
 								this.data.dnd.i1 = setInterval($.proxy(function () { this.scrollLeft += 5; }, cnt), 100);
 							}
-							else if(e.pageX - 20 < this.data.dnd.cof.left) {
+							else if(e.pageX - 24 < this.data.dnd.cof.left) {
 								if(this.data.dnd.i1) { clearInterval(this.data.dnd.i1); }
 								this.data.dnd.i1 = setInterval($.proxy(function () { this.scrollLeft -= 5; }, cnt), 100);
 							}
@@ -1934,11 +1934,11 @@
 							}
 
 							// Vertical scroll
-							if(e.pageY + 20 > this.data.dnd.cof.top + this.data.dnd.ch) {
+							if(e.pageY + 24 > this.data.dnd.cof.top + this.data.dnd.ch) {
 								if(this.data.dnd.i2) { clearInterval(this.data.dnd.i2); }
 								this.data.dnd.i2 = setInterval($.proxy(function () { this.scrollTop += 5; }, cnt), 100);
 							}
-							else if(e.pageY - 20 < this.data.dnd.cof.top) {
+							else if(e.pageY - 24 < this.data.dnd.cof.top) {
 								if(this.data.dnd.i2) { clearInterval(this.data.dnd.i2); }
 								this.data.dnd.i2 = setInterval($.proxy(function () { this.scrollTop -= 5; }, cnt), 100);
 							}
