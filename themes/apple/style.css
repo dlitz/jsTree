@@ -30,14 +30,14 @@
 
 .jstree-apple .jstree-search { font-style:italic; }
 
-.jstree-apple .jstree-no-icons .checkbox { display:inline-block; }
-.jstree-apple .jstree-no-checkboxes .checkbox { display:none !important; }
-.jstree-apple .jstree-checked > a > .checkbox { background-position:-38px -19px; }
-.jstree-apple .jstree-unchecked > a > .checkbox { background-position:-2px -19px; }
-.jstree-apple .jstree-undetermined > a > .checkbox { background-position:-20px -19px; }
+.jstree-apple .jstree-no-icons .jstree-checkbox { display:inline-block; }
+.jstree-apple .jstree-no-checkboxes .jstree-checkbox { display:none !important; }
+.jstree-apple .jstree-checked > a > .jstree-checkbox { background-position:-38px -19px; }
+.jstree-apple .jstree-unchecked > a > .jstree-checkbox { background-position:-2px -19px; }
+.jstree-apple .jstree-undetermined > a > .jstree-checkbox { background-position:-20px -19px; }
 .jstree-apple .jstree-checked > a > .checkbox:hover { background-position:-38px -37px; }
-.jstree-apple .jstree-unchecked > a > .checkbox:hover { background-position:-2px -37px; }
-.jstree-apple .jstree-undetermined > a > .checkbox:hover { background-position:-20px -37px; }
+.jstree-apple .jstree-unchecked > a > .jstree-checkbox:hover { background-position:-2px -37px; }
+.jstree-apple .jstree-undetermined > a > .jstree-checkbox:hover { background-position:-20px -37px; }
 
 #vakata-dragged.jstree-apple ins { background:transparent !important; }
 #vakata-dragged.jstree-apple .jstree-ok { background:url("d.png") -2px -53px no-repeat !important; }

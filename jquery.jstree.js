@@ -2239,8 +2239,12 @@
 		_fn : {
 			_prepare_checkboxes : function (obj) {
 				obj = !obj || obj == -1 ? this.get_container() : this._get_node(obj);
-				var c = obj.is("li") && obj.hasClass("jstree-checked") ? "jstree-checked" : "jstree-unchecked", _this = this;
-				obj.find("a").not(":has(.checkbox)").prepend("<ins class='checkbox'>&#160;</ins>").parent().not(".jstree-checked, .jstree-unchecked").addClass(c);
+				var c, _this = this, t;
+				obj.each(function () {
+					t = $(this);
+					c = t.is("li") && t.hasClass("jstree-checked") ? "jstree-checked" : "jstree-unchecked";
+					t.find("a").not(":has(.jstree-checkbox)").prepend("<ins class='jstree-checkbox'>&#160;</ins>").parent().not(".jstree-checked, .jstree-unchecked").addClass(c);
+				});
 				if(obj.is("li")) { this._repair_state(obj); }
 				else { obj.find("> ul > li").each(function () { _this._repair_state(this); }); }
 			},
