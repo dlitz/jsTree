@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS `tree` (
   `left` bigint(20) unsigned NOT NULL,
   `right` bigint(20) unsigned NOT NULL,
   `level` bigint(20) unsigned NOT NULL,
-  `title` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-  `type` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `title` text CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+  `type` varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=13 ;
 

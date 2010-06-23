@@ -551,9 +551,9 @@
 				obj = obj.is("li") ? obj.find("li").andSelf() : obj.find("li");
 				obj.removeClass("jstree-last")
 					.filter("li:last-child").addClass("jstree-last").end()
-					.filter(":has(ul)")
+					.filter(":has(li)")
 						.not(".jstree-open").removeClass("jstree-leaf").addClass("jstree-closed");
-				obj.not(".jstree-open, .jstree-closed").addClass("jstree-leaf");
+				obj.not(".jstree-open, .jstree-closed").addClass("jstree-leaf").children("ul").remove();
 				this.__callback({ "obj" : obj });
 			},
 			// rollback
@@ -686,7 +686,7 @@
 				var p = this._get_parent(obj), prev = this._get_prev(obj);
 				obj = obj.remove();
 				if(p !== -1 && p.find("> ul > li").length === 0) {
-					p.removeClass("jstree-open, jstree-closed").addClass("jstree-leaf");
+					p.removeClass("jstree-open jstree-closed").addClass("jstree-leaf");
 				}
 				this.clean_node(p);
 				this.__callback({ "obj" : obj, "prev" : prev });
@@ -2027,7 +2027,7 @@
 						}
 						$.vakata.dnd.helper.children("ins").attr("class","jstree-invalid");
 						var cnt = this.get_container();
-						this.data.dnd.cof = cnt.children("ul").offset();
+						this.data.dnd.cof = cnt.offset();
 						this.data.dnd.cw = parseInt(cnt.width(),10);
 						this.data.dnd.ch = parseInt(cnt.height(),10);
 						this.data.dnd.foreign = true;

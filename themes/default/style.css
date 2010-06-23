@@ -67,4 +67,7 @@
 .jstree-default a ins.jstree-icon { _background-position:-56px -19px; }
 #vakata-contextmenu.jstree-default-context ins { _display:none; }
 #vakata-contextmenu.jstree-default-context li { _zoom:1; }
+.jstree-default .jstree-undetermined a .checkbox { _background-position:-20px -19px; }
+.jstree-default .jstree-checked a .checkbox { _background-position:-38px -19px; }
+.jstree-default .jstree-unchecked a .checkbox { _background-position:-2px -19px; }
 /* IE6 END */
