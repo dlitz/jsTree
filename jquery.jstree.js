@@ -298,7 +298,11 @@
 			html_titles	: false,
 			animation	: 500,
 			initially_open : [],
-			rtl			: false
+			rtl			: false,
+			strings		: {
+				loading		: "Loading ...",
+				new_node	: "New node"
+			}
 		},
 		_fn : { 
 			init	: function () { 
@@ -306,7 +310,7 @@
 				if(this._get_settings().core.rtl) {
 					this.get_container().addClass("jstree-rtl").css("direction", "rtl");
 				}
-				this.get_container().html("<ul><li class='jstree-last jstree-leaf'><ins>&#160;</ins><a class='jstree-loading' href='#'><ins class='jstree-icon'>&#160;</ins>Loading ...</a></li></ul>");
+				this.get_container().html("<ul><li class='jstree-last jstree-leaf'><ins>&#160;</ins><a class='jstree-loading' href='#'><ins class='jstree-icon'>&#160;</ins>" + this._get_settings().core.strings.loading + "</a></li></ul>");
 				this.data.core.li_height = this.get_container().find("ul li.jstree-closed, ul li.jstree-leaf").eq(0).height() || 18;
 
 				this.get_container()
@@ -576,7 +580,7 @@
 				obj = this._get_node(obj);
 				position = typeof position === "undefined" ? "last" : position;
 				var d = $("<li>"),
-					s = this._get_settings().core.html_titles,
+					s = this._get_settings().core,
 					tmp;
 
 				if(obj !== -1 && !obj.length) { return false; }
@@ -588,16 +592,16 @@
 				if(!js) { js = {}; }
 				if(js.attr) { d.attr(js.attr); }
 				if(js.state) { d.addClass("jstree-" + js.state); }
-				if(!js.data) { js.data = "New node"; }
+				if(!js.data) { js.data = s.strings.new_node; }
 				if(!$.isArray(js.data)) { tmp = js.data; js.data = []; js.data.push(tmp); }
 				$.each(js.data, function (i, m) {
 					tmp = $("<a>");
 					if($.isFunction(m)) { m = m.call(this, js); }
-					if(typeof m == "string") { tmp.attr('href','#')[ s ? "html" : "text" ](m); }
+					if(typeof m == "string") { tmp.attr('href','#')[ s.html_titles ? "html" : "text" ](m); }
 					else {
 						if(!m.attr) { m.attr = {}; }
 						if(!m.attr.href) { m.attr.href = '#'; }
-						tmp.attr(m.attr)[ s ? "html" : "text" ](m.title);
+						tmp.attr(m.attr)[ s.html_titles ? "html" : "text" ](m.title);
 						if(m.language) { tmp.addClass(m.language); }
 					}
 					tmp.prepend("<ins class='jstree-icon'>&#160;</ins>");
@@ -3433,7 +3437,7 @@
 									if(!p || p === -1) { p = this.get_container(); }
 								}
 								if(typeof data.args[2] === "string") { nms.push(data.args[2]); }
-								else if(!data.args[2] || !data.args[2].data) { nms.push("New node"); }
+								else if(!data.args[2] || !data.args[2].data) { nms.push(this._get_settings().core.strings.new_node); }
 								else { nms.push(data.args[2].data); }
 								res = this._check_unique(nms, p.find("> ul > li"));
 							}
