@@ -12,6 +12,7 @@
  * $Revision$
  */
 
+/*jslint browser: true, onevar: true, undef: true, bitwise: true, strict: true */
 /*global window : false, clearInterval: false, clearTimeout: false, document: false, setInterval: false, setTimeout: false, jQuery: false, navigator: false, XSLTProcessor: false, DOMParser: false, XMLSerializer: false*/
 
 "use strict";
@@ -116,7 +117,7 @@
 				var instance_id = $.data(this, "jstree-instance-id"),
 					s = false;
 				// if an instance already exists, destroy it first
-				if(instance_id && instances[instance_id]) { instances[instance_id].destroy(); }
+				if(typeof instance_id !== "undefined" && instances[instance_id]) { instances[instance_id].destroy(); }
 				// push a new empty object to the instances array
 				instance_id = parseInt(instances.push({}),10) - 1;
 				// store the jstree instance id to the container element
@@ -1244,9 +1245,9 @@
 (function ($) {
 	var bound = [];
 	function exec(i, event) {
-		var f = $.jstree._focused();
+		var f = $.jstree._focused(), tmp;
 		if(f && f.data && f.data.hotkeys && f.data.hotkeys.enabled) { 
-			var tmp = f._get_settings().hotkeys[i];
+			tmp = f._get_settings().hotkeys[i];
 			if(tmp) { return tmp.call(f, event); }
 		}
 	}
@@ -1534,7 +1535,7 @@
 							}
 							tmp2 = { attr : { }, title : _this.get_text(t, lang) }; 
 							$.each(a_attr, function (k, z) {
-								tmp1.attr[z] = li.attr(z).replace(/jstree[^ ]*|$/ig,'');
+								tmp1.attr[z] = (t.attr(z) || "").replace(/jstree[^ ]*|$/ig,'');
 							});
 							$.each(s.languages, function (k, z) {
 								if(t.hasClass(z)) { tmp2.language = z; return true; }
@@ -2236,6 +2237,9 @@
 						e.preventDefault();
 					}, this));
 		},
+		__destroy : function () {
+			this.get_container().find(".jstree-checkbox").remove();
+		},
 		_fn : {
 			_prepare_checkboxes : function (obj) {
 				obj = !obj || obj == -1 ? this.get_container() : this._get_node(obj);
@@ -2666,7 +2670,7 @@
 						}
 						if(a_attr.length) { 
 							$.each(a_attr, function (k, z) {
-								result += " " + z + "=\"" + li.attr(z).replace(/jstree[^ ]*|$/ig,'') + "\"";
+								result += " " + z + "=\"" + (tmp1.attr(z) || "").replace(/jstree[^ ]*|$/ig,'') + "\"";
 							});
 						}
 						if(tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"").length) {
@@ -3226,7 +3230,7 @@
 (function ($) {
 	$.jstree.plugin("html_data", {
 		__init : function () { 
-			this.data.html_data.original_container_html = this.get_container().html().replace(/<\/([^>]+)>\s+</ig,"</$1><").replace(/>\s+<([a-z]{1})/ig,"><$1");
+			this.data.html_data.original_container_html = this.get_container().find(" > ul > li").clone(true);
 		},
 		defaults : { 
 			data : false,
@@ -3253,8 +3257,10 @@
 					case (!s.data && !s.ajax):
 						if(!obj || obj == -1) {
 							this.get_container()
-								.html(this.data.html_data.original_container_html)
-								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>");
+								.children("ul").empty()
+								.append(this.data.html_data.original_container_html)
+								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end()
+								.filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon");
 							this.clean_node();
 						}
 						if(s_call) { s_call.call(this); }
@@ -3265,7 +3271,8 @@
 							if(!d.is("ul")) { d = $("<ul>").append(d); }
 							this.get_container()
 								.children("ul").empty().append(d.children())
-								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>");
+								.find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end()
+								.filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon");
 							this.clean_node();
 						}
 						if(s_call) { s_call.call(this); }
@@ -3294,8 +3301,8 @@
 							if(d) {
 								d = $(d);
 								if(!d.is("ul")) { d = $("<ul>").append(d); }
-								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); }
-								else { obj.children(".jstree-loading").removeClass("jstree-loading"); obj.append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>"); obj.data("jstree-is-loading",false); }
+								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end().filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon"); }
+								else { obj.children(".jstree-loading").removeClass("jstree-loading"); obj.append(d).find("li, a").filter(function () { return this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end().filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon"); obj.data("jstree-is-loading",false); }
 								this.clean_node(obj);
 								if(s_call) { s_call.call(this); }
 							}
