@@ -495,7 +495,8 @@
 			// open/close
 			open_node	: function (obj, callback, skip_animation) {
 				obj = this._get_node(obj);
-				if(!obj.length || !obj.hasClass("jstree-closed")) { return false; }
+				if(!obj.length) { return false; }
+				if(!obj.hasClass("jstree-closed")) { callback.call(); return false; }
 				var s = skip_animation || is_ie6 ? 0 : this._get_settings().core.animation,
 					t = this;
 				if(!this._is_loaded(obj)) {
@@ -2691,6 +2692,7 @@
 					tmp2 = li[0].id;
 					li = li.find("> ul > li");
 					if(li.length) { tmp2 = _this.get_xml(tp, li, li_attr, a_attr, tmp2); }
+					else { tmp2 = ""; }
 					if(tp == "nest") { result += tmp2; }
 					result += "</item>";
 					if(tp == "flat") { result += tmp2; }
