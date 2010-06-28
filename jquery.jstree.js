@@ -3236,7 +3236,10 @@
 (function ($) {
 	$.jstree.plugin("html_data", {
 		__init : function () { 
+			// this used to use html() and clean the whitespace, but this way any attached data was lost
 			this.data.html_data.original_container_html = this.get_container().find(" > ul > li").clone(true);
+			// remove white space from LI node - otherwise nodes appear a bit to the right
+			this.data.html_data.original_container_html.find("li").andSelf().contents().filter(function() { return this.nodeType == 3; }).remove();
 		},
 		defaults : { 
 			data : false,
