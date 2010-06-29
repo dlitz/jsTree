@@ -3359,10 +3359,10 @@
 			var s = this._get_settings().themeroller;
 			this.get_container()
 				.addClass("ui-widget-content")
-				.delegate("a","mouseenter", function () {
+				.delegate("a","mouseenter.jstree", function () {
 					$(this).addClass(s.item_h);
 				})
-				.delegate("a","mouseleave", function () {
+				.delegate("a","mouseleave.jstree", function () {
 					$(this).removeClass(s.item_h);
 				})
 				.bind("open_node.jstree create_node.jstree", $.proxy(function (e, data) { 
@@ -3385,6 +3385,17 @@
 				.bind("move_node.jstree", $.proxy(function (e, data) {
 						this._themeroller(data.rslt.o);
 					}, this));
+		},
+		__destroy : function () {
+			var s = this._get_settings().themeroller,
+				c = [ "ui-icon" ];
+			$.each(s, function (i, v) {
+				v = v.split(" ");
+				if(v.length) { c = c.concat(v); }
+			});
+			this.get_container()
+				.removeClass("ui-widget-content")
+				.find("." + c.join(", .")).removeClass(c.join(" "));
 		},
 		_fn : {
 			_themeroller : function (obj) {
