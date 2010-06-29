@@ -1805,6 +1805,7 @@
 		is_down : false,
 		is_drag : false,
 		helper : false,
+		scroll_spd : 10,
 		init_x : 0,
 		init_y : 0,
 		threshold : 5,
@@ -1842,14 +1843,14 @@
 				var d = $(document), t = d.scrollTop(), l = d.scrollLeft();
 				if(e.pageY - t < 20) { 
 					if(sti && dir1 === "down") { clearInterval(sti); sti = false; }
-					if(!sti) { dir1 = "up"; sti = setInterval(function () { $(document).scrollTop($(document).scrollTop() - 15); }, 150); }
+					if(!sti) { dir1 = "up"; sti = setInterval(function () { $(document).scrollTop($(document).scrollTop() - $.vakata.dnd.scroll_spd); }, 150); }
 				}
 				else { 
 					if(sti && dir1 === "up") { clearInterval(sti); sti = false; }
 				}
 				if($(window).height() - (e.pageY - t) < 20) {
 					if(sti && dir1 === "up") { clearInterval(sti); sti = false; }
-					if(!sti) { dir1 = "down"; sti = setInterval(function () { $(document).scrollTop($(document).scrollTop() + 15); }, 150); }
+					if(!sti) { dir1 = "down"; sti = setInterval(function () { $(document).scrollTop($(document).scrollTop() + $.vakata.dnd.scroll_spd); }, 150); }
 				}
 				else { 
 					if(sti && dir1 === "down") { clearInterval(sti); sti = false; }
@@ -1857,14 +1858,14 @@
 
 				if(e.pageX - l < 20) {
 					if(sli && dir2 === "right") { clearInterval(sli); sli = false; }
-					if(!sli) { dir2 = "left"; sli = setInterval(function () { $(document).scrollLeft($(document).scrollLeft() - 15); }, 150); }
+					if(!sli) { dir2 = "left"; sli = setInterval(function () { $(document).scrollLeft($(document).scrollLeft() - $.vakata.dnd.scroll_spd); }, 150); }
 				}
 				else { 
 					if(sli && dir2 === "left") { clearInterval(sli); sli = false; }
 				}
 				if($(window).width() - (e.pageX - l) < 20) {
 					if(sli && dir2 === "left") { clearInterval(sli); sli = false; }
-					if(!sli) { dir2 = "right"; sli = setInterval(function () { $(document).scrollLeft($(document).scrollLeft() + 15); }, 150); }
+					if(!sli) { dir2 = "right"; sli = setInterval(function () { $(document).scrollLeft($(document).scrollLeft() + $.vakata.dnd.scroll_spd); }, 150); }
 				}
 				else { 
 					if(sli && dir2 === "right") { clearInterval(sli); sli = false; }
@@ -1929,11 +1930,11 @@
 							// Horizontal scroll
 							if(e.pageX + 24 > this.data.dnd.cof.left + this.data.dnd.cw) {
 								if(this.data.dnd.i1) { clearInterval(this.data.dnd.i1); }
-								this.data.dnd.i1 = setInterval($.proxy(function () { this.scrollLeft += 5; }, cnt), 100);
+								this.data.dnd.i1 = setInterval($.proxy(function () { this.scrollLeft += $.vakata.dnd.scroll_spd; }, cnt), 100);
 							}
 							else if(e.pageX - 24 < this.data.dnd.cof.left) {
 								if(this.data.dnd.i1) { clearInterval(this.data.dnd.i1); }
-								this.data.dnd.i1 = setInterval($.proxy(function () { this.scrollLeft -= 5; }, cnt), 100);
+								this.data.dnd.i1 = setInterval($.proxy(function () { this.scrollLeft -= $.vakata.dnd.scroll_spd; }, cnt), 100);
 							}
 							else {
 								if(this.data.dnd.i1) { clearInterval(this.data.dnd.i1); }
@@ -1942,11 +1943,11 @@
 							// Vertical scroll
 							if(e.pageY + 24 > this.data.dnd.cof.top + this.data.dnd.ch) {
 								if(this.data.dnd.i2) { clearInterval(this.data.dnd.i2); }
-								this.data.dnd.i2 = setInterval($.proxy(function () { this.scrollTop += 5; }, cnt), 100);
+								this.data.dnd.i2 = setInterval($.proxy(function () { this.scrollTop += $.vakata.dnd.scroll_spd; }, cnt), 100);
 							}
 							else if(e.pageY - 24 < this.data.dnd.cof.top) {
 								if(this.data.dnd.i2) { clearInterval(this.data.dnd.i2); }
-								this.data.dnd.i2 = setInterval($.proxy(function () { this.scrollTop -= 5; }, cnt), 100);
+								this.data.dnd.i2 = setInterval($.proxy(function () { this.scrollTop -= $.vakata.dnd.scroll_spd; }, cnt), 100);
 							}
 							else {
 								if(this.data.dnd.i2) { clearInterval(this.data.dnd.i2); }
