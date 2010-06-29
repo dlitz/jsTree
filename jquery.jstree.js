@@ -1699,7 +1699,7 @@
 			}
 			if(!!s.save_selected) {
 				tmp = $.cookie(s.save_selected);
-				if(tmp && tmp.length) { this.data.ui.to_select = tmp.split(","); }
+				if(tmp && tmp.length && this.data.ui) { this.data.ui.to_select = tmp.split(","); }
 			}
 			this.get_container()
 				.one( ( this.data.ui ? "reselect" : "reopen" ) + ".jstree", $.proxy(function () {
