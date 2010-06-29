@@ -496,7 +496,7 @@
 			open_node	: function (obj, callback, skip_animation) {
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
-				if(!obj.hasClass("jstree-closed")) { callback.call(); return false; }
+				if(!obj.hasClass("jstree-closed")) { if(callback) { callback.call(); } return false; }
 				var s = skip_animation || is_ie6 ? 0 : this._get_settings().core.animation,
 					t = this;
 				if(!this._is_loaded(obj)) {
