@@ -3153,11 +3153,17 @@
 				}
 				if($.isFunction(v)) { v = v.call(this, obj); }
 				if(rule === "max_depth" && obj !== -1 && opts !== false && s.max_depth !== -2 && v !== 0) {
-					this._get_node(obj).parentsUntil(".jstree","li").each(function (i) {
+					// also include the node itself - otherwise if root node it is not checked
+					this._get_node(obj).children("a:eq(0)").parentsUntil(".jstree","li").each(function (i) {
+						// check if current depth already exceeds global tree depth
 						if(s.max_depth !== -1 && s.max_depth - (i + 1) <= 0) { v = 0; return false; }
-						d = _this._check(rule, this, false);
+						d = (i === 0) ? v : _this._check(rule, this, false);
+						// check if current node max depth is already matched or exceeded
 						if(d !== -1 && d - (i + 1) <= 0) { v = 0; return false; }
+						// otherwise - set the max depth to the current value minus current depth
 						if(d >= 0 && (d - (i + 1) < v || v < 0) ) { v = d - (i + 1); }
+						// if the global tree depth exists and it minus the nodes calculated so far is less than `v` or `v` is unlimited
+						if(s.max_depth >= 0 && (s.max_depth - (i + 1) < v || v < 0) ) { v = s.max_depth - (i + 1); }
 					});
 				}
 				return v;
@@ -3221,7 +3227,7 @@
 						ch = p === -1 ? this.get_container().children("> ul > li").length : p.children("> ul > li").length;
 						if(ch + 1 > mc) { return false; }
 					}
-					if(s.max_depth !== -2 && md !== -1 && (md - 1) <= 0) { return false; }
+					if(s.max_depth !== -2 && md !== -1 && (md - 1) < 0) { return false; }
 				}
 				return this.__call_old(true, obj, position, js, callback, is_loaded, skip_check);
 			}
