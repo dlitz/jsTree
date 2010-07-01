@@ -2567,14 +2567,17 @@
 										d = $(d);
 										this.get_container().children("ul").empty().append(d.children());
 										if(s.clean_node) { this.clean_node(obj); }
+										if(s_call) { s_call.call(this); }
 									}
 								}
 								else { 
-									if(s.correct_state) { this.get_container().children("ul").empty(); }
+									if(s.correct_state) { 
+										this.get_container().children("ul").empty(); 
+										if(s_call) { s_call.call(this); }
+									}
 								}
 							}, this));
 						}
-						if(s_call) { s_call.call(this); }
 						break;
 					case (!s.data && !!s.ajax) || (!!s.data && !!s.ajax && obj && obj !== -1):
 						error_func = function (x, t, e) {
@@ -2650,7 +2653,7 @@
 				obj = this._get_node(obj);
 				if(!obj || obj === -1) { obj = this.get_container().find("> ul > li"); }
 				li_attr = $.isArray(li_attr) ? li_attr : [ "id", "class" ];
-				if(!is_callback && this.data.types) { li_attr.push(s.types.type_attr); }
+				if(!is_callback && this.data.types && $.inArray(s.types.type_attr, li_attr) === -1) { li_attr.push(s.types.type_attr); }
 
 				a_attr = $.isArray(a_attr) ? a_attr : [ ];
 

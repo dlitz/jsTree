@@ -17,7 +17,6 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	#container { width:780px; margin:10px auto; overflow:hidden; position:relative; }
 	#demo { width:auto; height:400px; overflow:auto; border:1px solid gray; }
 
-	#menu { height:30px; overflow:auto; }
 	#text { margin-top:1px; }
 
 	#alog { font-size:9px !important; margin:5px; border:1px solid silver; }
@@ -26,7 +25,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <body>
 <div id="container">
 
-<div id="menu">
+<div id="mmenu" style="height:30px; overflow:auto;">
 <input type="button" id="add_folder" value="add folder" style="display:block; float:left;"/>
 <input type="button" id="add_default" value="add file" style="display:block; float:left;"/>
 <input type="button" id="rename" value="rename" style="display:block; float:left;"/>
@@ -246,7 +245,7 @@ $(function () {
 });
 </script>
 
-<div style="position:absolute; right:10px; top:40px; width:220px; border:1px solid silver; min-height:160px;">
+<div style="position:absolute; right:30px; top:120px; width:220px; border:1px solid silver; min-height:160px;">
 	<input type="button" style='display:block; width:170px; height:24px; margin:5px auto;' value="reconstruct" onclick="$.get('./server.php?reconstruct', function () { $('#demo').jstree('refresh',-1); });" />
 	<input type="button" style='display:block; width:170px; height:24px; margin:5px auto;' id="analyze" value="analyze" onclick="$('#alog').load('./server.php?analyze');" />
 	<input type="button" style='display:block; width:170px; height:24px; margin:5px auto;' value="refresh" onclick="$('#demo').jstree('refresh',-1);" />
