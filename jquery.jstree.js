@@ -731,7 +731,7 @@
 				}
 				else {
 					if(!/^(before|after)$/.test(p.p) && !this._is_loaded(p.r)) {
-						return this.load_node(p.r, function () { this.prepare_move(o, r, p, cb, true); });
+						return this.load_node(p.r, function () { this.prepare_move(o, r, pos, cb, true); });
 					}
 					switch(p.p) {
 						case "before":
@@ -1156,6 +1156,8 @@
 				if(!this.data.crrm.ct_nodes && !this.data.crrm.cp_nodes) { return false; }
 				if(this.data.crrm.ct_nodes) { this.move_node(this.data.crrm.ct_nodes, obj); }
 				if(this.data.crrm.cp_nodes) { this.move_node(this.data.crrm.cp_nodes, obj, false, true); }
+				this.data.crrm.cp_nodes = false;
+				this.data.crrm.ct_nodes = false;
 			}
 		}
 	});

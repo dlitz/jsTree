@@ -165,18 +165,20 @@ $(function () {
 		})
 		.bind("remove.jstree", function (e, data) {
 			data.rslt.obj.each(function () {
-				$.post(
-					"./server.php", 
-					{ 
+				$.ajax({
+					async : false,
+					type: 'POST',
+					url: "./server.php",
+					data : { 
 						"operation" : "remove_node", 
 						"id" : this.id.replace("node_","")
 					}, 
-					function (r) {
+					success : function (r) {
 						if(!r.status) {
-							$.jstree.rollback(data.rlbk);
+							data.inst.refresh();
 						}
 					}
-				);
+				});
 			});
 		})
 		.bind("rename.jstree", function (e, data) {
@@ -227,7 +229,7 @@ $(function () {
 </script>
 <script type="text/javascript">
 $(function () { 
-	$("#menu input").click(function () {
+	$("#mmenu input").click(function () {
 		switch(this.id) {
 			case "add_default":
 			case "add_folder":
