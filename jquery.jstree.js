@@ -310,7 +310,7 @@
 				if(this._get_settings().core.rtl) {
 					this.get_container().addClass("jstree-rtl").css("direction", "rtl");
 				}
-				this.get_container().html("<ul><li class='jstree-last jstree-leaf'><ins>&#160;</ins><a class='jstree-loading' href='#'><ins class='jstree-icon'>&#160;</ins>" + this._get_settings().core.strings.loading + "</a></li></ul>");
+				this.get_container().html("<ul><li class='jstree-last jstree-leaf'><ins>&#160;</ins><a class='jstree-loading' href='#'><ins class='jstree-icon'>&#160;</ins>" + this._get_string("loading") + "</a></li></ul>");
 				this.data.core.li_height = this.get_container().find("ul li.jstree-closed, ul li.jstree-leaf").eq(0).height() || 18;
 
 				this.get_container()
@@ -489,6 +489,11 @@
 				return p;
 			},
 
+			// string functions
+			_get_string : function (key) {
+				return this._get_settings().core.strings[key] || key;
+			},
+
 			is_open		: function (obj) { obj = this._get_node(obj); return obj && obj !== -1 && obj.hasClass("jstree-open"); },
 			is_closed	: function (obj) { obj = this._get_node(obj); return obj && obj !== -1 && obj.hasClass("jstree-closed"); },
 			is_leaf		: function (obj) { obj = this._get_node(obj); return obj && obj !== -1 && obj.hasClass("jstree-leaf"); },
@@ -593,7 +598,7 @@
 				if(!js) { js = {}; }
 				if(js.attr) { d.attr(js.attr); }
 				if(js.state) { d.addClass("jstree-" + js.state); }
-				if(!js.data) { js.data = s.strings.new_node; }
+				if(!js.data) { js.data = this._get_string("new_node"); }
 				if(!$.isArray(js.data)) { tmp = js.data; js.data = []; js.data.push(tmp); }
 				$.each(js.data, function (i, m) {
 					tmp = $("<a>");
@@ -1390,7 +1395,7 @@
 						success_func = function (d, t, x) {
 							var sf = this.get_settings().json_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
-							if(d === "" || (!$.isArray(d) && !$.isPlainObject(d))) {
+							if(d === "" || (d && d.toString && d.toString().replace(/^[\s\n]+$/,"") == "") || (!$.isArray(d) && !$.isPlainObject(d))) {
 								return error_func.call(this, x, t, "");
 							}
 							d = this._parse_json(d);
@@ -1602,6 +1607,16 @@
 			},
 			get_lang : function () {
 				return this.data.languages.current_language;
+			},
+			_get_string : function (key, lang) {
+				var langs = this._get_settings().languages,
+					s = this._get_settings().core.strings;
+				if($.isArray(langs) && langs.length) {
+					lang = (lang && $.inArray(lang,langs) != -1) ? lang : this.data.languages.current_language;
+				}
+				if(s[lang] && s[lang][key]) { return s[lang][key]; }
+				if(s[key]) { return s[key]; }
+				return key;
 			},
 			get_text : function (obj, lang) {
 				obj = this._get_node(obj) || this.data.ui.last_selected;
@@ -2599,7 +2614,7 @@
 							d = x.responseText;
 							var sf = this.get_settings().xml_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
-							if(d == "") {
+							if(d == "" || (d && d.toString && d.toString().replace(/^[\s\n]+$/,"") == "")) {
 								return error_func.call(this, x, t, "");
 							}
 							this.parse_xml(d, $.proxy(function (d) {
@@ -3316,7 +3331,7 @@
 						success_func = function (d, t, x) {
 							var sf = this.get_settings().html_data.ajax.success; 
 							if(sf) { d = sf.call(this,d,t,x) || d; }
-							if(d == "") {
+							if(d == "" || (d && d.toString && d.toString().replace(/^[\s\n]+$/,"") == "")) {
 								return error_func.call(this, x, t, "");
 							}
 							if(d) {
@@ -3465,7 +3480,7 @@
 									if(!p || p === -1) { p = this.get_container(); }
 								}
 								if(typeof data.args[2] === "string") { nms.push(data.args[2]); }
-								else if(!data.args[2] || !data.args[2].data) { nms.push(this._get_settings().core.strings.new_node); }
+								else if(!data.args[2] || !data.args[2].data) { nms.push(this._get_string("new_node")); }
 								else { nms.push(data.args[2].data); }
 								res = this._check_unique(nms, p.find("> ul > li"));
 							}
