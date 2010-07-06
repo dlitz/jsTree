@@ -47,9 +47,16 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <p class="meta">A string. Default is <code>"ui-state-active"</code>.</p>
 <p>The class name to use for selected items (UI plugin).</p>
 
-<h3>item_icon</h3>
+<h3>item_open</h3>
+<p class="meta">A string. Default is <code>"ui-icon-folder-open"</code>.</p>
+<p>The class name to use for the opened items. If set to <code>false</code> the icon is not shown.</p>
+<h3>item_clsd</h3>
 <p class="meta">A string. Default is <code>"ui-icon-folder-collapsed"</code>.</p>
-<p>The class name to use for the default icon.</p>
+<p>The class name to use for the opened items. If set to <code>false</code> the icon is not shown.</p>
+<h3>item_leaf</h3>
+<p class="meta">A string. Default is <code>"ui-icon-document"</code>.</p>
+<p>The class name to use for the opened items. If set to <code>false</code> the icon is not shown.</p>
+
 
 </div>
 
@@ -63,7 +70,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 			<a href="#">Root node 1</a>
 			<ul>
 				<li id="phtml_2">
-					<a href="#">Child node 1</a>
+					<a href="#"><ins class="ui-icon ui-icon-lightbulb">&#160;</ins>Child node 1</a>
 				</li>
 				<li id="phtml_3">
 					<a href="#">Child node 2</a>

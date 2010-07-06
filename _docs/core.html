@@ -388,6 +388,15 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	</li>
 </ul>
 
+<h3 id="open_node">.correct_state ( node )</h3>
+<p>Corrects closed items to leaf items, if no children are found. Used internally, triggers an event.</p>
+<ul class="arguments">
+	<li>
+		<code class="tp">mixed</code> <strong>node</strong>
+		<p>This can be a DOM node, jQuery node or selector pointing to an element we want corrected.</p>
+	</li>
+
+
 <h3 id="open_node">.open_node ( node , callback , skip_animation )</h3>
 <p>Opens a closed node, so that its children are visible. If the <code>animation</code> config option is greater than <code>0</code> the children are revealed using a slide down animation, whose duration is the value of the <code>animation</code> config option in milliseconds. Triggers an event.</p>
 <ul class="arguments">
