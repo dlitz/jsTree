@@ -123,6 +123,10 @@ jQuery("some-container")
 <p class="meta">An array. Default is <code>[]</code>.</p>
 <p>Defines which nodes are to be automatically opened when the tree finishes loading - a list of IDs is expected.</p>
 
+<h3>open_parents</h3>
+<p class="meta">Boolean. Default is <code>true</code>.</p>
+<p>If set to true opening a node will also open any closed ancestors it has (will open the whole chain down to this node).</p>
+
 <h3>rtl</h3>
 <p class="meta">Boolean. Default is <code>false</code>.</p>
 <p>Defines whether the tree is in right-to-left mode (also make sure you are using a RTL theme - for example the included <code>default-rtl</code>).</p>
@@ -631,6 +635,11 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 <code>.p</code> - the position to move to (may be a string - <code>"last"</code>, <code>"first"</code>, etc)<br />
 <code>.cp</code> - the calculated position to move to (always a number)<br />
 <code>.np</code> - the new parent<br />
+<code>.oc</code> - the original node (if there was a copy)<br />
+<code>.cy</code> - boolen indicating if the move was a copy<br />
+<code>.cr</code> - same as <code>np</code>, but if a root node is created this is -1<br />
+<code>.op</code> - the former parent<br />
+<code>.or</code> - the node that was previously in the position of the moved node<br />
 </p>
 
 </div>

@@ -286,6 +286,14 @@
 		if(/msie/.test(u) && parseInt(v, 10) == 7) { 
 			css_string += '.jstree li a { border-width:0 !important; padding:0px 2px !important; } ';
 		}
+		// correct ff2 lack of display:inline-block
+		if(!/compatible/.test(u) && /mozilla/.test(u) && parseFloat(v, 10) < 1.9) {
+			css_string += '' + 
+				'.jstree ins { display:-moz-inline-stack; position:relative; } ' + 
+				'.jstree a { display:-moz-inline-block; } ' + 
+				'.jstree .jstree-no-icons .jstree-checkbox { display:-moz-inline-stack !important; } ';
+				/* this shouldn't be here as it is theme specific */
+		}
 		$.vakata.css.add_sheet({ str : css_string });
 	});
 
@@ -298,6 +306,7 @@
 			html_titles	: false,
 			animation	: 500,
 			initially_open : [],
+			open_parents : true,
 			rtl			: false,
 			strings		: {
 				loading		: "Loading ...",
@@ -515,6 +524,11 @@
 					this.load_node(obj, function () { t.open_node(obj, callback, skip_animation); }, callback);
 				}
 				else {
+					if(this._get_settings().core.open_parents) {
+						obj.parentsUntil(".jstree",".jstree-closed").each(function () {
+							t.open_node(this, false, true);
+						});
+					}
 					if(s) { obj.children("ul").css("display","none"); }
 					obj.removeClass("jstree-closed").addClass("jstree-open").children("a").removeClass("jstree-loading");
 					if(s) { obj.children("ul").stop(true).slideDown(s, function () { this.style.display = ""; }); }
@@ -780,7 +794,7 @@
 				var obj = prepared_move, ret = true;
 				if(obj.or[0] === obj.o[0]) { return false; }
 				obj.o.each(function () { 
-					if(obj.r.parentsUntil(".jstree").andSelf().filter("li").index(this) !== -1) { ret = false; return false; }
+					if(obj.r.parentsUntil(".jstree", "li").andSelf().index(this) !== -1) { ret = false; return false; }
 				});
 				return ret;
 			},
@@ -944,7 +958,7 @@
 					is_selected = this.is_selected(obj),
 					proceed = true;
 				if(check) {
-					if(s.disable_selecting_children && is_multiple && obj.parents("li", this.get_container()).children("a.jstree-clicked").length) {
+					if(s.disable_selecting_children && is_multiple && obj.parentsUntil(".jstree","li").children("a.jstree-clicked").length) {
 						return false;
 					}
 					proceed = false;
@@ -3135,7 +3149,7 @@
 								( 
 									(s[t] && typeof s[t][data.func] !== "undefined") || 
 									(s["default"] && typeof s["default"][data.func] !== "undefined")
-								) && !this._check(data.func, data.args[0])
+								) && this._check(data.func, data.args[0]) === false
 							) {
 								e.stopImmediatePropagation();
 								return false;
@@ -3418,7 +3432,7 @@
 						this._themeroller();
 					}, this))
 				.bind("close_node.jstree", $.proxy(function (e, data) {
-						data.rslt.obj.children("ins").removeClass(s.opened).addClass(s.closed);
+						this._themeroller(data.rslt.obj);
 					}, this))
 				.bind("correct_state.jstree", $.proxy(function (e, data) {
 						data.rslt.obj
