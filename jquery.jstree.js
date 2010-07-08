@@ -310,7 +310,8 @@
 			rtl			: false,
 			strings		: {
 				loading		: "Loading ...",
-				new_node	: "New node"
+				new_node	: "New node",
+				multiple_selection : "Multiple selection"
 			}
 		},
 		_fn : { 
@@ -2232,7 +2233,7 @@
 			start_drag : function (obj, e) {
 				o = this._get_node(obj);
 				if(this.data.ui && this.is_selected(o)) { o = this._get_node(null, true); }
-				$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + (o.length > 1 ? "Multiple selection" : this.get_text(o)) );
+				$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + (o.length > 1 ? this._get_string("multiple_selection") : this.get_text(o)) );
 				if(this.data.themes) { 
 					m.attr("class", "jstree-" + this.data.themes.theme); 
 					$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme); 
@@ -2807,7 +2808,7 @@
 				}
 				if(this.data.search.result.length) { this.clear_search(); }
 				this.data.search.result = this.get_container().find("a" + (this.data.languages ? "." + this.get_lang() : "" ) + ":" + (s.case_insensitive ? "jstree_contains" : "contains") + "(" + this.data.search.str + ")");
-				this.data.search.result.addClass("jstree-search").parents(".jstree-closed").each(function () {
+				this.data.search.result.addClass("jstree-search").parent().parents(".jstree-closed").each(function () {
 					t.open_node(this, false, true);
 				});
 				this.__callback({ nodes : this.data.search.result, str : str });
