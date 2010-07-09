@@ -21,6 +21,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <h2>Description</h2>
 <div id="description">
 <p>The <code>search</code> plugin enables searching for nodes whose title contains a given string, works on async trees too. All found nodes get the <code>jstree-search</code> class applied to their contained <code>a</code> nodes - you can use that class to style search results.</p>
+<p class="note">You can also include the <code>adv_search</code> plugin in your plugins array. It hides all non-matching nodes and leaves only the matching visible, until the search is cleared. Keep in mind <code>adv_search</code> is heavy on the browser/DOM and is still experimental.</p>
 </div>
 
 <h2 id="configuration">Configuration</h2>
@@ -79,6 +80,40 @@ $(function () {
 		})
 		.bind("search.jstree", function (e, data) {
 			alert("Found " + data.rslt.nodes.length + " nodes matching '" + data.rslt.str + "'.");
+		});
+});
+</script>
+
+<h3>Using adv_search</h3>
+<p>Try pressing the buttons. It will also work with AJAX searching.</p>
+<input type="button" class="button" value="search for ADV_SEARCH" id="search1" rel="ADV_SEARCH" style="float:left;" />
+<input type="button" class="button" value="search for Root" id="search2" rel="Root" style="float:left;" />
+<input type="button" class="button" value="search for Child" id="search3" rel="Child" style="float:left;" />
+<input type="button" class="button" value="Clear search" id="clear" style="" />
+<div id="demo2" class="demo">
+<ul>
+	<li class="jstree-open"><a href="#">Root node 1</a>
+		<ul>
+			<li><a href="#">Child node 1</a></li>
+			<li><a href="#">Child node 2</a></li>
+			<li><a href="#">ADV_SEARCH</a></li>
+			<li><a href="#">Child node 4</a></li>
+		</ul>
+	</li>
+	<li><a href="#">Root node 2</a>
+</ul>
+</div>
+<script type="text/javascript" class="source">
+$(function () {
+	$("#search1, #search2, #search3").click(function () {
+		$("#demo2").jstree("search", $(this).attr("rel"));
+	});
+	$("#clear").click(function () {
+		$("#demo2").jstree("clear_search");
+	});
+	$("#demo2")
+		.jstree({ 
+			"plugins" : [ "themes", "html_data", "search", "adv_search" ]
 		});
 });
 </script>

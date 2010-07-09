@@ -33,6 +33,10 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <p class="meta">A string. Default is <code>"ctrl"</code>.</p>
 <p>The special key used to make a click add to the selection and not replace it (<code>"ctrl"</code>, <code>"shift"</code>, <code>"alt"</code>, <code>"meta"</code>).<br />You can also set this to <code>"on"</code> making every click add to the selection.</p>
 
+<h3>select_range_modifier</h3>
+<p class="meta">A string. Default is <code>"shift"</code>.</p>
+<p>The special key used to make a click expand a range from the last selected item (<code>"ctrl"</code>, <code>"shift"</code>, <code>"alt"</code>, <code>"meta"</code>).<br />Note that the last clicked elemtn should be a sibling of the currently clicked element so that a range will be created (same as common file explorers).</p>
+
 <h3>selected_parent_close</h3>
 <p class="meta">A string (or <code>false</code>). Default is <code>"select_parent"</code>.</p>
 <p>What action to take when a selected node's parent is closed (making the selected node invisible). Possible values are <code>false</code> - do nothing, <code>"select_parent"</code> - select the closed node's parent and <code>"deselect"</code> - deselect the node.</p>
@@ -94,7 +98,7 @@ $(function () {
 <div class="panel api">
 
 <h3 id="_get_node">._get_node ( node , allow_multiple )</h3>
-<p>Overrides the function form the <a href="core.html#_get_node">core</a> module.<br />if <code>node</code> is <code>undefined</code> or <code>null</code> and <code>allow_multiple</code> is <code>true</code> all the currently selected nodes are returned<br />if <code>node</code> is <code>undefined</code> or <code>null</code> and <code>allow_multiple</code> is NOT <code>true</code> only the last selected node is returned.</p>
+<p>Overrides the function from the <a href="core.html#_get_node">core</a> module.<br />if <code>node</code> is <code>undefined</code> or <code>null</code> and <code>allow_multiple</code> is <code>true</code> all the currently selected nodes are returned<br />if <code>node</code> is <code>undefined</code> or <code>null</code> and <code>allow_multiple</code> is NOT <code>true</code> only the last selected node is returned.</p>
 <ul class="arguments">
 	<li>
 		<code class="tp">mixed</code> <strong>node</strong>

@@ -82,7 +82,7 @@
 })(jQuery);
 
 /* 
- * jsTree core 1.0
+ * jsTree core
  */
 (function ($) {
 	// private variables 
@@ -571,11 +571,11 @@
 				// so that callback is fired AFTER all nodes are open
 				if(original_obj.find('li.jstree-closed').length === 0) { this.__callback({ "obj" : original_obj }); }
 			},
-			close_all	: function (obj) {
+			close_all	: function (obj, skip_animation) {
 				var _this = this;
 				obj = obj ? this._get_node(obj) : this.get_container();
 				if(!obj || obj === -1) { obj = this.get_container(); }
-				obj.find("li.jstree-open").andSelf().each(function () { _this.close_node(this); });
+				obj.find("li.jstree-open").andSelf().each(function () { _this.close_node(this, skip_animation); });
 				this.__callback({ "obj" : obj });
 			},
 			clean_node	: function (obj) {
@@ -845,7 +845,7 @@
 //*/
 
 /* 
- * jsTree ui plugin 1.0
+ * jsTree ui plugin
  * This plugins handles selecting/deselecting/hovering/dehovering nodes
  */
 (function ($) {
@@ -905,6 +905,7 @@
 		defaults : {
 			select_limit : -1, // 0, 1, 2 ... or -1 for unlimited
 			select_multiple_modifier : "ctrl", // on, or ctrl, shift, alt
+			select_range_modifier : "shift",
 			selected_parent_close : "select_parent", // false, "deselect", "select_parent"
 			select_prev_on_delete : true,
 			disable_selecting_children : false,
@@ -956,14 +957,26 @@
 				if(obj == -1 || !obj || !obj.length) { return false; }
 				var s = this._get_settings().ui,
 					is_multiple = (s.select_multiple_modifier == "on" || (s.select_multiple_modifier !== false && e && e[s.select_multiple_modifier + "Key"])),
+					is_range = (s.select_range_modifier !== false && e && e[s.select_range_modifier + "Key"] && this.data.ui.last_selected && this.data.ui.last_selected[0] !== obj[0] && this.data.ui.last_selected.parent()[0] === obj.parent()[0]),
 					is_selected = this.is_selected(obj),
-					proceed = true;
+					proceed = true,
+					t = this;
 				if(check) {
 					if(s.disable_selecting_children && is_multiple && obj.parentsUntil(".jstree","li").children("a.jstree-clicked").length) {
 						return false;
 					}
 					proceed = false;
 					switch(!0) {
+						case (is_range):
+							this.data.ui.last_selected.addClass("jstree-last-selected");
+							obj = obj[ obj.index() < this.data.ui.last_selected.index() ? "nextUntil" : "prevUntil" ](".jstree-last-selected").andSelf();
+							this.data.ui.last_selected.removeClass("jstree-last-selected");
+							this.data.ui.selected.each(function () {
+								if(this !== t.data.ui.last_selected[0]) { t.deselect_node(this); }
+							});
+							is_selected = false;
+							proceed = true;
+							break;
 						case (is_selected && !is_multiple): 
 							this.deselect_all();
 							is_selected = false;
@@ -986,9 +999,9 @@
 					}
 				}
 				if(proceed && !is_selected) {
+					if(!is_range) { this.data.ui.last_selected = obj; }
 					obj.children("a").addClass("jstree-clicked");
 					this.data.ui.selected = this.data.ui.selected.add(obj);
-					this.data.ui.last_selected = obj;
 					this.__callback({ "obj" : obj });
 				}
 			},
@@ -1027,7 +1040,7 @@
 //*/
 
 /* 
- * jsTree CRRM plugin 1.0
+ * jsTree CRRM plugin
  * Handles creating/renaming/removing/moving nodes by user interaction.
  */
 (function ($) {
@@ -1196,7 +1209,7 @@
 })(jQuery);
 
 /* 
- * jsTree themes plugin 1.0
+ * jsTree themes plugin
  * Handles loading and setting themes, as well as detecting path to themes, etc.
  */
 (function ($) {
@@ -1275,7 +1288,7 @@
 //*/
 
 /*
- * jsTree hotkeys plugin 1.0
+ * jsTree hotkeys plugin
  * Enables keyboard navigation for all tree instances
  * Depends on the jstree ui & jquery hotkeys plugins
  */
@@ -1602,7 +1615,7 @@
 //*/
 
 /* 
- * jsTree languages plugin 1.0
+ * jsTree languages plugin
  * Adds support for multiple language versions in one tree
  * This basically allows for many titles coexisting in one node, but only one of them being visible at any given time
  * This is useful for maintaining the same structure in many languages (hence the name of the plugin)
@@ -1724,7 +1737,7 @@
 //*/
 
 /*
- * jsTree cookies plugin 1.0
+ * jsTree cookies plugin
  * Stores the currently opened/selected nodes in a cookie and then restores them
  * Depends on the jquery.cookie plugin
  */
@@ -1797,7 +1810,7 @@
 //*/
 
 /*
- * jsTree sort plugin 1.0
+ * jsTree sort plugin
  * Sorts items alphabetically (or using any other function)
  */
 (function ($) {
@@ -1832,7 +1845,7 @@
 //*/
 
 /*
- * jsTree DND plugin 1.0
+ * jsTree DND plugin
  * Drag and drop plugin for moving/copying nodes
  */
 (function ($) {
@@ -2267,7 +2280,7 @@
 //*/
 
 /*
- * jsTree checkbox plugin 1.0
+ * jsTree checkbox plugin
  * Inserts checkboxes in front of every node
  * Depends on the ui plugin
  * DOES NOT WORK NICELY WITH MULTITREE DRAG'N'DROP
@@ -2761,7 +2774,7 @@
 //*/
 
 /*
- * jsTree search plugin 1.0
+ * jsTree search plugin
  * Enables both sync and async search on the tree
  * DOES NOT WORK WITH JSON PROGRESSIVE RENDER
  */
@@ -2845,7 +2858,30 @@
 //*/
 
 /*
- * jsTree contextmenu plugin 1.0
+ * jsTree advanced search plugin
+ * Enables hiding all the non-matching nodes! NOTE: This is heavy on the DOM/browser!
+ */
+(function ($) {
+	$.jstree.plugin("adv_search", {
+		__init : function () {
+			if(!this.data.search) { throw "jsTree adv_search: jsTree search plugin not included."; }
+			this.get_container()
+				.bind("search.jstree", function (e, data) {
+					$(this).find("li").hide().removeClass("jstree-last");
+					data.rslt.nodes.parentsUntil(".jstree").andSelf().show()
+						.filter("ul").each(function () { $(this).children("li:visible").eq(-1).addClass("jstree-last"); });
+				})
+				.bind("clear_search.jstree", function () {
+					$(this).find("li").css("display","");
+					$(this).jstree("clean_node", -1);
+				});
+		}
+	});
+})(jQuery);
+//*/
+
+/* 
+ * jsTree contextmenu plugin
  */
 (function ($) {
 	$.vakata.context = {
@@ -3109,7 +3145,7 @@
 //*/
 
 /* 
- * jsTree types plugin 1.0
+ * jsTree types plugin
  * Adds support types of nodes
  * You can set an attribute on each li node, that represents its type.
  * According to the type setting the node may get custom icon/validation rules
@@ -3411,7 +3447,7 @@
 //*/
 
 /* 
- * jsTree themeroller plugin 1.0
+ * jsTree themeroller plugin
  * Adds support for jQuery UI themes. Include this at the end of your plugins list, also make sure "themes" is not included.
  */
 (function ($) {
@@ -3536,7 +3572,7 @@
 //*/
 
 /* 
- * jsTree unique plugin 1.0
+ * jsTree unique plugin
  * Forces different names amongst siblings (still a bit experimental)
  * NOTE: does not check language versions (it will not be possible to have nodes with the same title, even in different languages)
  */
