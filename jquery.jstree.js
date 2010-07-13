@@ -205,7 +205,7 @@
 					// * check the additional data object (func property)
 					// * call event.stopImmediatePropagation()
 					// * return false (or an array of arguments)
-					rslt = this.get_container().triggerHandler(evnt, { "func" : i, "inst" : this, "args" : args });
+					rslt = this.get_container().triggerHandler(evnt, { "func" : i, "inst" : this, "args" : args, "plugin" : func.plugin });
 					if(rslt === false) { return; }
 					if(typeof rslt !== "undefined") { args = rslt; }
 
@@ -721,7 +721,7 @@
 					p.removeClass("jstree-open jstree-closed").addClass("jstree-leaf");
 				}
 				this.clean_node(p);
-				this.__callback({ "obj" : obj, "prev" : prev });
+				this.__callback({ "obj" : obj, "prev" : prev, "parent" : p });
 				return obj;
 			},
 			prepare_move : function (o, r, pos, cb, is_cb) {
@@ -730,7 +730,7 @@
 				p.ot = $.jstree._reference(p.o) || this;
 				p.o = p.ot._get_node(o);
 				p.r = r === - 1 ? -1 : this._get_node(r);
-				p.p = (typeof p === "undefined") ? "last" : pos; // TODO: move to a setting
+				p.p = (typeof pos === "undefined") ? "last" : pos; // TODO: move to a setting
 				if(!is_cb && prepared_move.o && prepared_move.o[0] === p.o[0] && prepared_move.r[0] === p.r[0] && prepared_move.p === p.p) {
 					this.__callback(prepared_move);
 					if(cb) { cb.call(this, prepared_move); }
@@ -1155,9 +1155,10 @@
 			},
 			remove : function (obj) {
 				obj = this._get_node(obj, true);
+				var p = this._get_parent(obj), prev = this._get_prev(obj);
 				this.__rollback();
 				this.delete_node(obj);
-				this.__callback({ "obj" : obj });
+				this.__callback({ "obj" : obj, "prev" : prev, "parent" : p });
 			},
 			check_move : function () {
 				if(!this.__call_old()) { return false; }
@@ -1168,7 +1169,7 @@
 			move_node : function (obj, ref, position, is_copy, is_prepared, skip_check) {
 				var s = this._get_settings().crrm.move;
 				if(!is_prepared) { 
-					if(!position) { position = s.default_position; }
+					if(typeof position === "undefined") { position = s.default_position; }
 					if(position === "inside" && !s.default_position.match(/^(before|after)$/)) { position = s.default_position; }
 					return this.__call_old(true, obj, ref, position, is_copy, false, skip_check);
 				}
@@ -1560,7 +1561,7 @@
 					$.each(li_attr, function (i, v) { 
 						tmp2 = li.attr(v); 
 						if(tmp2 && tmp2.length && tmp2.replace(/jstree[^ ]*|$/ig,'').length) {
-							tmp1.attr[v] = tmp2.replace(/jstree[^ ]*|$/ig,''); 
+							tmp1.attr[v] = tmp2.replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,""); 
 						}
 					});
 					if(li.hasClass("jstree-open")) { tmp1.state = "open"; }
@@ -1585,13 +1586,13 @@
 							}
 							tmp2 = { attr : { }, title : _this.get_text(t, lang) }; 
 							$.each(a_attr, function (k, z) {
-								tmp1.attr[z] = (t.attr(z) || "").replace(/jstree[^ ]*|$/ig,'');
+								tmp1.attr[z] = (t.attr(z) || "").replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"");
 							});
 							$.each(s.languages, function (k, z) {
 								if(t.hasClass(z)) { tmp2.language = z; return true; }
 							});
 							if(t.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"").length) {
-								tmp2.icon = t.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"");
+								tmp2.icon = t.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"");
 							}
 							if(t.children("ins").get(0).style.backgroundImage.length) {
 								tmp2.icon = t.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","");
@@ -2246,7 +2247,7 @@
 			start_drag : function (obj, e) {
 				o = this._get_node(obj);
 				if(this.data.ui && this.is_selected(o)) { o = this._get_node(null, true); }
-				$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + (o.length > 1 ? this._get_string("multiple_selection") : this.get_text(o)) );
+				$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + (o.length > 1 ? this._get_string("multiple_selection") : this.get_text(o).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")) );
 				if(this.data.themes) { 
 					m.attr("class", "jstree-" + this.data.themes.theme); 
 					$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme); 
@@ -2725,7 +2726,7 @@
 				obj.each(function () {
 					result += "<item";
 					li = $(this);
-					$.each(li_attr, function (i, v) { result += " " + v + "=\"" + (li.attr(v) || "").replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"") + "\""; });
+					$.each(li_attr, function (i, v) { result += " " + v + "=\"" + (li.attr(v) || "").replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"") + "\""; });
 					if(li.hasClass("jstree-open")) { result += " state=\"open\""; }
 					if(li.hasClass("jstree-closed")) { result += " state=\"closed\""; }
 					if(tp === "flat") { result += " parent_id=\"" + is_callback + "\""; }
@@ -2743,11 +2744,11 @@
 						}
 						if(a_attr.length) { 
 							$.each(a_attr, function (k, z) {
-								result += " " + z + "=\"" + (tmp1.attr(z) || "").replace(/jstree[^ ]*|$/ig,'') + "\"";
+								result += " " + z + "=\"" + (tmp1.attr(z) || "").replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"") + "\"";
 							});
 						}
 						if(tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"").length) {
-							result += ' icon="' + tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"") + '"';
+							result += ' icon="' + tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"") + '"';
 						}
 						if(tmp1.children("ins").get(0).style.backgroundImage.length) {
 							result += ' icon="' + tmp1.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","") + '"';
@@ -2793,7 +2794,7 @@
 		},
 		_fn : {
 			search : function (str, skip_async) {
-				if(str === "") { return; }
+				if($.trim(str) === "") { this.clear_search(); return; }
 				var s = this.get_settings().search, 
 					t = this,
 					error_func = function () { },
@@ -2872,8 +2873,7 @@
 						.filter("ul").each(function () { $(this).children("li:visible").eq(-1).addClass("jstree-last"); });
 				})
 				.bind("clear_search.jstree", function () {
-					$(this).find("li").css("display","");
-					$(this).jstree("clean_node", -1);
+					$(this).find("li").css("display","").end().jstree("clean_node", -1);
 				});
 		}
 	});
