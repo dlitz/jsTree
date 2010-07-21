@@ -785,6 +785,8 @@
 				}
 				p.np = p.cr == -1 ? p.rt.get_container() : p.cr;
 				p.op = p.ot._get_parent(p.o);
+				if(p.op === -1) { p.op = this.get_container(); }
+				if(p.op && p.np && p.op[0] === p.np[0] && p.o.index() < p.cp) { p.cp++; }
 				p.or = p.np.find(" > ul > li:nth-child(" + (p.cp + 1) + ")");
 
 				prepared_move = p;
@@ -792,10 +794,10 @@
 				if(cb) { cb.call(this, prepared_move); }
 			},
 			check_move : function () {
-				var obj = prepared_move, ret = true;
+				var obj = prepared_move, ret = true, r = obj.r === -1 ? this.get_container() : obj.r;
 				if(obj.or[0] === obj.o[0]) { return false; }
 				obj.o.each(function () { 
-					if(obj.r.parentsUntil(".jstree", "li").andSelf().index(this) !== -1) { ret = false; return false; }
+					if(r.parentsUntil(".jstree", "li").andSelf().index(this) !== -1) { ret = false; return false; }
 				});
 				return ret;
 			},
