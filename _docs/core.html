@@ -453,12 +453,14 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	</li>
 </ul>
 
-<h3 id="close_all">.close_all ( node )</h3>
+<h3 id="close_all">.close_all ( node, do_animation )</h3>
 <p>Closes all descendants of the <code>node</code> node.</p>
 <ul class="arguments">
 	<li>
 		<code class="tp">mixed</code> <strong>node</strong>
 		<p>This can be a DOM node, jQuery node or selector pointing to an element whose descendants you want closed. If this param is omitted or set to <code>-1</code> all nodes in the tree are closed.</p>
+		<code class="tp">boolean</code> <strong>do_animation</strong>
+		<p>If set to <code>true</code> all nodes are closed with an animation. This can be slow on large trees.</p>
 	</li>
 </ul>
 

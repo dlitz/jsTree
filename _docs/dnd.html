@@ -21,7 +21,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <h2>Description</h2>
 <div id="description">
 <p>The <code>dnd</code> plugin enables drag'n'drop support for jstree, also using foreign nodes and drop targets.</p>
-<p class="note">All foreign node options and callback functions in the config (drop_target, drop_check, drop_finish, drag_target, drag_check, drag_finish) are to be used ONLY when nodes that are not part of any tree are involved.<br />If moving nodes from one tree instance to another - just listed for the "move_node.jstree" event on the receiving tree.<br /><span style="color:red">DO NOT SET drag_target AND drop_target to match tree nodes!</span></p>
+<p class="note">All foreign node options and callback functions in the config (drop_target, drop_check, drop_finish, drag_target, drag_check, drag_finish) are to be used ONLY when nodes that are not part of any tree are involved.<br />If moving nodes from one tree instance to another - just listen for the "move_node.jstree" event on the receiving tree.<br /><span style="color:red">DO NOT SET drag_target AND drop_target to match tree nodes!</span></p>
 </div>
 
 <h2 id="configuration">Configuration</h2>
