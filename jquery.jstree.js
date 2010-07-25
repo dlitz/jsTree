@@ -2262,7 +2262,9 @@
 			start_drag : function (obj, e) {
 				o = this._get_node(obj);
 				if(this.data.ui && this.is_selected(o)) { o = this._get_node(null, true); }
-				$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + (o.length > 1 ? this._get_string("multiple_selection") : this.get_text(o).replace(/</ig,"&lt;").replace(/>/ig,"&gt;")) );
+				var dt = o.length > 1 ? this._get_string("multiple_selection") : this.get_text(o);
+				if(!this._get_settings().core.html_titles) { dt = dt.replace(/</ig,"&lt;").replace(/>/ig,"&gt;"); }
+				$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + dt );
 				if(this.data.themes) { 
 					m.attr("class", "jstree-" + this.data.themes.theme); 
 					$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme); 
