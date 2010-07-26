@@ -193,6 +193,8 @@
 						evnt = new $.Event("before.jstree"),
 						rlbk = false;
 
+					if(this.data.core.locked === true && i !== "unlock" && i !== "is_locked") { return; }
+
 					// Check if function belongs to the included plugins of this instance
 					do {
 						if(func && func.plugin && $.inArray(func.plugin, this._get_settings().plugins) !== -1) { break; }
@@ -300,6 +302,7 @@
 	// core functions (open, close, create, update, delete)
 	$.jstree.plugin("core", {
 		__init : function () {
+			this.data.core.locked = false;
 			this.data.core.to_open = $.map($.makeArray(this.get_settings().core.initially_open), function (n) { return "#" + n.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/'); });
 		},
 		defaults : { 
@@ -380,6 +383,15 @@
 				instances[n] = null;
 				delete instances[n];
 			},
+			lock : function () {
+				this.data.core.locked = true;
+				this.get_container().children("ul").addClass("jstree-locked").css("opacity","0.7");
+			},
+			unlock : function () {
+				this.data.core.locked = false;
+				this.get_container().children("ul").removeClass("jstree-locked").css("opacity","1");
+			},
+			is_locked : function () { return this.data.core.locked; },
 			save_opened : function () {
 				var _this = this;
 				this.data.core.to_open = [];
@@ -1192,26 +1204,25 @@
 
 			cut : function (obj) {
 				obj = this._get_node(obj);
-				this.data.crrm.cp_nodes = false;
-				this.data.crrm.ct_nodes = false;
 				if(!obj || !obj.length) { return false; }
+				this.data.crrm.cp_nodes = false;
 				this.data.crrm.ct_nodes = obj;
+				this.__callback({ "obj" : obj });
 			},
 			copy : function (obj) {
 				obj = this._get_node(obj);
-				this.data.crrm.cp_nodes = false;
-				this.data.crrm.ct_nodes = false;
 				if(!obj || !obj.length) { return false; }
+				this.data.crrm.ct_nodes = false;
 				this.data.crrm.cp_nodes = obj;
+				this.__callback({ "obj" : obj });
 			},
 			paste : function (obj) { 
 				obj = this._get_node(obj);
 				if(!obj || !obj.length) { return false; }
 				if(!this.data.crrm.ct_nodes && !this.data.crrm.cp_nodes) { return false; }
-				if(this.data.crrm.ct_nodes) { this.move_node(this.data.crrm.ct_nodes, obj); }
+				if(this.data.crrm.ct_nodes) { this.move_node(this.data.crrm.ct_nodes, obj); this.data.crrm.ct_nodes = false; }
 				if(this.data.crrm.cp_nodes) { this.move_node(this.data.crrm.cp_nodes, obj, false, true); }
-				this.data.crrm.cp_nodes = false;
-				this.data.crrm.ct_nodes = false;
+				this.__callback({ "obj" : obj });
 			}
 		}
 	});
@@ -1316,29 +1327,46 @@
 		__init : function () {
 			if(typeof $.hotkeys === "undefined") { throw "jsTree hotkeys: jQuery hotkeys plugin not included."; }
 			if(!this.data.ui) { throw "jsTree hotkeys: jsTree UI plugin not included."; }
-			$.each(this._get_settings().hotkeys, function (i, val) {
-				var b = (i.indexOf("__") !== -1) ? i.split("__") : [ i ];
-				$.each(b, function (k, v) {
-					if($.inArray(v, bound) == -1) {
-						$(document).bind("keydown", v, function (event) { return exec(i, event); });
-						bound.push(v);
-					}
-				});
+			$.each(this._get_settings().hotkeys, function (i, v) {
+				if($.inArray(i, bound) == -1) {
+					$(document).bind("keydown", i, function (event) { return exec(i, event); });
+					bound.push(i);
+				}
 			});
 			this.enable_hotkeys();
 		},
 		defaults : {
-			"up__ctrl+up__shift+up" : function () { 
+			"up" : function () { 
 				var o = this.data.ui.hovered || this.data.ui.last_selected || -1;
 				this.hover_node(this._get_prev(o));
 				return false; 
 			},
-			"down__ctrl+down__shift+down" : function () { 
+			"ctrl+up" : function () { 
+				var o = this.data.ui.hovered || this.data.ui.last_selected || -1;
+				this.hover_node(this._get_prev(o));
+				return false; 
+			},
+			"shift+up" : function () { 
+				var o = this.data.ui.hovered || this.data.ui.last_selected || -1;
+				this.hover_node(this._get_prev(o));
+				return false; 
+			},
+			"down" : function () { 
 				var o = this.data.ui.hovered || this.data.ui.last_selected || -1;
 				this.hover_node(this._get_next(o));
 				return false;
 			},
-			"left__ctrl+left__shift+left" : function () { 
+			"ctrl+down" : function () { 
+				var o = this.data.ui.hovered || this.data.ui.last_selected || -1;
+				this.hover_node(this._get_next(o));
+				return false;
+			},
+			"shift+down" : function () { 
+				var o = this.data.ui.hovered || this.data.ui.last_selected || -1;
+				this.hover_node(this._get_next(o));
+				return false;
+			},
+			"left" : function () { 
 				var o = this.data.ui.hovered || this.data.ui.last_selected;
 				if(o) {
 					if(o.hasClass("jstree-open")) { this.close_node(o); }
@@ -1346,7 +1374,39 @@
 				}
 				return false;
 			},
-			"right__ctrl+right__shift+right" : function () { 
+			"ctrl+left" : function () { 
+				var o = this.data.ui.hovered || this.data.ui.last_selected;
+				if(o) {
+					if(o.hasClass("jstree-open")) { this.close_node(o); }
+					else { this.hover_node(this._get_prev(o)); }
+				}
+				return false;
+			},
+			"shift+left" : function () { 
+				var o = this.data.ui.hovered || this.data.ui.last_selected;
+				if(o) {
+					if(o.hasClass("jstree-open")) { this.close_node(o); }
+					else { this.hover_node(this._get_prev(o)); }
+				}
+				return false;
+			},
+			"right" : function () { 
+				var o = this.data.ui.hovered || this.data.ui.last_selected;
+				if(o && o.length) {
+					if(o.hasClass("jstree-closed")) { this.open_node(o); }
+					else { this.hover_node(this._get_next(o)); }
+				}
+				return false;
+			},
+			"ctrl+right" : function () { 
+				var o = this.data.ui.hovered || this.data.ui.last_selected;
+				if(o && o.length) {
+					if(o.hasClass("jstree-closed")) { this.open_node(o); }
+					else { this.hover_node(this._get_next(o)); }
+				}
+				return false;
+			},
+			"shift+right" : function () { 
 				var o = this.data.ui.hovered || this.data.ui.last_selected;
 				if(o && o.length) {
 					if(o.hasClass("jstree-closed")) { this.open_node(o); }
@@ -1358,7 +1418,12 @@
 				if(this.data.ui.hovered) { this.data.ui.hovered.children("a:eq(0)").click(); } 
 				return false; 
 			},
-			"ctrl+space__shift+space" : function (event) { 
+			"ctrl+space" : function (event) { 
+				event.type = "click";
+				if(this.data.ui.hovered) { this.data.ui.hovered.children("a:eq(0)").trigger(event); } 
+				return false; 
+			},
+			"shift+space" : function (event) { 
 				event.type = "click";
 				if(this.data.ui.hovered) { this.data.ui.hovered.children("a:eq(0)").trigger(event); } 
 				return false; 
@@ -1838,7 +1903,7 @@
 						obj = obj === -1 ? this.get_container().children("ul") : obj.children("ul");
 						this.sort(obj);
 					}, this))
-				.bind("rename_node.jstree", $.proxy(function (e, data) {
+				.bind("rename_node.jstree create_node.jstree create.jstree", $.proxy(function (e, data) {
 						this.sort(data.rslt.obj.parent());
 					}, this))
 				.bind("move_node.jstree", $.proxy(function (e, data) {
@@ -2262,14 +2327,14 @@
 			start_drag : function (obj, e) {
 				o = this._get_node(obj);
 				if(this.data.ui && this.is_selected(o)) { o = this._get_node(null, true); }
-				var dt = o.length > 1 ? this._get_string("multiple_selection") : this.get_text(o);
+				var dt = o.length > 1 ? this._get_string("multiple_selection") : this.get_text(o),
+					cnt = this.get_container();
 				if(!this._get_settings().core.html_titles) { dt = dt.replace(/</ig,"&lt;").replace(/>/ig,"&gt;"); }
 				$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + dt );
 				if(this.data.themes) { 
 					m.attr("class", "jstree-" + this.data.themes.theme); 
 					$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme); 
 				}
-				var cnt = this.get_container();
 				this.data.dnd.cof = cnt.offset();
 				this.data.dnd.cw = parseInt(cnt.width(),10);
 				this.data.dnd.ch = parseInt(cnt.height(),10);

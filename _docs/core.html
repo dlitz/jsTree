@@ -326,6 +326,13 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 <h3 id="is_focused">.is_focused ()</h3>
 <p>Returns <code>true</code> if the current instance is the focused one, otherwise returns <code>false</code>.</p>
 
+<h3 id="lock">.lock ()</h3>
+<p>Sets the tree to a locked state - no methods can be called on that instance except for <code>unlock</code> and <code>is_locked</code>.</p>
+<h3 id="unlock">.unlock ()</h3>
+<p>Sets the tree to a unlocked state (the default state).</p>
+<h3 id="is_locked">.is_locked ()</h3>
+<p>Returns <code>true</code> if the tree is locked, otherwise returns <code>false</code>.</p>
+
 <h3 id="_get_node">._get_node ( node )</h3>
 <p>Return the jQuery extended <code>LI</code> element of the node, <code>-1</code> if the container node is passed, or <code>false</code> otherwise.</p>
 <ul class="arguments">
