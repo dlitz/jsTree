@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2010 Ivan Bozhanov (vakata.com)
  *
- * Dual licensed under the MIT and GPL licenses (same as jQuery):
+ * Licensed same as jquery - under the terms of either the MIT License or the GPL Version 2 License
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
@@ -1328,7 +1328,7 @@
 			if(typeof $.hotkeys === "undefined") { throw "jsTree hotkeys: jQuery hotkeys plugin not included."; }
 			if(!this.data.ui) { throw "jsTree hotkeys: jsTree UI plugin not included."; }
 			$.each(this._get_settings().hotkeys, function (i, v) {
-				if($.inArray(i, bound) == -1) {
+				if(v !== false && $.inArray(i, bound) == -1) {
 					$(document).bind("keydown", i, function (event) { return exec(i, event); });
 					bound.push(i);
 				}
@@ -2973,9 +2973,11 @@
 		par		: false,
 		func	: false,
 		data	: false,
-		show	: function (s, t, x, y, d, p) {
+		rtl		: false,
+		show	: function (s, t, x, y, d, p, rtl) {
 			var html = $.vakata.context.parse(s), h, w;
 			if(!html) { return; }
+			$.vakata.context.rtl = !!rtl;
 			$.vakata.context.vis = true;
 			$.vakata.context.tgt = t;
 			$.vakata.context.par = p || t || null;
@@ -3036,7 +3038,7 @@
 				if(val.icon && val.icon.indexOf("/") !== -1) { str += " style='background:url(" + val.icon + ") center center no-repeat;' "; }
 				str += ">&#160;</ins><a href='#' rel='" + i + "'>";
 				if(val.submenu) {
-					str += "<span style='float:right;'>&raquo;</span>";
+					str += "<span style='float:" + ($.vakata.context.rtl ? "left" : "right") + ";'>&raquo;</span>";
 				}
 				str += val.label + "</a>";
 				if(val.submenu) {
@@ -3218,7 +3220,7 @@
 				}
 				if($.isFunction(s.items)) { s.items = s.items.call(this, obj); }
 				this.data.contextmenu = true;
-				$.vakata.context.show(s.items, a, x, y, this, obj);
+				$.vakata.context.show(s.items, a, x, y, this, obj, this._get_settings().core.rtl);
 				if(this.data.themes) { $.vakata.context.cnt.attr("class", "jstree-" + this.data.themes.theme + "-context"); }
 			}
 		}
