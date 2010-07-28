@@ -630,6 +630,7 @@
 				if(typeof js === "string") { js = { "data" : js }; }
 				if(!js) { js = {}; }
 				if(js.attr) { d.attr(js.attr); }
+				if(js.metadata) { d.data("jstree", js.metadata); }
 				if(js.state) { d.addClass("jstree-" + js.state); }
 				if(!js.data) { js.data = this._get_string("new_node"); }
 				if(!$.isArray(js.data)) { tmp = js.data; js.data = []; js.data.push(tmp); }
@@ -728,7 +729,7 @@
 				if(!obj.length) { return false; }
 				this.__rollback();
 				var p = this._get_parent(obj), prev = this._get_prev(obj);
-				obj = obj.remove();
+				obj = obj.detach();
 				if(p !== -1 && p.find("> ul > li").length === 0) {
 					p.removeClass("jstree-open jstree-closed").addClass("jstree-leaf");
 				}
@@ -1179,8 +1180,8 @@
 				obj = this._get_node(obj, true);
 				var p = this._get_parent(obj), prev = this._get_prev(obj);
 				this.__rollback();
-				this.delete_node(obj);
-				this.__callback({ "obj" : obj, "prev" : prev, "parent" : p });
+				obj = this.delete_node(obj);
+				if(obj !== false) { this.__callback({ "obj" : obj, "prev" : prev, "parent" : p }); }
 			},
 			check_move : function () {
 				if(!this.__call_old()) { return false; }
@@ -2406,7 +2407,7 @@
 			},
 			change_state : function (obj, state) {
 				obj = this._get_node(obj);
-				if(!obj || obj === -1) { return; }
+				if(!obj || obj === -1) { return false; }
 				state = (state === false || state === true) ? state : obj.hasClass("jstree-checked");
 				if(state) { obj.find("li").andSelf().removeClass("jstree-checked jstree-undetermined").addClass("jstree-unchecked"); }
 				else { 
@@ -2437,12 +2438,13 @@
 				});
 				if(this.data.ui) { this.data.ui.selected = this.get_checked(); }
 				this.__callback(obj);
+				return true;
 			},
 			check_node : function (obj) {
-				this.change_state(obj, false);
+				if(this.change_state(obj, false)) { this.__callback(obj); }
 			},
 			uncheck_node : function (obj) {
-				this.change_state(obj, true);
+				if(this.change_state(obj, true)) { this.__callback(obj); }
 			},
 			check_all : function () {
 				var _this = this;
