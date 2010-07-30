@@ -808,7 +808,7 @@
 			},
 			check_move : function () {
 				var obj = prepared_move, ret = true, r = obj.r === -1 ? this.get_container() : obj.r;
-				if(obj.or[0] === obj.o[0]) { return false; }
+				if(!obj || !obj.o || obj.or[0] === obj.o[0]) { return false; }
 				obj.o.each(function () { 
 					if(r.parentsUntil(".jstree", "li").andSelf().index(this) !== -1) { ret = false; return false; }
 				});
@@ -2404,6 +2404,7 @@
 					t.find("a").not(":has(.jstree-checkbox)").prepend("<ins class='jstree-checkbox'>&#160;</ins>").parent().not(".jstree-checked, .jstree-unchecked").addClass(c);
 				});
 				if(obj.length === 1 && obj.is("li")) { this._repair_state(obj); }
+				else if(obj.is("li")) { obj.each(function () { _this._repair_state(this); }); }
 				else { obj.find("> ul > li").each(function () { _this._repair_state(this); }); }
 			},
 			change_state : function (obj, state) {
@@ -2491,12 +2492,11 @@
 				var a = obj.find("> ul > .jstree-checked").length,
 					b = obj.find("> ul > .jstree-undetermined").length,
 					c = obj.find("> ul > li").length;
-
-				if(c === 0) { if(obj.hasClass("jstree-undetermined")) { this.check_node(obj); } }
-				else if(a === 0 && b === 0) { this.uncheck_node(obj); }
-				else if(a === c) { this.check_node(obj); }
+				if(c === 0) { if(obj.hasClass("jstree-undetermined")) { this.change_state(obj, false); } }
+				else if(a === 0 && b === 0) { this.change_state(obj, true); }
+				else if(a === c) { this.change_state(obj, false); }
 				else { 
-					obj.parentsUntil(".jstree","li").removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
+					obj.parentsUntil(".jstree","li").andSelf().removeClass("jstree-checked jstree-unchecked").addClass("jstree-undetermined");
 				}
 			},
 			reselect : function () {
