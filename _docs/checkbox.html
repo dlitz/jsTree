@@ -129,17 +129,21 @@ $(function () {
 </ul>
 
 <div style="height:1px; visibility:hidden; overflow:hidden;"><span id="get_unchecked">&#160;</span></div>
-<h3 id="get_checked">.get_checked ( context ), .get_unchecked ( context )</h3>
+<h3 id="get_checked">.get_checked ( context, get_all ), .get_unchecked ( context, get_all )</h3>
 <p>Both functions return jQuery collections.</p>
 <ul class="arguments">
 	<li>
 		<code class="tp">mixed</code> <strong>context</strong>
 		<p>This can be a DOM node, jQuery node or selector pointing to an element within the tree. If specified only nodes inside the specified context are returned, otherwise the whole tree is searched.</p>
 	</li>
+	<li>
+		<code class="tp">boolean</code> <strong>get_all</strong>
+		<p>By default these functions return only top level checked/unchecked nodes (if a node is checked its children are note returned), if this parameter is set to <code>true</code> they will return all checked/unchecked nodes.</p>
+	</li>
 </ul>
 
 <div style="height:1px; visibility:hidden; overflow:hidden;"><span id="hide_checkboxes">&#160;</span></div>
-<h3 id="show_checkboxes">.show_checkboxes ( ), .get_unchecked ( )</h3>
+<h3 id="show_checkboxes">.show_checkboxes ( ), .hide_checkboxes ( )</h3>
 <p>Show or hide the checkbox icons.</p>
 
 </div>

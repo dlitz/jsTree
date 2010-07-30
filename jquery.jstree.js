@@ -1645,6 +1645,7 @@
 					});
 					if(li.hasClass("jstree-open")) { tmp1.state = "open"; }
 					if(li.hasClass("jstree-closed")) { tmp1.state = "closed"; }
+					if(li.data("jstree")) { tmp1.metadata = li.data("jstree"); }
 					a = li.children("a");
 					a.each(function () {
 						t = $(this);
@@ -2402,16 +2403,23 @@
 					c = t.is("li") && t.hasClass("jstree-checked") ? "jstree-checked" : "jstree-unchecked";
 					t.find("a").not(":has(.jstree-checkbox)").prepend("<ins class='jstree-checkbox'>&#160;</ins>").parent().not(".jstree-checked, .jstree-unchecked").addClass(c);
 				});
-				if(obj.is("li")) { this._repair_state(obj); }
+				if(obj.length === 1 && obj.is("li")) { this._repair_state(obj); }
 				else { obj.find("> ul > li").each(function () { _this._repair_state(this); }); }
 			},
 			change_state : function (obj, state) {
 				obj = this._get_node(obj);
+				var coll = false;
 				if(!obj || obj === -1) { return false; }
 				state = (state === false || state === true) ? state : obj.hasClass("jstree-checked");
-				if(state) { obj.find("li").andSelf().removeClass("jstree-checked jstree-undetermined").addClass("jstree-unchecked"); }
+				if(state) { 
+					coll = obj.find("li").andSelf();
+					if(!coll.filter(".jstree-checked, .jstree-undetermined").length) { return false; }
+					coll.removeClass("jstree-checked jstree-undetermined").addClass("jstree-unchecked"); 
+				}
 				else { 
-					obj.find("li").andSelf().removeClass("jstree-unchecked jstree-undetermined").addClass("jstree-checked"); 
+					coll = obj.find("li").andSelf();
+					if(!coll.filter(".jstree-unchecked, .jstree-undetermined").length) { return false; }
+					coll.removeClass("jstree-unchecked jstree-undetermined").addClass("jstree-checked"); 
 					if(this.data.ui) { this.data.ui.last_selected = obj; }
 					this.data.checkbox.last_selected = obj;
 				}
@@ -2449,27 +2457,29 @@
 			check_all : function () {
 				var _this = this;
 				this.get_container().children("ul").children("li").each(function () {
-					_this.check_node(this, false);
+					_this.change_state(this, false);
 				});
+				this.__callback();
 			},
 			uncheck_all : function () {
 				var _this = this;
 				this.get_container().children("ul").children("li").each(function () {
 					_this.change_state(this, true);
 				});
+				this.__callback();
 			},
 
 			is_checked : function(obj) {
 				obj = this._get_node(obj);
 				return obj.length ? obj.is(".jstree-checked") : false;
 			},
-			get_checked : function (obj) {
+			get_checked : function (obj, get_all) {
 				obj = !obj || obj === -1 ? this.get_container() : this._get_node(obj);
-				return obj.find("> ul > .jstree-checked, .jstree-undetermined > ul > .jstree-checked");
+				return get_all ? obj.find(".jstree-checked") : obj.find("> ul > .jstree-checked, .jstree-undetermined > ul > .jstree-checked");
 			},
-			get_unchecked : function (obj) { 
+			get_unchecked : function (obj, get_all) { 
 				obj = !obj || obj === -1 ? this.get_container() : this._get_node(obj);
-				return obj.find("> ul > .jstree-unchecked, .jstree-undetermined > ul > .jstree-unchecked");
+				return get_all ? obj.find(".jstree-unchecked") : obj.find("> ul > .jstree-unchecked, .jstree-undetermined > ul > .jstree-unchecked");
 			},
 
 			show_checkboxes : function () { this.get_container().children("ul").removeClass("jstree-no-checkboxes"); },
@@ -2977,9 +2987,9 @@
 		data	: false,
 		rtl		: false,
 		show	: function (s, t, x, y, d, p, rtl) {
+			$.vakata.context.rtl = !!rtl;
 			var html = $.vakata.context.parse(s), h, w;
 			if(!html) { return; }
-			$.vakata.context.rtl = !!rtl;
 			$.vakata.context.vis = true;
 			$.vakata.context.tgt = t;
 			$.vakata.context.par = p || t || null;
@@ -3143,6 +3153,11 @@
 				.delegate("a", "contextmenu.jstree", $.proxy(function (e) {
 						e.preventDefault();
 						this.show_contextmenu(e.currentTarget, e.pageX, e.pageY);
+					}, this))
+				.delegate("a", "click.jstree", $.proxy(function (e) {
+						if(this.data.contextmenu) {
+							$.vakata.context.hide();
+						}
 					}, this))
 				.bind("destroy.jstree", $.proxy(function () {
 						if(this.data.contextmenu) {
@@ -3556,6 +3571,9 @@
 					}, this))
 				.bind("close_node.jstree", $.proxy(function (e, data) {
 						this._themeroller(data.rslt.obj);
+					}, this))
+				.bind("delete_node.jstree", $.proxy(function (e, data) {
+						this._themeroller(data.rslt.parent);
 					}, this))
 				.bind("correct_state.jstree", $.proxy(function (e, data) {
 						data.rslt.obj
