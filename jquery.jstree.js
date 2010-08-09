@@ -544,7 +544,7 @@
 					}
 					if(s) { obj.children("ul").css("display","none"); }
 					obj.removeClass("jstree-closed").addClass("jstree-open").children("a").removeClass("jstree-loading");
-					if(s) { obj.children("ul").stop(true).slideDown(s, function () { this.style.display = ""; }); }
+					if(s) { obj.children("ul").stop(true, true).slideDown(s, function () { this.style.display = ""; }); }
 					this.__callback({ "obj" : obj });
 					if(callback) { callback.call(); }
 				}
@@ -555,7 +555,7 @@
 				if(!obj.length || !obj.hasClass("jstree-open")) { return false; }
 				if(s) { obj.children("ul").attr("style","display:block !important"); }
 				obj.removeClass("jstree-open").addClass("jstree-closed");
-				if(s) { obj.children("ul").stop(true).slideUp(s, function () { this.style.display = ""; }); }
+				if(s) { obj.children("ul").stop(true, true).slideUp(s, function () { this.style.display = ""; }); }
 				this.__callback({ "obj" : obj });
 			},
 			toggle_node	: function (obj) {
@@ -3270,7 +3270,7 @@
 							if(!tp.icon) { return true; }
 							if( tp.icon.image || tp.icon.position) {
 								if(i == "default")	{ icons_css += '.jstree-' + _this.get_index() + ' a > .jstree-icon { '; }
-								else				{ icons_css += '.jstree-' + _this.get_index() + ' li[' + attr + '=' + i + '] > a > .jstree-icon { '; }
+								else				{ icons_css += '.jstree-' + _this.get_index() + ' li[' + attr + '="' + i + '"] > a > .jstree-icon { '; }
 								if(tp.icon.image)	{ icons_css += ' background-image:url(' + tp.icon.image + '); '; }
 								if(tp.icon.position){ icons_css += ' background-position:' + tp.icon.position + '; '; }
 								else				{ icons_css += ' background-position:0 0; '; }
