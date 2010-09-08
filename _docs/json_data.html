@@ -95,7 +95,8 @@ $(function () {
 			"data" : [
 				{ 
 					"data" : "A node", 
-					"children" : [ "Child 1", "Child 2" ]
+					"metadata" : { id : 23 },
+					"children" : [ "Child 1", "A Child 2" ]
 				},
 				{ 
 					"attr" : { "id" : "li.node.id1" }, 
@@ -106,8 +107,8 @@ $(function () {
 				}
 			]
 		},
-		"plugins" : [ "themes", "json_data" ]
-	});
+		"plugins" : [ "themes", "json_data", "ui" ]
+	}).bind("select_node.jstree", function (e, data) { alert(jQuery.data(data.rslt.obj[0], "jstree").id) });
 });
 </script>
 

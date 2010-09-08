@@ -26,7 +26,11 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
 <h2 id="configuration">Configuration</h2>
 <div class="panel configuration">
-<p>No configuration possible</p>
+
+<h3>override_ui</h3>
+<p class="meta">A boolean. Default is <code>false</code>.</p>
+<p>If set to <code>true</code> all selection will be handled by checkboxes. If left as <code>false</code> nodes can be selected and checked independently.</p>
+
 </div>
 
 <h2 id="demos">Demos</h2>
@@ -41,7 +45,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 					<a href="#">Child node 1</a>
 				</li>
 				<li id="phtml_3">
-					<a href="#">Child node 2</a>
+					<a href="#">A Child node 2</a>
 				</li>
 			</ul>
 		</li>
@@ -53,7 +57,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <script type="text/javascript" class="source">
 $(function () {
 	$("#demo1").jstree({ 
-		"plugins" : [ "themes", "html_data", "checkbox" ]
+		"plugins" : [ "themes", "html_data", "checkbox", "sort", "ui" ]
 	});
 });
 </script>

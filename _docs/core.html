@@ -400,7 +400,7 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	</li>
 </ul>
 
-<h3 id="open_node">.correct_state ( node )</h3>
+<h3 id="correct_state">.correct_state ( node )</h3>
 <p>Corrects closed items to leaf items, if no children are found. Used internally, triggers an event.</p>
 <ul class="arguments">
 	<li>
@@ -426,6 +426,9 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	</li>
 </ul>
 
+<h3 id="after_open">.after_open ( node )</h3>
+<p>A dummy function, it triggers an event after the open animation has finished.</p>
+
 <h3 id="close_node">.close_node ( node , skip_animation )</h3>
 <p>Closes an open node, so that its children are not visible. If the <code>animation</code> config option is greater than <code>0</code> the children are hidden using a slide up animation, whose duration is the value of the <code>animation</code> config option in milliseconds. Triggers an event.</p>
 <ul class="arguments">
@@ -438,6 +441,9 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 		<p>If set to <code>true</code> the animation set in the <code>animation</code> config option is skipped. Default is <code>false</code>.</p>
 	</li>
 </ul>
+
+<h3 id="after_close">.after_close ( node )</h3>
+<p>A dummy function, it triggers an event after the close animation has finished.</p>
 
 <h3 id="toggle_node">.toggle_node ( node )</h3>
 <p>If a node is closed - this function opens it, if it is open - calling this function will close it.</p>
