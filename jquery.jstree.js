@@ -418,9 +418,9 @@
 					this.data.core.refreshing = true; 
 					this.data.core.to_open = $.map($.makeArray(this.data.core.to_open), function (n) { return "#" + n.toString().replace(/^#/,"").replace(/\\\//g,"/").replace(/\//g,"\\\/").replace(/\\\./g,".").replace(/\./g,"\\."); });
 					this.data.core.to_load = $.map($.makeArray(this.data.core.to_load), function (n) { return "#" + n.toString().replace(/^#/,"").replace(/\\\//g,"/").replace(/\//g,"\\\/").replace(/\\\./g,".").replace(/\./g,"\\."); });
-				}
-				if(this.data.core.to_open.length) {
-					this.data.core.to_load = this.data.core.to_load.concat(this.data.core.to_open);
+					if(this.data.core.to_open.length) {
+						this.data.core.to_load = this.data.core.to_load.concat(this.data.core.to_open);
+					}
 				}
 				if(this.data.core.to_load.length) {
 					$.each(this.data.core.to_load, function (i, val) {
@@ -437,6 +437,11 @@
 							}
 						});
 					}
+				}
+				if(this.data.core.to_open.length) {
+					$.each(this.data.core.to_open, function (i, val) {
+						_this.open_node(val, false, true); 
+					});
 				}
 				if(done) { 
 					// TODO: find a more elegant approach to syncronizing returning requests
