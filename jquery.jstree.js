@@ -836,7 +836,7 @@
 				}
 				p.np = p.cr == -1 ? p.rt.get_container() : p.cr;
 				p.op = p.ot._get_parent(p.o);
-				if(p.op === -1) { p.op = this.get_container(); }
+				if(p.op === -1) { p.op = p.ot ? p.ot.get_container() : this.get_container(); }
 				if(!/^(before|after)$/.test(p.p) && p.op && p.np && p.op[0] === p.np[0] && p.o.index() < p.cp) { p.cp++; }
 				p.or = p.np.find(" > ul > li:nth-child(" + (p.cp + 1) + ")");
 
@@ -2130,16 +2130,50 @@
 				mto : false
 			};
 			this.get_container()
-				.bind("mouseenter.jstree", $.proxy(function () {
-						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree && this.data.themes) {
-							m.attr("class", "jstree-" + this.data.themes.theme); 
-							$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme);
+				.bind("mouseenter.jstree", $.proxy(function (e) {
+						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
+							if(this.data.themes) {
+								m.attr("class", "jstree-" + this.data.themes.theme); 
+								$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme);
+							}
+							if($(e.currentTarget).find("> ul > li").length === 0) {
+								var tr = $.jstree._reference(e.target), dc;
+								if(tr.data.dnd.foreign) {
+									dc = tr._get_settings().dnd.drag_check.call(this, { "o" : o, "r" : tr.get_container(), is_root : true });
+									if(dc === true || dc.inside === true || dc.before === true || dc.after === true) {
+										$.vakata.dnd.helper.children("ins").attr("class","jstree-ok");
+									}
+								}
+								else {
+									tr.prepare_move(o, tr.get_container(), 0);
+									if(tr.check_move()) {
+										$.vakata.dnd.helper.children("ins").attr("class","jstree-ok");
+									}
+								}
+							}
+						}
+					}, this))
+				.bind("mouseup.jstree", $.proxy(function (e) {
+						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree && $(e.currentTarget).find("> ul > li").length === 0) {
+							var tr = $.jstree._reference(e.currentTarget);
+							if(tr.data.dnd.foreign) {
+								dc = tr._get_settings().dnd.drag_check.call(this, { "o" : o, "r" : tr.get_container(), is_root : true });
+								if(dc === true || dc.inside === true || dc.before === true || dc.after === true) {
+									tr._get_settings().dnd.drag_finish.call(this, { "o" : o, "r" : tr.get_container(), is_root : true });
+								}
+							}
+							else {
+								tr.move_node(o, tr.get_container(), 0, e[tr._get_settings().dnd.copy_modifier + "Key"]);
+							}
 						}
 					}, this))
 				.bind("mouseleave.jstree", $.proxy(function () {
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
 							if(this.data.dnd.i1) { clearInterval(this.data.dnd.i1); }
 							if(this.data.dnd.i2) { clearInterval(this.data.dnd.i2); }
+							if($.vakata.dnd.helper.children("ins").hasClass("jstree-ok")) {
+								$.vakata.dnd.helper.children("ins").attr("class","jstree-invalid");
+							}
 						}
 					}, this))
 				.bind("mousemove.jstree", $.proxy(function (e) {
@@ -2998,14 +3032,17 @@
 	$.expr[':'].jstree_contains = function(a,i,m){
 		return (a.textContent || a.innerText || "").toLowerCase().indexOf(m[3].toLowerCase())>=0;
 	};
+	$.expr[':'].jstree_title_contains = function(a,i,m) {
+		return (a.parentNode.getAttribute("title") || "").toLowerCase().indexOf(m[3].toLowerCase())>=0;
+	};
 	$.jstree.plugin("search", {
 		__init : function () {
 			this.data.search.str = "";
 			this.data.search.result = $();
 		},
 		defaults : {
-			ajax : false, // OR ajax object
-			case_insensitive : false
+			ajax : false,
+			search_method : "contains" // for case insensitive - jstree_contains
 		},
 		_fn : {
 			search : function (str, skip_async) {
@@ -3036,7 +3073,7 @@
 					return;
 				}
 				if(this.data.search.result.length) { this.clear_search(); }
-				this.data.search.result = this.get_container().find("a" + (this.data.languages ? "." + this.get_lang() : "" ) + ":" + (s.case_insensitive ? "jstree_contains" : "contains") + "(" + this.data.search.str + ")");
+				this.data.search.result = this.get_container().find("a" + (this.data.languages ? "." + this.get_lang() : "" ) + ":" + (s.search_method) + "(" + this.data.search.str + ")");
 				this.data.search.result.addClass("jstree-search").parent().parents(".jstree-closed").each(function () {
 					t.open_node(this, false, true);
 				});
