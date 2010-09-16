@@ -274,6 +274,12 @@
 		// Correct IE 6 (does not support the > CSS selector)
 		if(/msie/.test(u) && parseInt(v, 10) == 6) { 
 			is_ie6 = true;
+
+			// fix image flicker and lack of caching
+			try {
+				document.execCommand("BackgroundImageCache", false, true);
+			} catch (err) { }
+
 			css_string += '' + 
 				'.jstree li { height:18px; margin-left:0; margin-right:0; } ' + 
 				'.jstree li li { margin-left:18px; } ' + 
@@ -313,6 +319,7 @@
 			initially_load : [],
 			open_parents : true,
 			rtl			: false,
+			load_open	: false,
 			strings		: {
 				loading		: "Loading ...",
 				new_node	: "New node",
@@ -349,6 +356,18 @@
 							}
 						}
 					});
+				if(this._get_settings().core.load_open) {
+					this.get_container()
+						.bind("load_node.jstree", $.proxy(function (e, data) { 
+								var o = this._get_node(data.rslt.obj),
+									t = this;
+								if(o === -1) { o = this.get_container(); }
+								if(!o.length) { return; }
+								o.find("li.jstree-open:not(:has(ul))").each(function () {
+									t.load_node(this, $.noop, $.noop);
+								});
+							}, this));
+				}
 				this.__callback();
 				this.load_node(-1, function () { this.loaded(); this.reload_nodes(); });
 			},
@@ -778,7 +797,7 @@
 			prepare_move : function (o, r, pos, cb, is_cb) {
 				var p = {};
 
-				p.ot = $.jstree._reference(p.o) || this;
+				p.ot = $.jstree._reference(o) || this;
 				p.o = p.ot._get_node(o);
 				p.r = r === - 1 ? -1 : this._get_node(r);
 				p.p = (typeof pos === "undefined") ? "last" : pos; // TODO: move to a setting
@@ -788,7 +807,7 @@
 					return;
 				}
 				p.ot = $.jstree._reference(p.o) || this;
-				p.rt = r === -1 ? p.ot : $.jstree._reference(p.r) || this;
+				p.rt = $.jstree._reference(p.r) || this; // r === -1 ? p.ot : $.jstree._reference(p.r) || this
 				if(p.r === -1) {
 					p.cr = -1;
 					switch(p.p) {
@@ -963,6 +982,7 @@
 			select_multiple_modifier : "ctrl", // on, or ctrl, shift, alt
 			select_range_modifier : "shift",
 			selected_parent_close : "select_parent", // false, "deselect", "select_parent"
+			selected_parent_open : true,
 			select_prev_on_delete : true,
 			disable_selecting_children : false,
 			initially_select : []
@@ -1067,6 +1087,9 @@
 				if(proceed && !is_selected) {
 					if(!is_range) { this.data.ui.last_selected = obj; }
 					obj.children("a").addClass("jstree-clicked");
+					if(s.selected_parent_open) {
+						obj.parents(".jstree-closed").each(function () { t.open_node(this, false, true); });
+					}
 					this.data.ui.selected = this.data.ui.selected.add(obj);
 					this.__callback({ "obj" : obj });
 				}
@@ -3562,6 +3585,7 @@
 						md = this._check("max_depth", p),
 						vc = this._check("valid_children", p),
 						ch;
+					if(typeof js === "string") { js = { data : js }; }
 					if(!js) { js = {}; }
 					if(vc === "none") { return false; } 
 					if($.isArray(vc)) {
@@ -3905,28 +3929,6 @@
 				}
 				return true;
 			}
-		}
-	});
-})(jQuery);
-//*/
-
-/* 
- * jsTree load_open plugin
- * Forces loading of nodes marked as open, which do not have children
- */
-(function ($) {
-	$.jstree.plugin("load_open", {
-		__init : function () {
-			this.get_container()
-				.bind("load_node.jstree", $.proxy(function (e, data) { 
-						var o = this._get_node(data.rslt.obj),
-							t = this;
-						if(o === -1) { o = this.get_container(); }
-						if(!o.length) { return; }
-						o.find("li.jstree-open:not(:has(ul))").each(function () {
-							t.load_node(this, $.noop, $.noop);
-						});
-					}, this));
 		}
 	});
 })(jQuery);
