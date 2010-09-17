@@ -494,18 +494,23 @@
 			},
 			// deal with focus
 			set_focus	: function () { 
+				if(this.is_focused()) { return; }
 				var f = $.jstree._focused();
-				if(f && f !== this) {
-					f.get_container().removeClass("jstree-focused"); 
-				}
-				if(f !== this) {
-					this.get_container().addClass("jstree-focused"); 
-					focused_instance = this.get_index(); 
-				}
+				if(f) { f.unset_focus(); }
+
+				this.get_container().addClass("jstree-focused"); 
+				focused_instance = this.get_index(); 
 				this.__callback();
 			},
 			is_focused	: function () { 
 				return focused_instance == this.get_index(); 
+			},
+			unset_focus	: function () {
+				if(this.is_focused()) {
+					this.get_container().removeClass("jstree-focused"); 
+					focused_instance = -1; 
+				}
+				this.__callback();
 			},
 
 			// traverse
@@ -934,13 +939,19 @@
 			this.get_container()
 				.delegate("a", "click.jstree", $.proxy(function (event) {
 						event.preventDefault();
-						this.select_node(event.currentTarget, true, event);
+						if(!$(event.currentTarget).hasClass("jstree-loading")) {
+							this.select_node(event.currentTarget, true, event);
+						}
 					}, this))
 				.delegate("a", "mouseenter.jstree", $.proxy(function (event) {
-						this.hover_node(event.target);
+						if(!$(event.currentTarget).hasClass("jstree-loading")) {
+							this.hover_node(event.target);
+						}
 					}, this))
 				.delegate("a", "mouseleave.jstree", $.proxy(function (event) {
-						this.dehover_node(event.target);
+						if(!$(event.currentTarget).hasClass("jstree-loading")) {
+							this.dehover_node(event.target);
+						}
 					}, this))
 				.bind("reopen.jstree", $.proxy(function () { 
 						this.reselect();
@@ -2048,6 +2059,8 @@
 		init_x : 0,
 		init_y : 0,
 		threshold : 5,
+		helper_left : 5,
+		helper_top : 10,
 		user_data : {},
 
 		drag_start : function (e, data, html) { 
@@ -2111,7 +2124,7 @@
 				}
 			}
 
-			$.vakata.dnd.helper.css({ left : (e.pageX + 5) + "px", top : (e.pageY + 10) + "px" });
+			$.vakata.dnd.helper.css({ left : (e.pageX + $.vakata.dnd.helper_left) + "px", top : (e.pageY + $.vakata.dnd.helper_top) + "px" });
 			$(document).triggerHandler("drag.vakata", { "event" : e, "data" : $.vakata.dnd.user_data });
 		},
 		drag_stop : function (e) {
@@ -2178,7 +2191,7 @@
 					}, this))
 				.bind("mouseup.jstree", $.proxy(function (e) {
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree && $(e.currentTarget).find("> ul > li").length === 0) {
-							var tr = $.jstree._reference(e.currentTarget);
+							var tr = $.jstree._reference(e.currentTarget), dc;
 							if(tr.data.dnd.foreign) {
 								dc = tr._get_settings().dnd.drag_check.call(this, { "o" : o, "r" : tr.get_container(), is_root : true });
 								if(dc === true || dc.inside === true || dc.before === true || dc.after === true) {
@@ -2291,6 +2304,21 @@
 							}
 						}
 					}, this));
+				/*
+				.bind("keydown.jstree-" + this.get_index() + " keyup.jstree-" + this.get_index(), $.proxy(function(e) {
+						console.log(this.data.dnd);
+						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree && !this.data.dnd.foreign) {
+							var h = $.vakata.dnd.helper.children("ins");
+							if(e[this._get_settings().dnd.copy_modifier + "Key"] && h.hasClass("jstree-ok")) {
+								h.parent().html(h.parent().html().replace(/ \(Copy\)$/, "") + " (Copy)");
+							} 
+							else {
+								h.parent().html(h.parent().html().replace(/ \(Copy\)$/, ""));
+							}
+						}
+					}, this)); */
+
+
 
 			var s = this._get_settings().dnd;
 			if(s.drag_target) {
@@ -2699,7 +2727,7 @@
 			setTimeout( (function (xm, xs, callback) {
 				return function () {
 					callback.call(null, xm.transformNode(xs.XMLDocument));
-					setTimeout( (function (xm, xs) { return function () { jQuery("body").remove(xm).remove(xs); }; })(xm, xs), 200);
+					setTimeout( (function (xm, xs) { return function () { $(xm).remove(); $(xs).remove(); }; })(xm, xs), 200);
 				};
 			}) (xm, xs, callback), 100);
 			return true;
@@ -2713,7 +2741,8 @@
 			if($.isFunction(processor.transformDocument)) {
 				rs = document.implementation.createDocument("", "", null);
 				processor.transformDocument(xml, xsl, rs, null);
-				callback.call(null, XMLSerializer().serializeToString(rs));
+				alert(1);
+				callback.call(null, new XMLSerializer().serializeToString(rs));
 				return true;
 			}
 			else {
@@ -3056,7 +3085,7 @@
 		return (a.textContent || a.innerText || "").toLowerCase().indexOf(m[3].toLowerCase())>=0;
 	};
 	$.expr[':'].jstree_title_contains = function(a,i,m) {
-		return (a.parentNode.getAttribute("title") || "").toLowerCase().indexOf(m[3].toLowerCase())>=0;
+		return (a.getAttribute("title") || "").toLowerCase().indexOf(m[3].toLowerCase())>=0;
 	};
 	$.jstree.plugin("search", {
 		__init : function () {
@@ -3334,7 +3363,9 @@
 			this.get_container()
 				.delegate("a", "contextmenu.jstree", $.proxy(function (e) {
 						e.preventDefault();
-						this.show_contextmenu(e.currentTarget, e.pageX, e.pageY);
+						if(!$(e.currentTarget).hasClass("jstree-loading")) {
+							this.show_contextmenu(e.currentTarget, e.pageX, e.pageY);
+						}
 					}, this))
 				.delegate("a", "click.jstree", $.proxy(function (e) {
 						if(this.data.contextmenu) {
@@ -3579,7 +3610,7 @@
 			},
 			create_node : function (obj, position, js, callback, is_loaded, skip_check) {
 				if(!skip_check && (is_loaded || this._is_loaded(obj))) {
-					var p  = (position && position.match(/^before|after$/i) && obj !== -1) ? this._get_parent(obj) : this._get_node(obj),
+					var p  = (typeof position == "string" && position.match(/^before|after$/i) && obj !== -1) ? this._get_parent(obj) : this._get_node(obj),
 						s  = this._get_settings().types,
 						mc = this._check("max_children", p),
 						md = this._check("max_depth", p),
@@ -3741,12 +3772,18 @@
 			this.get_container()
 				.addClass("ui-widget-content")
 				.addClass("jstree-themeroller")
-				.delegate("a","mouseenter.jstree", function () {
-					$(this).addClass(s.item_h);
+				.delegate("a","mouseenter.jstree", function (e) {
+					if(!$(e.currentTarget).hasClass("jstree-loading")) {
+						$(this).addClass(s.item_h);
+					}
 				})
 				.delegate("a","mouseleave.jstree", function () {
 					$(this).removeClass(s.item_h);
 				})
+				.bind("init.jstree", $.proxy(function (e, data) { 
+						data.inst.get_container().find("> ul > li > .jstree-loading > ins").addClass("ui-icon-refresh");
+						this._themeroller(data.inst.get_container().find("> ul > li"));
+					}, this))
 				.bind("open_node.jstree create_node.jstree", $.proxy(function (e, data) { 
 						this._themeroller(data.rslt.obj);
 					}, this))

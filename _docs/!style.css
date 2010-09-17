@@ -42,3 +42,7 @@ ul.demos li { width:auto; }
 
 #demo_body .demo, #demo_body .code { width:auto; float:none; clear:both; margin:10px auto; }
 #demo_body .code { margin-bottom:20px; }
+
+ul.jstree { width:700px; margin:0px auto 15px auto; padding:0; }
+ul.jstree li { margin:0; padding:2px 0; }
+ul.jstree li a { color:#3B5998; text-decoration:underline; }
