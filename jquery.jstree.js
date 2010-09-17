@@ -2741,7 +2741,6 @@
 			if($.isFunction(processor.transformDocument)) {
 				rs = document.implementation.createDocument("", "", null);
 				processor.transformDocument(xml, xsl, rs, null);
-				alert(1);
 				callback.call(null, new XMLSerializer().serializeToString(rs));
 				return true;
 			}
