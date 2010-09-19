@@ -790,7 +790,10 @@
 				obj = this._get_node(obj);
 				if(!obj.length) { return false; }
 				this.__rollback();
-				var p = this._get_parent(obj), prev = this._get_prev(obj);
+				var p = this._get_parent(obj), prev = $([]), t = this;
+				obj.each(function () {
+					prev = prev.add(t._get_prev(this));
+				});
 				obj = obj.detach();
 				if(p !== -1 && p.find("> ul > li").length === 0) {
 					p.removeClass("jstree-open jstree-closed").addClass("jstree-leaf");
@@ -862,8 +865,8 @@
 				p.op = p.ot._get_parent(p.o);
 				if(p.op === -1) { p.op = p.ot ? p.ot.get_container() : this.get_container(); }
 				if(!/^(before|after)$/.test(p.p) && p.op && p.np && p.op[0] === p.np[0] && p.o.index() < p.cp) { p.cp++; }
+				if(p.p === "before" && p.op && p.np && p.op[0] === p.np[0] && p.o.index() < p.cp) { p.cp--; }
 				p.or = p.np.find(" > ul > li:nth-child(" + (p.cp + 1) + ")");
-
 				prepared_move = p;
 				this.__callback(prepared_move);
 				if(cb) { cb.call(this, prepared_move); }
@@ -2047,6 +2050,7 @@
 	var o = false,
 		r = false,
 		m = false,
+		ml = false,
 		sli = false,
 		sti = false,
 		dir1 = false,
@@ -2074,7 +2078,7 @@
 			$.vakata.dnd.init_y = e.pageY;
 			$.vakata.dnd.user_data = data;
 			$.vakata.dnd.is_down = true;
-			$.vakata.dnd.helper = $("<div id='vakata-dragged'>").html(html).css("opacity", "0.75");
+			$.vakata.dnd.helper = $("<div id='vakata-dragged'>").html(html); //.fadeTo(10,0.25);
 			$(document).bind("mousemove", $.vakata.dnd.drag);
 			$(document).bind("mouseup", $.vakata.dnd.drag_stop);
 			return false;
@@ -2170,6 +2174,7 @@
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
 							if(this.data.themes) {
 								m.attr("class", "jstree-" + this.data.themes.theme); 
+								if(ml) { ml.attr("class", "jstree-" + this.data.themes.theme); }
 								$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme);
 							}
 							if($(e.currentTarget).find("> ul > li").length === 0) {
@@ -2203,7 +2208,10 @@
 							}
 						}
 					}, this))
-				.bind("mouseleave.jstree", $.proxy(function () {
+				.bind("mouseleave.jstree", $.proxy(function (e) {
+						if(e.relatedTarget && e.relatedTarget.id && e.relatedTarget.id === "jstree-marker-line") {
+							return false; 
+						}
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
 							if(this.data.dnd.i1) { clearInterval(this.data.dnd.i1); }
 							if(this.data.dnd.i2) { clearInterval(this.data.dnd.i2); }
@@ -2257,6 +2265,9 @@
 					}, this))
 				.delegate("a", "mousemove.jstree", $.proxy(function (e) { 
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
+							if(!r || !r.length || r.children("a")[0] !== e.currentTarget) {
+								this.dnd_enter(e.currentTarget);
+							}
 							if(typeof this.data.dnd.off.top === "undefined") { this.data.dnd.off = $(e.target).offset(); }
 							this.data.dnd.w = (e.pageY - (this.data.dnd.off.top || 0)) % this.data.core.li_height;
 							if(this.data.dnd.w < 0) { this.data.dnd.w += this.data.core.li_height; }
@@ -2265,6 +2276,9 @@
 					}, this))
 				.delegate("a", "mouseleave.jstree", $.proxy(function (e) { 
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
+							if(e.relatedTarget && e.relatedTarget.id && e.relatedTarget.id === "jstree-marker-line") {
+								return false; 
+							}
 							this.data.dnd.mto = setTimeout( 
 								(function (t) { return function () { t.dnd_leave(e); }; }) (this),
 							0);
@@ -2295,6 +2309,7 @@
 						this.data.dnd.active	= false;
 						this.data.dnd.foreign	= false;
 						if(m) { m.css({ "top" : "-2000px" }); }
+						if(ml) { ml.css({ "top" : "-2000px" }); }
 					}, this))
 				.bind("drag_start.vakata", $.proxy(function (e, data) {
 						if(data.data.jstree) { 
@@ -2306,7 +2321,6 @@
 					}, this));
 				/*
 				.bind("keydown.jstree-" + this.get_index() + " keyup.jstree-" + this.get_index(), $.proxy(function(e) {
-						console.log(this.data.dnd);
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree && !this.data.dnd.foreign) {
 							var h = $.vakata.dnd.helper.children("ins");
 							if(e[this._get_settings().dnd.copy_modifier + "Key"] && h.hasClass("jstree-ok")) {
@@ -2327,7 +2341,8 @@
 						o = e.target;
 						$.vakata.dnd.drag_start(e, { jstree : true, obj : e.target }, "<ins class='jstree-icon'></ins>" + $(e.target).text() );
 						if(this.data.themes) { 
-							m.attr("class", "jstree-" + this.data.themes.theme); 
+							if(m) { m.attr("class", "jstree-" + this.data.themes.theme); }
+							if(ml) { ml.attr("class", "jstree-" + this.data.themes.theme); }
 							$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme); 
 						}
 						$.vakata.dnd.helper.children("ins").attr("class","jstree-invalid");
@@ -2422,15 +2437,19 @@
 				switch(r) {
 					case "before":
 						m.css({ "left" : pos + "px", "top" : (this.data.dnd.off.top - 6) + "px" }).show();
+						if(ml) { ml.css({ "left" : (pos + 8) + "px", "top" : (this.data.dnd.off.top - 1) + "px" }).show(); }
 						break;
 					case "after":
-						m.css({ "left" : pos + "px", "top" : (this.data.dnd.off.top + this.data.core.li_height - 7) + "px" }).show();
+						m.css({ "left" : pos + "px", "top" : (this.data.dnd.off.top + this.data.core.li_height - 6) + "px" }).show();
+						if(ml) { ml.css({ "left" : (pos + 8) + "px", "top" : (this.data.dnd.off.top + this.data.core.li_height - 1) + "px" }).show(); }
 						break;
 					case "inside":
 						m.css({ "left" : pos + ( rtl ? -4 : 4) + "px", "top" : (this.data.dnd.off.top + this.data.core.li_height/2 - 5) + "px" }).show();
+						if(ml) { ml.hide(); }
 						break;
 					default:
 						m.hide();
+						if(ml) { ml.hide(); }
 						break;
 				}
 				return r;
@@ -2452,6 +2471,7 @@
 				o = false;
 				r = false;
 				m.hide();
+				if(ml) { ml.hide(); }
 			},
 			dnd_enter : function (obj) {
 				if(this.data.dnd.mto) { 
@@ -2488,6 +2508,7 @@
 				this.data.dnd.inside	= false;
 				$.vakata.dnd.helper.children("ins").attr("class","jstree-invalid");
 				m.hide();
+				if(ml) { ml.hide(); }
 				if(r && r[0] === e.target.parentNode) {
 					if(this.data.dnd.to1) {
 						clearTimeout(this.data.dnd.to1);
@@ -2507,7 +2528,8 @@
 				if(!this._get_settings().core.html_titles) { dt = dt.replace(/</ig,"&lt;").replace(/>/ig,"&gt;"); }
 				$.vakata.dnd.drag_start(e, { jstree : true, obj : o }, "<ins class='jstree-icon'></ins>" + dt );
 				if(this.data.themes) { 
-					m.attr("class", "jstree-" + this.data.themes.theme); 
+					if(m) { m.attr("class", "jstree-" + this.data.themes.theme); }
+					if(ml) { ml.attr("class", "jstree-" + this.data.themes.theme); }
 					$.vakata.dnd.helper.attr("class", "jstree-dnd-helper jstree-" + this.data.themes.theme); 
 				}
 				this.data.dnd.cof = cnt.offset();
@@ -2519,19 +2541,47 @@
 	});
 	$(function() {
 		var css_string = '' + 
-			'#vakata-dragged ins { display:block; text-decoration:none; width:16px; height:16px; margin:0 0 0 0; padding:0; position:absolute; top:4px; left:4px; } ' + 
+			'#vakata-dragged ins { display:block; text-decoration:none; width:16px; height:16px; margin:0 0 0 0; padding:0; position:absolute; top:4px; left:4px; ' + 
+			' -moz-border-radius:4px; border-radius:4px; -webkit-border-radius:4px; ' +
+			'} ' + 
 			'#vakata-dragged .jstree-ok { background:green; } ' + 
 			'#vakata-dragged .jstree-invalid { background:red; } ' + 
-			'#jstree-marker { padding:0; margin:0; line-height:12px; font-size:1px; overflow:hidden; height:12px; width:8px; position:absolute; top:-30px; z-index:10000; background-repeat:no-repeat; display:none; background-color:silver; } ';
+			'#jstree-marker { padding:0; margin:0; font-size:12px; overflow:hidden; height:12px; width:8px; position:absolute; top:-30px; z-index:10001; background-repeat:no-repeat; display:none; background-color:transparent; text-shadow:1px 1px 1px white; color:black; line-height:10px; } ' + 
+			'#jstree-marker-line { padding:0; margin:0; line-height:0%; font-size:1px; overflow:hidden; height:1px; width:30px; position:absolute; top:-30px; z-index:10000; background-repeat:no-repeat; display:none; background-color:#456c43; ' + 
+			' cursor:pointer; border:1px solid #eeeeee; border-left:0; -moz-box-shadow: 0px 0px 2px #666; -webkit-box-shadow: 0px 0px 2px #666; box-shadow: 0px 0px 2px #666; ' + 
+			' -moz-border-radius:1px; border-radius:1px; -webkit-border-radius:1px; ' +
+			'}' + 
+			'';
 		$.vakata.css.add_sheet({ str : css_string });
-		m = $("<div>").attr({ id : "jstree-marker" }).hide().appendTo("body");
+		m = $("<div>").attr({ id : "jstree-marker" }).hide().html("&raquo;").appendTo("body");
+		ml = $("<div>").attr({ id : "jstree-marker-line" }).hide()
+			.bind("mouseup", function (e) { 
+				if(r && r.length) { 
+					r.children("a").trigger(e); 
+					e.preventDefault(); 
+					e.stopImmediatePropagation(); 
+					return false; 
+				} 
+			})
+			.bind("mouseleave", function (e) { 
+				var rt = $(e.relatedTarget);
+				if(rt.is(".jstree") || rt.closest(".jstree").length === 0) {
+					if(r && r.length) { 
+						r.children("a").trigger(e); 
+						m.hide();
+						ml.hide();
+						e.preventDefault(); 
+						e.stopImmediatePropagation(); 
+						return false; 
+					}
+				}
+			})
+			.appendTo("body");
 		$(document).bind("drag_start.vakata", function (e, data) {
-			if(data.data.jstree) { 
-				m.show(); 
-			}
+			if(data.data.jstree) { m.show(); if(ml) { ml.show(); } }
 		});
 		$(document).bind("drag_stop.vakata", function (e, data) {
-			if(data.data.jstree) { m.hide(); }
+			if(data.data.jstree) { m.hide(); if(ml) { ml.hide(); } }
 		});
 	});
 })(jQuery);
@@ -3090,10 +3140,22 @@
 		__init : function () {
 			this.data.search.str = "";
 			this.data.search.result = $();
+			if(this._get_settings().search.show_only_matches) {
+				this.get_container()
+					.bind("search.jstree", function (e, data) {
+						$(this).find("li").hide().removeClass("jstree-last");
+						data.rslt.nodes.parentsUntil(".jstree").andSelf().show()
+							.filter("ul").each(function () { $(this).children("li:visible").eq(-1).addClass("jstree-last"); });
+					})
+					.bind("clear_search.jstree", function () {
+						$(this).find("li").css("display","").end().jstree("clean_node", -1);
+					});
+			}
 		},
 		defaults : {
 			ajax : false,
-			search_method : "contains" // for case insensitive - jstree_contains
+			search_method : "jstree_contains", // for case insensitive - jstree_contains
+			show_only_matches : false
 		},
 		_fn : {
 			search : function (str, skip_async) {
@@ -3161,33 +3223,13 @@
 })(jQuery);
 //*/
 
-/*
- * jsTree advanced search plugin
- * Enables hiding all the non-matching nodes! NOTE: This is heavy on the DOM/browser!
- */
-(function ($) {
-	$.jstree.plugin("adv_search", {
-		__init : function () {
-			if(!this.data.search) { throw "jsTree adv_search: jsTree search plugin not included."; }
-			this.get_container()
-				.bind("search.jstree", function (e, data) {
-					$(this).find("li").hide().removeClass("jstree-last");
-					data.rslt.nodes.parentsUntil(".jstree").andSelf().show()
-						.filter("ul").each(function () { $(this).children("li:visible").eq(-1).addClass("jstree-last"); });
-				})
-				.bind("clear_search.jstree", function () {
-					$(this).find("li").css("display","").end().jstree("clean_node", -1);
-				});
-		}
-	});
-})(jQuery);
-//*/
-
 /* 
  * jsTree contextmenu plugin
  */
 (function ($) {
 	$.vakata.context = {
+		hide_on_mouseleave : true,
+
 		cnt		: $("<div id='vakata-contextmenu'>"),
 		vis		: false,
 		tgt		: false,
@@ -3206,6 +3248,12 @@
 			$.vakata.context.cnt
 				.html(html)
 				.css({ "visibility" : "hidden", "display" : "block", "left" : 0, "top" : 0 });
+
+			if($.vakata.context.hide_on_mouseleave) {
+				$.vakata.context.cnt
+					.one("mouseleave", function(e) { $.vakata.context.hide(); });
+			}
+
 			h = $.vakata.context.cnt.height();
 			w = $.vakata.context.cnt.width();
 			if(x + w > $(document).width()) { 
@@ -3913,7 +3961,7 @@
 							if(data.args[4] === true) {
 								if(data.args[0].o && data.args[0].o.length) {
 									data.args[0].o.children("a").each(function () { nms.push($(this).text().replace(/^\s+/g,"")); });
-									res = this._check_unique(nms, data.args[0].np.find("> ul > li").not(data.args[0].o));
+									res = this._check_unique(nms, data.args[0].np.find("> ul > li").not(data.args[0].o), "move_node");
 								}
 							}
 						}
@@ -3928,7 +3976,7 @@
 								if(typeof data.args[2] === "string") { nms.push(data.args[2]); }
 								else if(!data.args[2] || !data.args[2].data) { nms.push(this._get_string("new_node")); }
 								else { nms.push(data.args[2].data); }
-								res = this._check_unique(nms, p.find("> ul > li"));
+								res = this._check_unique(nms, p.find("> ul > li"), "create_node");
 							}
 						}
 						if(data.func == "rename_node") {
@@ -3937,7 +3985,7 @@
 							t = this._get_node(data.args[0]);
 							p = this._get_parent(t);
 							if(!p || p === -1) { p = this.get_container(); }
-							res = this._check_unique(nms, p.find("> ul > li").not(t));
+							res = this._check_unique(nms, p.find("> ul > li").not(t), "rename_node");
 						}
 						if(!res) {
 							e.stopPropagation();
@@ -3945,13 +3993,17 @@
 						}
 					}, this));
 		},
+		defaults : { 
+			error_callback : $.noop
+		},
 		_fn : { 
-			_check_unique : function (nms, p) {
+			_check_unique : function (nms, p, func) {
 				var cnms = [];
 				p.children("a").each(function () { cnms.push($(this).text().replace(/^\s+/g,"")); });
 				if(!cnms.length || !nms.length) { return true; }
 				cnms = cnms.sort().join(",,").replace(/(,|^)([^,]+)(,,\2)+(,|$)/g,"$1$2$4").replace(/,,+/g,",").replace(/,$/,"").split(",");
 				if((cnms.length + nms.length) != cnms.concat(nms).sort().join(",,").replace(/(,|^)([^,]+)(,,\2)+(,|$)/g,"$1$2$4").replace(/,,+/g,",").replace(/,$/,"").split(",").length) {
+					this._get_settings().unique.error_callback.call(null, nms, p, func);
 					return false;
 				}
 				return true;
@@ -3961,7 +4013,7 @@
 				var p = this._get_move(), nms = [];
 				if(p.o && p.o.length) {
 					p.o.children("a").each(function () { nms.push($(this).text().replace(/^\s+/g,"")); });
-					return this._check_unique(nms, p.np.find("> ul > li").not(p.o));
+					return this._check_unique(nms, p.np.find("> ul > li").not(p.o), "check_move");
 				}
 				return true;
 			}

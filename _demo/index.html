@@ -410,7 +410,7 @@ $("#demo")
 				data : { 
 					"operation" : "move_node", 
 					"id" : $(this).attr("id").replace("node_",""), 
-					"ref" : data.rslt.np.attr("id").replace("node_",""), 
+					"ref" : data.rslt.cr === -1 ? 1 : data.rslt.np.attr("id").replace("node_",""), 
 					"position" : data.rslt.cp + i,
 					"title" : data.rslt.name,
 					"copy" : data.rslt.cy ? 1 : 0

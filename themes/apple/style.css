@@ -42,7 +42,7 @@
 #vakata-dragged.jstree-apple ins { background:transparent !important; }
 #vakata-dragged.jstree-apple .jstree-ok { background:url("d.png") -2px -53px no-repeat !important; }
 #vakata-dragged.jstree-apple .jstree-invalid { background:url("d.png") -18px -53px no-repeat !important; }
-#jstree-marker.jstree-apple { background:url("d.png") -41px -57px no-repeat !important; }
+#jstree-marker.jstree-apple { background:url("d.png") -41px -57px no-repeat !important; text-indent:-100px; }
 
 .jstree-apple a.jstree-search { color:aqua; }
 .jstree-apple .jstree-locked a { color:silver; cursor:default; }

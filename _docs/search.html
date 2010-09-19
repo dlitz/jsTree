@@ -22,7 +22,6 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <h2>Description</h2>
 <div id="description">
 <p>The <code>search</code> plugin enables searching for nodes whose title contains a given string, works on async trees too. All found nodes get the <code>jstree-search</code> class applied to their contained <code>a</code> nodes - you can use that class to style search results.</p>
-<p class="note">You can also include the <code>adv_search</code> plugin in your plugins array. It hides all non-matching nodes and leaves only the matching visible, until the search is cleared. Keep in mind <code>adv_search</code> is heavy on the browser/DOM and is still experimental.</p>
 </div>
 
 <h2 id="configuration">Configuration</h2>
@@ -30,7 +29,11 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
 <h3>search_method</h3>
 <p class="meta">A string. Default is <code>"contains"</code>.</p>
-<p>The method to use for searching. The other options bundled with jstree are <code>"jstree_contains"</code> (case insensitive search) and <code>"jstree_title_contains"</code> (case insensitive based on the title tag of the A node)</p>
+<p>The method to use for searching. The other options bundled with jstree are <code>"jstree_contains"</code> (case insensitive search) and <code>"jstree_title_contains"</code> (case insensitive based on the title tag of the A node).</p>
+
+<h3>show_only_matches</h3>
+<p class="meta">A boolean. Default is <code>false</code>.</p>
+<p>If set to <code>true</code> all non-matching nodes are hidden and only the matching nodes (and their parents) are left visible, until the search is cleared. Keep in mind <code>show_only_matches</code> is heavy on the browser/DOM and is still experimental.</p>
 
 <h3>ajax</h3>
 <p class="meta">An object (or <code>false</code> if not used). Default is <code>false</code>.</p>
