@@ -26,12 +26,12 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <div class="code_f">
 <pre class="brush:js;">
 { 
-	data : "node_title", 
+	"data" : "node_title", 
 	// omit `attr` if not needed; the `attr` object gets passed to the jQuery `attr` function
-	attr : { id : "node_identificator", some-other-attribute : "attribute_value" }, 
+	"attr" : { "id" : "node_identificator", "some-other-attribute" : "attribute_value" }, 
 	// `state` and `children` are only used for NON-leaf nodes
-	state: "closed", // or "open", defaults to "closed"
-	children: [ /* an array of child nodes objects */ ]
+	"state" : "closed", // or "open", defaults to "closed"
+	"children" : [ /* an array of child nodes objects */ ]
 }
 </pre>
 </div>
@@ -41,21 +41,21 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <pre class="brush:js;">
 {
 	// `data` can also be an object
-	data : { 
-		title : "The node title", 
+	"data" : { 
+		"title" : "The node title", 
 		// omit when not needed
-		attr : {}, 
+		"attr" : {}, 
 		// if `icon` contains a slash / it is treated as a file, used for background
 		// otherwise - it is added as a class to the &lt;ins&gt; node
-		icon : "folder"
+		"icon" : "folder"
 	},
 
 	// the `metadata` property will be saved using the jQuery `data` function on the `li` node
-	metadata : "a string, array, object, etc",
+	"metadata" : "a string, array, object, etc",
 
 	// if you use the language plugin - just set this property
 	// also make sure that `data` is an array of objects
-	language : "en" // any code you are using
+	"language" : "en" // any code you are using
 }
 </pre>
 </div>

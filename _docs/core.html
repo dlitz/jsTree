@@ -465,12 +465,16 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	</li>
 </ul>
 
-<h3 id="open_all">.open_all ( node , original_obj )</h3>
+<h3 id="open_all">.open_all ( node , do_animation, original_obj )</h3>
 <p>Opens all descendants of the <code>node</code> node.</p>
 <ul class="arguments">
 	<li>
 		<code class="tp">mixed</code> <strong>node</strong>
 		<p>This can be a DOM node, jQuery node or selector pointing to an element whose descendants you want opened. If this param is omitted or set to <code>-1</code> all nodes in the tree are opened.</p>
+	</li>
+	<li>
+		<code class="tp">boolean</code> <strong>do_animation</strong>
+		<p>If set to <code>true</code> all nodes are opened with an animation. This can be slow on large trees.</p>
 	</li>
 	<li>
 		<code class="tp">mixed</code> <strong>original_obj</strong>
@@ -484,6 +488,8 @@ $("some-container").bind("some-event.jstree", function (e, data) {
 	<li>
 		<code class="tp">mixed</code> <strong>node</strong>
 		<p>This can be a DOM node, jQuery node or selector pointing to an element whose descendants you want closed. If this param is omitted or set to <code>-1</code> all nodes in the tree are closed.</p>
+	</li>
+	<li>
 		<code class="tp">boolean</code> <strong>do_animation</strong>
 		<p>If set to <code>true</code> all nodes are closed with an animation. This can be slow on large trees.</p>
 	</li>

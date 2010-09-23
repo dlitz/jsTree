@@ -29,7 +29,11 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 
 <h3>override_ui</h3>
 <p class="meta">A boolean. Default is <code>false</code>.</p>
-<p>If set to <code>true</code> all selection will be handled by checkboxes. If left as <code>false</code> nodes can be selected and checked independently.</p>
+<p>If set to <code>true</code> all selection will be handled by checkboxes. The checkbox plugin will map UI's <a href="ui.html#get_selected">get_selected function</a> to its own <a href="#get_checked">get_checked function</a> and overwrite the <a href="ui.html#reselect">UI reselect function</a>. It will also disable the <code>select_node</code>, <code>deselect_node</code> and <code>deselect_all</code> functions. If left as <code>false</code> nodes can be selected and checked independently. </p>
+
+<h3>two_state</h3>
+<p class="meta">A boolean. Default is <code>false</code>.</p>
+<p>If set to <code>true</code> checkboxes will be two-state only, meaning that you will be able to select parent and children independently and there will be no undetermined state.</p>
 
 </div>
 
@@ -66,8 +70,6 @@ $(function () {
 
 <h2 id="api">API</h2>
 <div class="panel api">
-<p>The checkbox plugin maps UI's <a href="ui.html#get_selected">get_selected function</a> to its own <a href="#get_checked">get_checked function</a> and overwrites the <a href="ui.html#reselect">UI reselect function</a>. It also disables the <code>select_node</code>, <code>deselect_node</code> and <code>deselect_all</code> functions.
-
 <h3 id="_prepare_checkboxes">._prepare_checkboxes ( node )</h3>
 <p>Inserts the checkbox icons on the node. Used internally.</p>
 <ul class="arguments">
