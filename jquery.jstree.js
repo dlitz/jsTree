@@ -99,7 +99,7 @@
 			returnValue = this;
 
 		// extend settings and allow for multiple hashes and metadata
-		if(!isMethodCall && $.meta) { args.push($.metadata.get(this).jstree); }
+		if(!isMethodCall && $.metadata) { args.push($.metadata.get(this).jstree); }
 		settings = !isMethodCall && args.length ? $.extend.apply(null, [true, settings].concat(args)) : settings;
 		// block calls to "private" methods
 		if(isMethodCall && settings.substring(0, 1) == '_') { return returnValue; }
@@ -202,20 +202,15 @@
 					} while(func);
 					if(!func) { return; }
 
-					// a chance to stop execution (or change arguments): 
-					// * just bind to jstree.before
-					// * check the additional data object (func property)
-					// * call event.stopImmediatePropagation()
-					// * return false (or an array of arguments)
-					rslt = this.get_container().triggerHandler(evnt, { "func" : i, "inst" : this, "args" : args, "plugin" : func.plugin });
-					if(rslt === false) { return; }
-					if(typeof rslt !== "undefined") { args = rslt; }
-
 					// context and function to trigger events, then finally call the function
 					if(i.indexOf("_") === 0) {
 						rslt = func.apply(this, args);
 					}
 					else {
+						rslt = this.get_container().triggerHandler(evnt, { "func" : i, "inst" : this, "args" : args, "plugin" : func.plugin });
+						if(rslt === false) { return; }
+						if(typeof rslt !== "undefined") { args = rslt; }
+
 						rslt = func.apply(
 							$.extend({}, this, { 
 								__callback : function (data) { 
@@ -692,7 +687,7 @@
 				if(typeof js === "string") { js = { "data" : js }; }
 				if(!js) { js = {}; }
 				if(js.attr) { d.attr(js.attr); }
-				if(js.metadata) { d.data("jstree", js.metadata); }
+				if(js.metadata) { d.data(js.metadata); }
 				if(js.state) { d.addClass("jstree-" + js.state); }
 				if(!js.data) { js.data = this._get_string("new_node"); }
 				if(!$.isArray(js.data)) { tmp = js.data; js.data = []; js.data.push(tmp); }
@@ -1681,7 +1676,7 @@
 					if(!js.data && js.data !== "") { return d; }
 					d = $("<li>");
 					if(js.attr) { d.attr(js.attr); }
-					if(js.metadata) { d.data("jstree", js.metadata); }
+					if(js.metadata) { d.data(js.metadata); }
 					if(js.state) { d.addClass("jstree-" + js.state); }
 					if(!$.isArray(js.data)) { tmp = js.data; js.data = []; js.data.push(tmp); }
 					$.each(js.data, function (i, m) {
@@ -2709,10 +2704,10 @@
 				return true;
 			},
 			check_node : function (obj) {
-				if(this.change_state(obj, false)) { this.__callback(obj); }
+				if(this.change_state(obj, false)) { this.__callback({ "obj" : this._get_node(obj) }); }
 			},
 			uncheck_node : function (obj) {
-				if(this.change_state(obj, true)) { this.__callback(obj); }
+				if(this.change_state(obj, true)) { this.__callback({ "obj" : this._get_node(obj) }); }
 			},
 			check_all : function () {
 				var _this = this, 
@@ -3564,13 +3559,15 @@
 						if(icons_css !== "") { $.vakata.css.add_sheet({ 'str' : icons_css }); }
 					}, this))
 				.bind("before.jstree", $.proxy(function (e, data) { 
+						var s, t, o = this._get_settings().types.use_data ? this._get_node(data.args[0]) : false, d = o && o !== -1 && o.length ? o[$.metadata ? "metadata" : "data"]() : false;
+						if(d && d.jstree && d.jstree[data.func] === false) { e.stopImmediatePropagation(); return false; }
 						if($.inArray(data.func, this.data.types.attach_to) !== -1) {
-							var s = this._get_settings().types.types,
-								t = this._get_type(data.args[0]);
+							s = this._get_settings().types.types;
+							t = this._get_type(data.args[0]);
 							if(
 								( 
 									(s[t] && typeof s[t][data.func] !== "undefined") || 
-									(s["default"] && typeof s["default"][data.func] !== "undefined")
+									(s["default"] && typeof s["default"][data.func] !== "undefined") 
 								) && this._check(data.func, data.args[0]) === false
 							) {
 								e.stopImmediatePropagation();
@@ -3587,6 +3584,8 @@
 			// defines valid node types for the root nodes
 			valid_children		: "all",
 
+			// whether to use $.metadata (if available) and $.data
+			use_data : false, 
 			// where is the type stores (the rel attribute of the LI element)
 			type_attr : "rel",
 			// a list of types
@@ -3598,11 +3597,7 @@
 					"valid_children": "all"
 
 					// Bound functions - you can bind any other function here (using boolean or function)
-					//"select_node"	: true,
-					//"open_node"	: true,
-					//"close_node"	: true,
-					//"create_node"	: true,
-					//"delete_node"	: true
+					//"select_node"	: true
 				}
 			}
 		},
@@ -3616,20 +3611,23 @@
 				return (!obj.length || !str) ? false : obj.attr(this._get_settings().types.type_attr, str);
 			},
 			_check : function (rule, obj, opts) {
-				var v = false, t = this._get_type(obj), d = 0, _this = this, s = this._get_settings().types;
+				obj = this._get_node(obj);
+				var v = false, t = this._get_type(obj), d = 0, _this = this, s = this._get_settings().types, data = false;
 				if(obj === -1) { 
 					if(!!s[rule]) { v = s[rule]; }
 					else { return; }
 				}
 				else {
 					if(t === false) { return; }
-					if(!!s.types[t] && !!s.types[t][rule]) { v = s.types[t][rule]; }
-					else if(!!s.types["default"] && !!s.types["default"][rule]) { v = s.types["default"][rule]; }
+					data = s.use_data ? obj[ $.metadata ? "metadata" : "data" ]() : false;
+					if(data && data.jstree && typeof data.jstree[rule] !== "undefined") { v = data.jstree[rule]; }
+					else if(!!s.types[t] && typeof s.types[t][rule] !== "undefined") { v = s.types[t][rule]; }
+					else if(!!s.types["default"] && typeof s.types["default"][rule] !== "undefined") { v = s.types["default"][rule]; }
 				}
 				if($.isFunction(v)) { v = v.call(this, obj); }
 				if(rule === "max_depth" && obj !== -1 && opts !== false && s.max_depth !== -2 && v !== 0) {
 					// also include the node itself - otherwise if root node it is not checked
-					this._get_node(obj).children("a:eq(0)").parentsUntil(".jstree","li").each(function (i) {
+					obj.children("a:eq(0)").parentsUntil(".jstree","li").each(function (i) {
 						// check if current depth already exceeds global tree depth
 						if(s.max_depth !== -1 && s.max_depth - (i + 1) <= 0) { v = 0; return false; }
 						d = (i === 0) ? v : _this._check(rule, this, false);
