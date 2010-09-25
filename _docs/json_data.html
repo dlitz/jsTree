@@ -66,7 +66,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <div class="panel configuration">
 <h3>data</h3>
 <p class="meta">A JSON object (or <code>false</code> if not used). Default is <code>false</code>.</p>
-<p>Specifies the content to load into the container and convert to a tree.</p>
+<p>Specifies the content to load into the container and convert to a tree. You can also set this to a function - it will be executed in the tree's scope for every node that needs to be loaded, the function will receive two arguments - the node being loaded &amp; a function to call with the data once your processing is done.</p>
 <h3>ajax</h3>
 <p class="meta">An object (or <code>false</code> if not used). Default is <code>false</code>.</p>
 <p>The ajax config object is pretty much the same as the <a href="http://api.jquery.com/jQuery.ajax/">jQuery ajax settings object</a>.</p>
@@ -79,6 +79,9 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <h3>progressive_render</h3>
 <p class="meta">A Boolean. Default is <code>false</code>.</p>
 <p>If this option is set to <code>true</code> only the visible (open nodes) parts of the returned JSON are converted to DOM nodes, any hidden parts are saved away and parsed ondemand (when a node becomes visible). This is useful when you have a large nested tree which would result in a heavy DOM.</p>
+<h3>progressive_unload</h3>
+<p class="meta">A Boolean. Default is <code>false</code>.</p>
+<p>If this option is set to <code>true</code> when a node is closed its children are removed from the DOM and saved as metadata on the node itself, on reopen that metadata is used (much like <code>progressive_render</code>).</p>
 
 <p class="note"><strong>NOTE:</strong><br />If both <code>data</code> and <code>ajax</code> are set the initial tree is rendered from the <code>data</code> string. When opening a closed node (that has no loaded children) an AJAX request is made.</p>
 </div>
@@ -202,12 +205,16 @@ $(function () {
 		<p>A function to be executed if the node is not loaded due to an error - used internally. You should wait for the <code>load_node</code> event.</p>
 	</li>
 </ul>
-<h3 id="_parse_json">._parse_json ( data , is_callback )</h3>
+<h3 id="_parse_json">._parse_json ( data , node , is_callback )</h3>
 <p>This function converts JSON nodes to the DOM structure required by jstree. Returns a jQuery object.</p>
 <ul class="arguments">
 	<li>
 		<code class="tp">mixed</code> <strong>node</strong>
 		<p>This can be a tree node in the JSON format described above, or an array of such JSON nodes, may also be a string.</p>
+	</li>
+	<li>
+		<code class="tp">mixed</code> <strong>node</strong>
+		<p>This is the DOM node, jQuery node or selector pointing to the element for which data is parsed. <code>-1</code> means root nodes.</p>
 	</li>
 	<li>
 		<code class="tp">bool</code> <strong>is_callback</strong>
