@@ -1,5 +1,5 @@
 /*
- * jsTree 1.0-rc2
+ * jsTree 1.0-rc3
  * http://jstree.com/
  *
  * Copyright (c) 2010 Ivan Bozhanov (vakata.com)
@@ -309,8 +309,9 @@
 		if(!/compatible/.test(u) && /mozilla/.test(u) && parseFloat(v, 10) < 1.9) {
 			is_ff2 = true;
 			css_string += '' + 
-				'.jstree ins { display:-moz-inline-stack; position:relative; } ' + 
-				'.jstree a { display:-moz-inline-block; } ' + 
+				'.jstree ins { display:-moz-inline-box; } ' + 
+				'.jstree li { line-height:12px; } ' + // WHY??
+				'.jstree a { display:-moz-inline-box; } ' + 
 				'.jstree .jstree-no-icons .jstree-checkbox { display:-moz-inline-stack !important; } ';
 				/* this shouldn't be here as it is theme specific */
 		}
@@ -971,6 +972,7 @@
 			this.get_container()
 				.delegate("a", "click.jstree", $.proxy(function (event) {
 						event.preventDefault();
+						event.currentTarget.blur();
 						if(!$(event.currentTarget).hasClass("jstree-loading")) {
 							this.select_node(event.currentTarget, true, event);
 						}
@@ -4202,7 +4204,6 @@
 	$.jstree.plugin("wholerow", {
 		__init : function () {
 			if(!this.data.ui) { throw "jsTree wholerow: jsTree UI plugin not included."; }
-			if(is_ie6 || is_ie7 || is_ff2) { return; }
 			this.data.wholerow.html = false;
 			this.data.wholerow.to = false;
 			this.get_container()
@@ -4246,6 +4247,9 @@
 						if($(e.currentTarget).children("a").hasClass("jstree-hovered").length) { return; }
 						this.dehover_node(e.currentTarget);
 					}, this));
+			if(is_ie7 || is_ie6) {
+				$.vakata.css.add_sheet({ str : ".jstree-" + this.get_index() + " { position:relative; } ", title : "jstree" });
+			}
 		},
 		defaults : {
 		},
@@ -4270,13 +4274,12 @@
 				if(this.data.wholerow.last_html !== h) {
 					this.data.wholerow.last_html = h;
 					this.get_container().children(".jstree-wholerow").remove();
-					this.get_container().append(o.clone().removeClass("jstree-wholerow-real").wrapAll("<div class='jstree-wholerow'>").parent().width(o.width()).css("top", o.height() * -1 ).find("li[id]").each(function () { this.removeAttribute("id"); }).end()); 
+					this.get_container().append(o.clone().removeClass("jstree-wholerow-real").wrapAll("<div class='jstree-wholerow'>").parent().width(o.width()).css("top", (o.height() + ( is_ie7 ? 5 : 0)) * -1 ).find("li[id]").each(function () { this.removeAttribute("id"); }).end()); 
 				}
 			}
 		}
 	});
 	$(function() {
-		if(is_ie6 || is_ie7 || is_ff2) { return; }
 		var css_string = '' + 
 			'.jstree .jstree-wholerow-real { position:relative; z-index:1; } ' + 
 			'.jstree .jstree-wholerow-real li { cursor:pointer; } ' + 
@@ -4287,6 +4290,16 @@
 			'.jstree .jstree-wholerow ins, .jstree .jstree-wholerow span, .jstree .jstree-wholerow input { display:none !important; }' + 
 			'.jstree .jstree-wholerow a, .jstree .jstree-wholerow a:hover { text-indent:-9999px; !important; width:100%; padding:0 !important; border-right-width:0px !important; border-left-width:0px !important; } ' + 
 			'.jstree .jstree-wholerow-span { position:absolute; left:0; margin:0px; padding:0; height:18px; border-width:0; padding:0; z-index:0; }';
+		if(is_ff2) {
+			css_string += '' + 
+				'.jstree .jstree-wholerow a { display:block; height:18px; margin:0; padding:0; border:0; } ' + 
+				'.jstree .jstree-wholerow-real a { border-color:transparent !important; } ';
+		}
+		if(is_ie7 || is_ie6) {
+			css_string += '' + 
+				'.jstree .jstree-wholerow, .jstree .jstree-wholerow li, .jstree .jstree-wholerow ul, .jstree .jstree-wholerow a { margin:0; padding:0; line-height:18px; } ' + 
+				'.jstree .jstree-wholerow a { display:block; height:18px; line-height:18px; overflow:hidden; } ';
+		}
 		$.vakata.css.add_sheet({ str : css_string, title : "jstree" });
 	});
 })(jQuery);
