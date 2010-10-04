@@ -129,7 +129,7 @@
 		else {
 			this.each(function() {
 				var instance_id = $.data(this, "jstree-instance-id"),
-					s = false;
+					s = false, t = [];
 				// if an instance already exists, destroy it first
 				if(typeof instance_id !== "undefined" && instances[instance_id]) { instances[instance_id].destroy(); }
 				// push a new empty object to the instances array
@@ -139,15 +139,18 @@
 				// clean up all plugins
 				if(!settings) { settings = {}; }
 				settings.plugins = $.isArray(settings.plugins) ? settings.plugins : $.jstree.defaults.plugins;
-				if($.inArray("core", settings.plugins) === -1) { settings.plugins.unshift("core"); }
-				
-				// only unique plugins (NOT WORKING)
-				// settings.plugins = settings.plugins.sort().join(",,").replace(/(,|^)([^,]+)(,,\2)+(,|$)/g,"$1$2$4").replace(/,,+/g,",").replace(/,$/,"").split(",");
+				settings.plugins.unshift("core");
+				// only unique plugins
+				settings.plugins = settings.plugins.sort().join(",,").replace(/(,|^)([^,]+)(,,\2)+(,|$)/g,"$1$2$4").replace(/,,+/g,",").replace(/,$/,"").split(",");
 
 				// extend defaults with passed data
 				s = $.extend(true, {}, $.jstree.defaults, settings);
 				s.plugins = settings.plugins;
-				$.each(plugins, function (i, val) { if($.inArray(i, s.plugins) === -1) { s[i] = null; delete s[i]; } });
+				$.each(plugins, function (i, val) { 
+					if($.inArray(i, s.plugins) === -1) { s[i] = null; delete s[i]; } 
+					else { t.push(i); }
+				});
+				s.plugins = t;
 				// push the new object to the instances array (at the same time set the default classes to the container) and init
 				instances[instance_id] = new $.jstree._instance(instance_id, $(this).addClass("jstree jstree-" + instance_id), s); 
 				// init all activated plugins for this instance
@@ -4198,7 +4201,6 @@
  * jsTree wholerow plugin
  * Makes select and hover work on the entire width of the node
  * MAY BE HEAVY IN LARGE DOM
- * does not work in ff2, ie6, ie7
  */
 (function ($) {
 	$.jstree.plugin("wholerow", {
@@ -4223,14 +4225,16 @@
 				.bind("select_node.jstree deselect_node.jstree ", $.proxy(function (e, data) { 
 						data.rslt.obj.each(function () { 
 							var ref = data.inst.get_container().find(" > .jstree-wholerow li:visible:eq(" + ( parseInt((($(this).offset().top - data.inst.get_container().offset().top + data.inst.get_container()[0].scrollTop) / data.inst.data.core.li_height),10)) + ")");
-							ref.children("a")[e.type === "select_node" ? "addClass" : "removeClass"]("jstree-clicked");
+							// ref.children("a")[e.type === "select_node" ? "addClass" : "removeClass"]("jstree-clicked");
+							ref.children("a").attr("class",data.rslt.obj.children("a").attr("class"));
 						});
 					}, this))
 				.bind("hover_node.jstree dehover_node.jstree", $.proxy(function (e, data) { 
 						this.get_container().find(" > .jstree-wholerow .jstree-hovered").removeClass("jstree-hovered");
 						if(e.type === "hover_node") {
 							var ref = this.get_container().find(" > .jstree-wholerow li:visible:eq(" + ( parseInt(((data.rslt.obj.offset().top - this.get_container().offset().top + this.get_container()[0].scrollTop) / this.data.core.li_height),10)) + ")");
-							ref.children("a").addClass("jstree-hovered");
+							// ref.children("a").addClass("jstree-hovered");
+							ref.children("a").attr("class",data.rslt.obj.children(".jstree-hovered").attr("class"));
 						}
 					}, this))
 				.delegate(".jstree-wholerow-span, ins.jstree-icon, li", "click.jstree", function (e) {
@@ -4274,7 +4278,13 @@
 				if(this.data.wholerow.last_html !== h) {
 					this.data.wholerow.last_html = h;
 					this.get_container().children(".jstree-wholerow").remove();
-					this.get_container().append(o.clone().removeClass("jstree-wholerow-real").wrapAll("<div class='jstree-wholerow'>").parent().width(o.width()).css("top", (o.height() + ( is_ie7 ? 5 : 0)) * -1 ).find("li[id]").each(function () { this.removeAttribute("id"); }).end()); 
+					this.get_container().append(
+						o.clone().removeClass("jstree-wholerow-real")
+							.wrapAll("<div class='jstree-wholerow'>").parent()
+							.width(o.parent()[0].scrollWidth)
+							.css("top", (o.height() + ( is_ie7 ? 5 : 0)) * -1 )
+							.find("li[id]").each(function () { this.removeAttribute("id"); }).end()
+					);
 				}
 			}
 		}
@@ -4285,6 +4295,7 @@
 			'.jstree .jstree-wholerow-real li { cursor:pointer; } ' + 
 			'.jstree .jstree-wholerow-real a { border-left-color:transparent !important; border-right-color:transparent !important; } ' + 
 			'.jstree .jstree-wholerow { position:relative; z-index:0; height:0; } ' + 
+			'.jstree .jstree-wholerow ul, .jstree .jstree-wholerow li { width:100%; } ' + 
 			'.jstree .jstree-wholerow, .jstree .jstree-wholerow ul, .jstree .jstree-wholerow li, .jstree .jstree-wholerow a { margin:0 !important; padding:0 !important; } ' + 
 			'.jstree .jstree-wholerow, .jstree .jstree-wholerow ul, .jstree .jstree-wholerow li { background:transparent !important; }' + 
 			'.jstree .jstree-wholerow ins, .jstree .jstree-wholerow span, .jstree .jstree-wholerow input { display:none !important; }' + 
