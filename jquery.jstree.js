@@ -439,7 +439,7 @@
 				var _this = this;
 				this.data.core.to_open = [];
 				this.get_container_ul().find("li.jstree-open").each(function () { 
-					if(this.id) { _this.data.core.to_open.push("#" + this.id.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/')); }
+					if(this.id) { _this.data.core.to_open.push("#" + this.id.toString().replace(/^#/,"").replace(/\\\//g,"/").replace(/\//g,"\\\/").replace(/\\\./g,".").replace(/\./g,"\\.")); }
 				});
 				this.__callback(_this.data.core.to_open);
 			},
@@ -1050,7 +1050,7 @@
 			save_selected : function () {
 				var _this = this;
 				this.data.ui.to_select = [];
-				this.data.ui.selected.each(function () { if(this.id) { _this.data.ui.to_select.push("#" + this.id.toString().replace(/^#/,"").replace('\\/','/').replace('/','\\/')); } });
+				this.data.ui.selected.each(function () { if(this.id) { _this.data.ui.to_select.push("#" + this.id.toString().replace(/^#/,"").replace(/\\\//g,"/").replace(/\//g,"\\\/").replace(/\\\./g,".").replace(/\./g,"\\.")); } });
 				this.__callback(this.data.ui.to_select);
 			},
 			reselect : function () {
@@ -2739,6 +2739,7 @@
 			override_ui : false,
 			two_state : false,
 			real_checkboxes : false,
+			checked_parent_open : true,
 			real_checkboxes_names : function (n) { return [ ("check_" + (n[0].id || Math.ceil(Math.random() * 10000))) , 1]; }
 		},
 		__destroy : function () {
@@ -2835,7 +2836,14 @@
 				return true;
 			},
 			check_node : function (obj) {
-				if(this.change_state(obj, false)) { this.__callback({ "obj" : this._get_node(obj) }); }
+				if(this.change_state(obj, false)) { 
+					obj = this._get_node(obj);
+					if(this._get_settings().checkbox.checked_parent_open) {
+						var t = this;
+						obj.parents(".jstree-closed").each(function () { t.open_node(this, false, true); });
+					}
+					this.__callback({ "obj" : obj }); 
+				}
 			},
 			uncheck_node : function (obj) {
 				if(this.change_state(obj, true)) { this.__callback({ "obj" : this._get_node(obj) }); }

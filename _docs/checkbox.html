@@ -31,6 +31,10 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 <p class="meta">A boolean. Default is <code>false</code>.</p>
 <p>If set to <code>true</code> all selection will be handled by checkboxes. The checkbox plugin will map UI's <a href="ui.html#get_selected">get_selected function</a> to its own <a href="#get_checked">get_checked function</a> and overwrite the <a href="ui.html#reselect">UI reselect function</a>. It will also disable the <code>select_node</code>, <code>deselect_node</code> and <code>deselect_all</code> functions. If left as <code>false</code> nodes can be selected and checked independently. </p>
 
+<h3>checked_parent_open</h3>
+<p class="meta">A Boolean. Default is <code>true</code>.</p>
+<p>When set to <code>true</code> when programatically checking a node in the tree all of its closed parents are opened automatically.</p>
+
 <h3>two_state</h3>
 <p class="meta">A boolean. Default is <code>false</code>.</p>
 <p>If set to <code>true</code> checkboxes will be two-state only, meaning that you will be able to select parent and children independently and there will be no undetermined state.</p>
