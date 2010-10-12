@@ -1831,7 +1831,7 @@
 					});
 					if(li.hasClass("jstree-open")) { tmp1.state = "open"; }
 					if(li.hasClass("jstree-closed")) { tmp1.state = "closed"; }
-					if(li.data("jstree")) { tmp1.metadata = li.data("jstree"); }
+					if(li.data()) { tmp1.metadata = li.data(); }
 					a = li.children("a");
 					a.each(function () {
 						t = $(this);
@@ -2454,7 +2454,7 @@
 						this.data.dnd.cw = parseInt(cnt.width(),10);
 						this.data.dnd.ch = parseInt(cnt.height(),10);
 						this.data.dnd.foreign = true;
-						return false;
+						e.preventDefault();
 					}, this));
 			}
 			if(s.drop_target) {
@@ -2750,6 +2750,7 @@
 		_fn : {
 			_prepare_checkboxes : function (obj) {
 				obj = !obj || obj == -1 ? this.get_container().find("> ul > li") : this._get_node(obj);
+				if(obj === false) { return; } // added for removing root nodes
 				var c, _this = this, t, ts = this._get_settings().checkbox.two_state, rc = this._get_settings().checkbox.real_checkboxes, rcn = this._get_settings().checkbox.real_checkboxes_names;
 				obj.each(function () {
 					t = $(this);
@@ -3019,7 +3020,7 @@
 			'						<xsl:if test="string-length(attribute::icon) > 0 and contains(@icon,\'/\')"><xsl:attribute name="style">background:url(<xsl:value-of select="@icon" />) center center no-repeat;</xsl:attribute></xsl:if>' + 
 			'						<xsl:text>&#xa0;</xsl:text>' + 
 			'					</ins>' + 
-			'					<xsl:value-of select="current()" />' + 
+			'					<xsl:copy-of select="./child::node()" />' + // was <xsl:value-of select="current()" />
 			'				</a>' + 
 			'			</xsl:for-each>' + 
 			'			<xsl:if test="$children or @hasChildren"><xsl:call-template name="nodes"><xsl:with-param name="node" select="current()" /></xsl:call-template></xsl:if>' + 
@@ -3084,7 +3085,7 @@
 			'				<xsl:if test="string-length(attribute::icon) > 0 and contains(@icon,\'/\')"><xsl:attribute name="style">background:url(<xsl:value-of select="@icon" />) center center no-repeat;</xsl:attribute></xsl:if>' + 
 			'				<xsl:text>&#xa0;</xsl:text>' + 
 			'			</ins>' + 
-			'			<xsl:value-of select="current()" />' + 
+			'			<xsl:copy-of select="./child::node()" />' + // was <xsl:value-of select="current()" />
 			'		</a>' + 
 			'	</xsl:for-each>' + 
 			'	<xsl:if test="$children">' + 
@@ -4274,6 +4275,7 @@
 		_fn : {
 			_prepare_wholerow_span : function (obj) {
 				obj = !obj || obj == -1 ? this.get_container().find("> ul > li") : this._get_node(obj);
+				if(obj === false) { return; } // added for removing root nodes
 				obj.each(function () {
 					$(this).find("li").andSelf().each(function () {
 						var $t = $(this);
