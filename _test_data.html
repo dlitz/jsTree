@@ -1,0 +1,60 @@
+<!DOCTYPE html
+PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>jstree DATA test</title>
+	<meta content="text/html;charset=utf-8" http-equiv="content-type" />
+	<script src="_lib/jquery.js" type="text/javascript"></script>
+	<script src="jquery.jstree.js" type="text/javascript"></script>
+	<style type="text/css">
+	html, body { margin:0; padding:0; font-family:Verdana; font-size:10px; }
+	body { padding-top:10px; }
+	#container { width:790px; margin:0px auto; position:relative; overflow:hidden; _width:795px; }
+	.demo { width:250px; margin:0 17px 17px 0; float:left; border:1px solid #ebebeb; height:197px; }
+	.last { margin-right:0; }
+	.grid_line { position:absolute; width:790px; left:0; margin:0 auto; padding:0; height:1px; line-height:1px; font-size:1px; overflow:hidden; background:transparent; border-bottom:1px dotted #ebebeb; }
+	</style>
+	<script type="text/javascript">
+	(function ($) { 
+		// init all trees and open all nodes
+		$(function () { 
+			$(".demo")
+				.jstree()
+				.bind("reopen.jstree", function (e, data) { 
+					data.inst.select_node($(this).find("li:first")); 
+					data.inst.open_node($(this).find("li:first")); 
+				}); 
+		}); 
+		// create grid
+		/*
+		$(function () { 
+			var i = -1, c = $("#container"), h = c.height(), d = "";
+			for( ; i < h; i += 18) {
+				d += '<' + 'div class="grid_line" style="top:' + i + 'px">&#160;<' + '/div>';
+			}
+			$("#container").append(d);
+		});
+		*/
+	})(jQuery);
+	</script>
+</head>
+<body>
+<div id="container">
+
+	<div id="demo1" class="demo">
+		<ul>
+			<li class="jstree-closed"><a href="#">Root HTML PREDEFINED</a><ul>
+				<li><a href="#">Multiple children</a></li>
+				<li><a href="#">on one level</a></li></ul></li>
+		</ul>
+	</div>
+	<div id="demo2" class="demo" data-jstree='{ "html_data" : { "data" : "<li class=\"jstree-closed\"><a href=\"#\">Root HTML</a></li>", "ajax" : { "url" : "_docs/_html_data.html" } }, "plugins" : ["themes","html_data","ui"] }'></div>
+	<div id="demo3" class="demo last" data-jstree='{ "json_data" : { "data" : { "data" : "Root JSON", "state" : "closed" }, "ajax" : { "url" : "_docs/_json_data.json" } }, "plugins" : ["themes","json_data","ui"] }'></div>
+	<div id="demo4" class="demo" data-jstree='{ "xml_data" : { "xsl" : "flat", "data" : "<root><item state=\"closed\"><content><name>Root XML FLAT</name></content></item></root>", "ajax" : { "url" : "_docs/_xml_flat.xml" } }, "plugins" : ["themes","xml_data","ui"] }'></div>
+	<div id="demo5" class="demo" data-jstree='{ "xml_data" : { "xsl" : "nest", "data" : "<root><item state=\"closed\"><content><name>Root XML NEST</name></content></item></root>", "ajax" : { "url" : "_docs/_xml_nest.xml" } }, "plugins" : ["themes","xml_data","ui"] }'></div>
+	<div id="demo6" class="demo last"></div>
+
+</div>
+</body>
+</html>
