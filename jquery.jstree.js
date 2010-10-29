@@ -1049,7 +1049,7 @@
 						clk.each(function () { _this.deselect_node(this); });
 						if(s && clk.length) { 
 							data.rslt.prev.each(function () { 
-								if(this.parentNode) { _this.select_node(this); }
+								if(this.parentNode) { _this.select_node(this); return false; /* if return false is removed all prev nodes will be selected */}
 							});
 						}
 					}, this))
