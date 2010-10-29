@@ -2902,7 +2902,7 @@
 			},
 			uncheck_all : function () {
 				var _this = this,
-					coll = this._get_settings().checkbox.two_state ? this.get_container_ul().find("li") : this.get_container().children("li");
+					coll = this._get_settings().checkbox.two_state ? this.get_container_ul().find("li") : this.get_container_ul().children("li");
 				coll.each(function () {
 					_this.change_state(this, true);
 				});
