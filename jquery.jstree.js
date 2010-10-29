@@ -21,9 +21,12 @@
 (function () { if(jQuery && jQuery.jstree) { return; }
 	var is_ie6 = false, is_ie7 = false, is_ff2 = false;
 
-// Common functions not related to jsTree 
-// decided to move them to a `vakata` "namespace"
+/* 
+ * jsTree core
+ */
 (function ($) {
+	// Common functions not related to jsTree 
+	// decided to move them to a `vakata` "namespace"
 	$.vakata = {};
 	// CSS related functions
 	$.vakata.css = {
@@ -94,12 +97,7 @@
 			}
 		}
 	};
-})(jQuery);
 
-/* 
- * jsTree core
- */
-(function ($) {
 	// private variables 
 	var instances = [],			// instance array (used by $.jstree.reference/create/focused)
 		focused_instance = -1,	// the index in the instance array of the currently focused instance
@@ -1403,6 +1401,7 @@
 	// include the crr plugin by default
 	// $.jstree.defaults.plugins.push("crrm");
 })(jQuery);
+//*/
 
 /* 
  * jsTree themes plugin
@@ -1624,7 +1623,7 @@
 //*/
 
 /* 
- * jsTree JSON 1.0
+ * jsTree JSON plugin
  * The JSON data store. Datastores are build by overriding the `load_node` and `_is_loaded` functions.
  */
 (function ($) {
@@ -2339,6 +2338,8 @@
 						if($.vakata.dnd.is_drag && $.vakata.dnd.user_data.jstree) {
 							if(this.data.dnd.i1) { clearInterval(this.data.dnd.i1); }
 							if(this.data.dnd.i2) { clearInterval(this.data.dnd.i2); }
+							if(this.data.dnd.to1) { clearTimeout(this.data.dnd.to1); }
+							if(this.data.dnd.to2) { clearTimeout(this.data.dnd.to2); }
 							if($.vakata.dnd.helper.children("ins").hasClass("jstree-ok")) {
 								$.vakata.dnd.helper.children("ins").attr("class","jstree-invalid");
 							}
@@ -2515,7 +2516,7 @@
 		},
 		defaults : {
 			copy_modifier	: "ctrl",
-			check_timeout	: 200,
+			check_timeout	: 100,
 			open_timeout	: 500,
 			drop_target		: ".jstree-drop",
 			drop_check		: function (data) { return true; },
@@ -2969,7 +2970,7 @@
 //*/
 
 /* 
- * jsTree XML 1.0
+ * jsTree XML plugin
  * The XML data store. Datastores are build by overriding the `load_node` and `_is_loaded` functions.
  */
 (function ($) {
@@ -3063,7 +3064,7 @@
 			'						<xsl:if test="string-length(attribute::icon) > 0 and contains(@icon,\'/\')"><xsl:attribute name="style">background:url(<xsl:value-of select="@icon" />) center center no-repeat;</xsl:attribute></xsl:if>' + 
 			'						<xsl:text>&#xa0;</xsl:text>' + 
 			'					</ins>' + 
-			'					<xsl:copy-of select="./child::node()" />' + // was <xsl:value-of select="current()" />
+			'					<xsl:copy-of select="./child::node()" />' + 
 			'				</a>' + 
 			'			</xsl:for-each>' + 
 			'			<xsl:if test="$children or @hasChildren"><xsl:call-template name="nodes"><xsl:with-param name="node" select="current()" /></xsl:call-template></xsl:if>' + 
@@ -3128,7 +3129,7 @@
 			'				<xsl:if test="string-length(attribute::icon) > 0 and contains(@icon,\'/\')"><xsl:attribute name="style">background:url(<xsl:value-of select="@icon" />) center center no-repeat;</xsl:attribute></xsl:if>' + 
 			'				<xsl:text>&#xa0;</xsl:text>' + 
 			'			</ins>' + 
-			'			<xsl:copy-of select="./child::node()" />' + // was <xsl:value-of select="current()" />
+			'			<xsl:copy-of select="./child::node()" />' + 
 			'		</a>' + 
 			'	</xsl:for-each>' + 
 			'	<xsl:if test="$children">' + 
@@ -3575,7 +3576,7 @@
 	};
 	$(function () {
 		var css_string = '' + 
-			'#vakata-contextmenu { display:block; visibility:hidden; position:absolute; margin:0; padding:0; min-width:180px; background:#ebebeb; border:1px solid silver; z-index:10000; *width:180px; } ' + 
+			'#vakata-contextmenu { display:block; visibility:hidden; left:0; top:-200px; position:absolute; margin:0; padding:0; min-width:180px; background:#ebebeb; border:1px solid silver; z-index:10000; *width:180px; } ' + 
 			'#vakata-contextmenu ul { min-width:180px; *width:180px; } ' + 
 			'#vakata-contextmenu ul, #vakata-contextmenu li { margin:0; padding:0; list-style-type:none; display:block; } ' + 
 			'#vakata-contextmenu li { line-height:20px; min-height:20px; position:relative; padding:0px; } ' + 
@@ -3958,7 +3959,7 @@
 //*/
 
 /* 
- * jsTree HTML data 1.0
+ * jsTree HTML plugin
  * The HTML data store. Datastores are build by replacing the `load_node` and `_is_loaded` functions.
  */
 (function ($) {
