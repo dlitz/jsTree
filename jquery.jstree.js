@@ -265,8 +265,6 @@
 	// set the prototype for all instances
 	$.jstree._fn = $.jstree._instance.prototype = {};
 
-	// css functions - used internally
-
 	// load the css when DOM is ready
 	$(function() {
 		// code is copied from jQuery ($.browser is deprecated + there is a bug in IE)
@@ -1094,6 +1092,7 @@
 				s = $.map($.makeArray(s), function (n) { return "#" + n.toString().replace(/^#/,"").replace(/\\\//g,"/").replace(/\//g,"\\\/").replace(/\\\./g,".").replace(/\./g,"\\."); });
 				// this.deselect_all(); WHY deselect, breaks plugin state notifier?
 				$.each(s, function (i, val) { if(val && val !== "#") { _this.select_node(val); } });
+				this.data.ui.selected = this.data.ui.selected.filter(function () { return this.parentNode; });
 				this.__callback();
 			},
 			refresh : function (obj) {
@@ -1657,7 +1656,7 @@
 				obj = this._get_node(obj);
 				var s = this._get_settings().json_data;
 				if(obj && obj !== -1 && s.progressive_unload && ($.isFunction(s.data) || !!s.ajax)) {
-					$.removeData(obj, "jstree-children");
+					obj.removeData("jstree-children");
 				}
 				return this.__call_old();
 			},
@@ -1671,7 +1670,7 @@
 					d = this._parse_json(obj.data("jstree-children"), obj);
 					if(d) {
 						obj.append(d);
-						if(!s.progressive_unload) { $.removeData(obj, "jstree-children"); }
+						if(!s.progressive_unload) { obj.removeData("jstree-children"); }
 					}
 					this.clean_node(obj);
 					if(s_call) { s_call.call(this); }
@@ -1694,14 +1693,14 @@
 								}
 								else {
 									obj.children("a.jstree-loading").removeClass("jstree-loading");
-									$.removeData(obj, "jstree-is-loading");
+									obj.removeData("jstree-is-loading");
 									if(s.correct_state) { this.correct_state(obj); }
 								}
 								if(e_call) { e_call.call(this); }
 							}
 							else {
 								if(obj === -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
-								else { obj.append(d).children("a.jstree-loading").removeClass("jstree-loading"); $.removeData(obj, "jstree-is-loading"); }
+								else { obj.append(d).children("a.jstree-loading").removeClass("jstree-loading"); obj.removeData("jstree-is-loading"); }
 								this.clean_node(obj);
 								if(s_call) { s_call.call(this); }
 							}
@@ -1726,7 +1725,7 @@
 							if(ef) { ef.call(this, x, t, e); }
 							if(obj != -1 && obj.length) {
 								obj.children("a.jstree-loading").removeClass("jstree-loading");
-								$.removeData(obj, "jstree-is-loading");
+								obj.removeData("jstree-is-loading");
 								if(t === "success" && s.correct_state) { this.correct_state(obj); }
 							}
 							else {
@@ -1743,7 +1742,7 @@
 							d = this._parse_json(d, obj);
 							if(d) {
 								if(obj === -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
-								else { obj.append(d).children("a.jstree-loading").removeClass("jstree-loading"); $.removeData(obj, "jstree-is-loading"); }
+								else { obj.append(d).children("a.jstree-loading").removeClass("jstree-loading"); obj.removeData("jstree-is-loading"); }
 								this.clean_node(obj);
 								if(s_call) { s_call.call(this); }
 							}
@@ -1756,7 +1755,7 @@
 								}
 								else {
 									obj.children("a.jstree-loading").removeClass("jstree-loading");
-									$.removeData(obj, "jstree-is-loading");
+									obj.removeData("jstree-is-loading");
 									if(s.correct_state) { 
 										this.correct_state(obj);
 										if(s_call) { s_call.call(this); } 
@@ -2753,7 +2752,7 @@
 			}
 
 			this.get_container()
-				.bind("open_node.jstree create_node.jstree clean_node.jstree", $.proxy(function (e, data) { 
+				.bind("open_node.jstree create_node.jstree clean_node.jstree refresh.jstree", $.proxy(function (e, data) { 
 						this._prepare_checkboxes(data.rslt.obj);
 					}, this))
 				.bind("loaded.jstree", $.proxy(function (e) {
@@ -2809,14 +2808,20 @@
 							else {
 								$t.children(":checkbox").addClass("jstree-real-checkbox");
 							}
-							if(c === "jstree-checked") { $t.children(":checkbox").attr("checked","checked"); }
+							if(c === "jstree-checked") { 
+								$t.children(":checkbox").attr("checked","checked"); 
+							}
+						}
+						if(c === "jstree-checked" && !ts) {
+							$t.find("li").addClass("jstree-checked");
 						}
 					});
 				});
 				if(!ts) {
 					if(obj.length === 1 && obj.is("li")) { this._repair_state(obj); }
-					else if(obj.is("li")) { obj.each(function () { _this._repair_state(this); }); }
+					if(obj.is("li")) { obj.each(function () { _this._repair_state(this); }); }
 					else { obj.find("> ul > li").each(function () { _this._repair_state(this); }); }
+					obj.find(".jstree-checked").parent().parent().each(function () { _this._repair_state(this); }); 
 				}
 			},
 			change_state : function (obj, state) {
@@ -3182,14 +3187,14 @@
 									if(d.length > 10) {
 										d = $(d);
 										if(obj === -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
-										else { obj.children("a.jstree-loading").removeClass("jstree-loading"); obj.append(d); $.removeData(obj, "jstree-is-loading"); }
+										else { obj.children("a.jstree-loading").removeClass("jstree-loading"); obj.append(d); obj.removeData("jstree-is-loading"); }
 										if(s.clean_node) { this.clean_node(obj); }
 										if(s_call) { s_call.call(this); }
 									}
 									else {
 										if(obj && obj !== -1) { 
 											obj.children("a.jstree-loading").removeClass("jstree-loading");
-											$.removeData(obj, "jstree-is-loading");
+											obj.removeData("jstree-is-loading");
 											if(s.correct_state) { 
 												this.correct_state(obj);
 												if(s_call) { s_call.call(this); } 
@@ -3233,7 +3238,7 @@
 							if(ef) { ef.call(this, x, t, e); }
 							if(obj !== -1 && obj.length) {
 								obj.children("a.jstree-loading").removeClass("jstree-loading");
-								$.removeData(obj, "jstree-is-loading");
+								obj.removeData("jstree-is-loading");
 								if(t === "success" && s.correct_state) { this.correct_state(obj); }
 							}
 							else {
@@ -3254,14 +3259,14 @@
 									if(d.length > 10) {
 										d = $(d);
 										if(obj === -1 || !obj) { this.get_container().children("ul").empty().append(d.children()); }
-										else { obj.children("a.jstree-loading").removeClass("jstree-loading"); obj.append(d); $.removeData(obj, "jstree-is-loading"); }
+										else { obj.children("a.jstree-loading").removeClass("jstree-loading"); obj.append(d); obj.removeData("jstree-is-loading"); }
 										if(s.clean_node) { this.clean_node(obj); }
 										if(s_call) { s_call.call(this); }
 									}
 									else {
 										if(obj && obj !== -1) { 
 											obj.children("a.jstree-loading").removeClass("jstree-loading");
-											$.removeData(obj, "jstree-is-loading");
+											obj.removeData("jstree-is-loading");
 											if(s.correct_state) { 
 												this.correct_state(obj);
 												if(s_call) { s_call.call(this); } 
@@ -3998,14 +4003,14 @@
 								d = $(d);
 								if(!d.is("ul")) { d = $("<ul />").append(d); }
 								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()).find("li, a").filter(function () { return !this.firstChild || !this.firstChild.tagName || this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end().filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon"); }
-								else { obj.children("a.jstree-loading").removeClass("jstree-loading"); obj.append(d).children("ul").find("li, a").filter(function () { return !this.firstChild || !this.firstChild.tagName || this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end().filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon"); $.removeData(obj, "jstree-is-loading"); }
+								else { obj.children("a.jstree-loading").removeClass("jstree-loading"); obj.append(d).children("ul").find("li, a").filter(function () { return !this.firstChild || !this.firstChild.tagName || this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end().filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon"); obj.removeData("jstree-is-loading"); }
 								this.clean_node(obj);
 								if(s_call) { s_call.call(this); }
 							}
 							else {
 								if(obj && obj !== -1) {
 									obj.children("a.jstree-loading").removeClass("jstree-loading");
-									$.removeData(obj, "jstree-is-loading");
+									obj.removeData("jstree-is-loading");
 									if(s.correct_state) { 
 										this.correct_state(obj);
 										if(s_call) { s_call.call(this); } 
@@ -4050,7 +4055,7 @@
 							if(ef) { ef.call(this, x, t, e); }
 							if(obj != -1 && obj.length) {
 								obj.children("a.jstree-loading").removeClass("jstree-loading");
-								$.removeData(obj, "jstree-is-loading");
+								obj.removeData("jstree-is-loading");
 								if(t === "success" && s.correct_state) { this.correct_state(obj); }
 							}
 							else {
@@ -4068,14 +4073,14 @@
 								d = $(d);
 								if(!d.is("ul")) { d = $("<ul />").append(d); }
 								if(obj == -1 || !obj) { this.get_container().children("ul").empty().append(d.children()).find("li, a").filter(function () { return !this.firstChild || !this.firstChild.tagName || this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end().filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon"); }
-								else { obj.children("a.jstree-loading").removeClass("jstree-loading"); obj.append(d).children("ul").find("li, a").filter(function () { return !this.firstChild || !this.firstChild.tagName || this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end().filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon"); $.removeData(obj, "jstree-is-loading"); }
+								else { obj.children("a.jstree-loading").removeClass("jstree-loading"); obj.append(d).children("ul").find("li, a").filter(function () { return !this.firstChild || !this.firstChild.tagName || this.firstChild.tagName !== "INS"; }).prepend("<ins class='jstree-icon'>&#160;</ins>").end().filter("a").children("ins:first-child").not(".jstree-icon").addClass("jstree-icon"); obj.removeData("jstree-is-loading"); }
 								this.clean_node(obj);
 								if(s_call) { s_call.call(this); }
 							}
 							else {
 								if(obj && obj !== -1) {
 									obj.children("a.jstree-loading").removeClass("jstree-loading");
-									$.removeData(obj, "jstree-is-loading");
+									obj.removeData("jstree-is-loading");
 									if(s.correct_state) { 
 										this.correct_state(obj);
 										if(s_call) { s_call.call(this); } 
@@ -4441,6 +4446,70 @@
 				'.jstree .jstree-wholerow a { display:block; height:18px; line-height:18px; overflow:hidden; } ';
 		}
 		$.vakata.css.add_sheet({ str : css_string, title : "jstree" });
+	});
+})(jQuery);
+//*/
+
+/*
+* jsTree model plugin
+* This plugin gets jstree to use a class model to retrieve data, creating great dynamism
+*/
+(function ($) {
+	var nodeInterface = ["getChildren","getChildrenCount","getAttr","getName","getProps"],
+		validateInterface = function(obj, inter) {
+			var valid = true;
+			obj = obj || {};
+			inter = [].concat(inter);
+			$.each(inter, function (i, v) {
+				if(!$.isFunction(obj[v])) { valid = false; return false; }
+			});
+			return valid;
+		};
+	$.jstree.plugin("model", {
+		__init : function () {
+			if(!this.data.json_data) { throw "jsTree model: jsTree json_data plugin not included."; }
+			this._get_settings().json_data.data = function (n, b) {
+				var obj = (n == -1) ? this._get_settings().model.object : n.data("jstree_model");
+				if(!validateInterface(obj, nodeInterface)) { return b.call(null, false); }
+				if(this._get_settings().model.async) {
+					obj.getChildren($.proxy(function (data) {
+						this.model_done(data, b);
+					}, this));
+				}
+				else {
+					this.model_done(obj.getChildren(), b);
+				}
+			};
+		},
+		defaults : {
+			object : false,
+			id_prefix : false,
+			async : false
+		},
+		_fn : {
+			model_done : function (data, callback) {
+				var ret = [], 
+					s = this._get_settings(),
+					_this = this;
+
+				if(!$.isArray(data)) { data = [data]; }
+				$.each(data, function (i, nd) {
+					var r = nd.getProps() || {};
+					r.attr = nd.getAttr() || {};
+					if(nd.getChildrenCount()) { r.state = "closed"; }
+					r.data = nd.getName();
+					if(!$.isArray(r.data)) { r.data = [r.data]; }
+					if(_this.data.types && $.isFunction(nd.getType)) {
+						r.attr[s.types.type_attr] = nd.getType();
+					}
+					if(r.attr.id && s.model.id_prefix) { r.attr.id = s.model.id_prefix + r.attr.id; }
+					if(!r.metadata) { r.metadata = { }; }
+					r.metadata.jstree_model = nd;
+					ret.push(r);
+				});
+				callback.call(null, ret);
+			}
+		}
 	});
 })(jQuery);
 //*/
