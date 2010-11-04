@@ -978,6 +978,16 @@
  * This plugins handles selecting/deselecting/hovering/dehovering nodes
  */
 (function ($) {
+	/*
+	DESELECT ON OUTSIDE CLICK
+			var _this = this;
+			$(document).bind("click", function (e) {
+				if(!$(e.target).parents(".jstree:eq(0)").length) {
+					// $.jstree._focused().deselect_all();
+					_this.deselect_all();
+				}
+			});
+	*/
 	var scrollbar_width, e1, e2;
 	$(function() {
 		if (/msie/.test(navigator.userAgent.toLowerCase())) {
@@ -3793,6 +3803,7 @@
 							d = o && o !== -1 && o.length ? o.data("jstree") : false;
 						if(d && d.types && d.types[data.func] === false) { e.stopImmediatePropagation(); return false; }
 						if($.inArray(data.func, this.data.types.attach_to) !== -1) {
+							if(!data.args[0] || (!data.args[0].tagName && !data.args[0].jquery)) { return; }
 							s = this._get_settings().types.types;
 							t = this._get_type(data.args[0]);
 							if(
