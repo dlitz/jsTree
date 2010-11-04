@@ -3357,7 +3357,7 @@
 							result += ' icon="' + tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"") + '"';
 						}
 						if(tmp1.children("ins").get(0).style.backgroundImage.length) {
-							result += ' icon="' + tmp1.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","") + '"';
+							result += ' icon="' + tmp1.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","").replace(/'/ig,"").replace(/"/ig,"") + '"';
 						}
 						result += ">";
 						result += "<![CDATA[" + _this.get_text(tmp1, lang) + "]]>";
