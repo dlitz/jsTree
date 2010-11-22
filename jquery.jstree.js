@@ -3027,6 +3027,15 @@
 		}
 		return false;
 	};
+	var escape_xml = function(string) {
+		return string
+			.toString()
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&apos;');
+	};
 	var xsl = {
 		'nest' : '<' + '?xml version="1.0" encoding="utf-8" ?>' + 
 			'<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >' + 
@@ -3327,12 +3336,12 @@
 					$.each(li_attr, function (i, v) { 
 						var t = li.attr(v);
 						if(!s.xml_data.get_skip_empty || typeof t !== "undefined") {
-							result += " " + v + "=\"" + (" " + (t || "")).replace(/ jstree[^ ]*/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"") + "\""; 
+							result += " " + v + "=\"" + escape_xml((" " + (t || "")).replace(/ jstree[^ ]*/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"")) + "\"";
 						}
 					});
 					if(li.hasClass("jstree-open")) { result += " state=\"open\""; }
 					if(li.hasClass("jstree-closed")) { result += " state=\"closed\""; }
-					if(tp === "flat") { result += " parent_id=\"" + is_callback + "\""; }
+					if(tp === "flat") { result += " parent_id=\"" + escape_xml(is_callback) + "\""; }
 					result += ">";
 					result += "<content>";
 					a = li.children("a");
@@ -3342,25 +3351,25 @@
 						result += "<name";
 						if($.inArray("languages", s.plugins) !== -1) {
 							$.each(s.languages, function (k, z) {
-								if(tmp1.hasClass(z)) { result += " lang=\"" + z + "\""; lang = z; return false; }
+								if(tmp1.hasClass(z)) { result += " lang=\"" + escape_xml(z) + "\""; lang = z; return false; }
 							});
 						}
 						if(a_attr.length) { 
 							$.each(a_attr, function (k, z) {
 								var t = tmp1.attr(z);
 								if(!s.xml_data.get_skip_empty || typeof t !== "undefined") {
-									result += " " + z + "=\"" + (" " + t || "").replace(/ jstree[^ ]*/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"") + "\"";
+									result += " " + z + "=\"" + escape_xml((" " + t || "").replace(/ jstree[^ ]*/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"")) + "\"";
 								}
 							});
 						}
 						if(tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/^\s+$/ig,"").length) {
-							result += ' icon="' + tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"") + '"';
+							result += ' icon="' + escape_xml(tmp1.children("ins").get(0).className.replace(/jstree[^ ]*|$/ig,'').replace(/\s+$/ig," ").replace(/^ /,"").replace(/ $/,"")) + '"';
 						}
 						if(tmp1.children("ins").get(0).style.backgroundImage.length) {
-							result += ' icon="' + tmp1.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","").replace(/'/ig,"").replace(/"/ig,"") + '"';
+							result += ' icon="' + escape_xml(tmp1.children("ins").get(0).style.backgroundImage.replace("url(","").replace(")","").replace(/'/ig,"").replace(/"/ig,"")) + '"';
 						}
 						result += ">";
-						result += "<![CDATA[" + _this.get_text(tmp1, lang) + "]]>";
+						result += escape_xml(_this.get_text(tmp1, lang));
 						result += "</name>";
 					});
 					result += "</content>";
