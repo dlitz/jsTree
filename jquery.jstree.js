@@ -3329,7 +3329,10 @@
 
 				a_attr = $.isArray(a_attr) ? a_attr : [ ];
 
-				if(!is_callback) { result += "<root>"; }
+				if(!is_callback) {
+					if(s.xml_data.get_include_preamble) { result += "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"; }
+					result += "<root>";
+				}
 				obj.each(function () {
 					result += "<item";
 					li = $(this);
